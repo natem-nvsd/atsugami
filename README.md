@@ -2,11 +2,10 @@ Atsugami
 ========
 Tool for managing and tagging your images from the command line.
 
-# Commands
 Command		Implementation status
 -------------------------------------
- ls		[✔]
- lstag		[✔]
+ ls		[✔]  return
+ lstag		[✔]  return
  find		[✘]
  help		[✔]
  version	[✔]

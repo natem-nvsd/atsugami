@@ -34,4 +34,4 @@ uninstall:
 
 void:
 
-.PHONY: all #options clean install
+#.PHONY: all #options clean install
