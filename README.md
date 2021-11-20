@@ -4,8 +4,8 @@ Tool for managing and tagging your images from the command line.
 
 Command		Implementation status
 -------------------------------------
- ls		[✔]  return
- lstag		[✔]  return
+ ls		[✔]  
+ lstag		[✔]  
  find		[✘]
  help		[✔]
  version	[✔]
