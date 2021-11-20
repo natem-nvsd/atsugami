@@ -1,5 +1,5 @@
-Atsugami (厚紙)
-===============
+Atsugami
+========
 Tool for managing and tagging your images from the command line.
 
 # Commands
