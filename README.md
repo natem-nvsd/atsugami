@@ -3,7 +3,6 @@ Atsugami
 Tool for managing and tagging your images from the command line.
 
 Command		Implementation status
--------------------------------------
  ls		[✔]  
  lstag		[✔]  
  find		[✘]  
@@ -28,7 +27,7 @@ Command		Implementation status
  unfavourite	[✘]  
  unfavorite	[✘]  
 
-# Colours:
+### Colours:
 ff8a8b: Artist		XTerm 204  
 c797ff: Copyright	XTerm 135  
 35c64a: Character	XTerm 048  
