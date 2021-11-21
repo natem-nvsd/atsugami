@@ -1,5 +1,5 @@
 # atsugami version
-VERSION = 0.10
+VERSION = 0.3
 
 # Paths
 PREFIX = /usr/local
