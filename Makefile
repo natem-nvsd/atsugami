@@ -1,6 +1,6 @@
 include config.mk
 
-SRC = atsugami.c #functions.c
+SRC = atsugami.c functions.c
 OBJ = ${SRC:.c=.o}
 
 all: options atsugami
@@ -21,11 +21,7 @@ atsugami: cleanobj
 clean:
 	rm -f atsugami ${OBJ}
 
-cleanobj:
-	rm -f ${OBJ}
-
 install: atsugami 
-#	${CC} -o atsugami ${SRC} ${CFLAGS} ${LDFLAGS} $<
 	cp -f atsugami ${DESTDIR}${PREFIX}/bin
 	chmod 755 ${DESTDIR}${PREFIX}/bin/atsugami
 
