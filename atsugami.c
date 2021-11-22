@@ -141,25 +141,9 @@ int main(int argc, char *argv[]) {
 	}
 
 	if (lstag == 1) {
-		while (argc > 3) {
-			fprintf(stderr, "%s: %s: Too many arguments.\n", argv[0], argv[1]);
-			return(7);
-		}
-
-		/***********************************************\
-		*************************************************
-		!!!!!! THIS CODE IS PRONE TO SQL INJECTION !!!!!!
-		*************************************************
-		\***********************************************/
-
-/*		char buffer[512];
-		int num=snprintf(buffer, sizeof(buffer), "SELECT name FROM public.tags WHERE name LIKE '%d%';", argv[3]);
-		printf("%d\n", num); */
-
-//		char query_string[] = "SELECT name FROM public.tags ";
-
 		dbconnect(conninfo, &conn);
 		query(PQexec(conn, "SELECT name FROM public.tags;"), conninfo, &conn);
+		PQfinish(conn);
 		return(0);
 	}
 
@@ -184,18 +168,50 @@ int main(int argc, char *argv[]) {
 	}
 
 	if (find == 1) {
-		/* Debugging code */
-		printf("%s\n", argv[0]);
-		printf("%s\n", argv[1]);
-		printf("%s\n", argv[2]);
+		while (argc > 3) {
+			fprintf(stderr, "%s: %s: Too many arguments.\n", argv[0], argv[1]);
+			return(7);
+		}
 
+		/***********************************************\
+		*************************************************
+		!!!!!! THIS CODE IS PRONE TO SQL INJECTION !!!!!!
+		*************************************************
+		\***********************************************/
 		dbconnect(conninfo, &conn);
+		const char *values[1];
+		values[0] = argv[2];
+		const char *cmd[1];
+		cmd[0] = "SELECT name FROM public.tags WHERE name LIKE '%$0%';";
 
-		/* Query the database */
-//		search(PQexec(conn, "SELECT uuid, artist, copyrights, characters, tags FROM public.files WHERE tags LIKE '%s';", argv[2]), conninfo, &conn);
-//		PQexec(conn, "SELECT uuid, artist, copyrights, characters, tags FROM public.files WHERE tags LIKE '%s';", argv[2]);
+		PGresult *res = PQexecParams(conn,
+					     &cmd,
+//					     "SELECT name FROM public.tags WHERE name LIKE '%$1%';",
+					     1,
+					     NULL,
+					     &values[0],
+					     NULL,
+					     NULL,
+					     0);
+		PQprintOpt      options = {0};
+		options.header          = 1;    /* Printoutput field headings and row count */
+		options.align           = 1;    /* Fill align the fields */
+		options.standard        = 0;    /* Old brain dead format */
+		options.html3           = 0;    /* Output HTML tables */
+		options.expanded        = 0;    /* Expand tables */
+		options.pager           = 0;    /* Use pager for output if needed */
+		options.fieldSep        = "|";  /* Field sparator */
+		options.tableOpt        = 0;    /* Attributes for HTML table element */
+		options.caption = 0;    /* HTML table caption */
 
-		/* disconnect from the database */
+		if (PQresultStatus(res) != PGRES_TUPLES_OK) {
+			fprintf(stderr, "%s", PQerrorMessage(conn));
+			PQclear(res);
+			exit_nicely(conn);
+		}
+
+		PQprint(stdout, res, &options);
+		PQclear(res);
 		PQfinish(conn);
 		return(0);
 	}
