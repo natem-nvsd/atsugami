@@ -31,6 +31,9 @@ int main(int argc, char *argv[]) {
 	/* Commands */
 	int ls			= 0;
 	int lstag		= 0;
+	int lsart		= 0; // NEW
+	int lschar		= 0; // NEW
+	int lscopy		= 0; // NEW
 	int find		= 0;
 	int about		= 0;
 	int help		= 0;
@@ -57,9 +60,12 @@ int main(int argc, char *argv[]) {
 		fprintf(stderr, "%s: Atsugami requires at least one argument. See '%s help' for more details.\n", argv[0], argv[0]);
 		exit(1);
 	}
-	
+
 	if	(strcmp(argv[1], "ls")		== 0) ls++;
 	else if	(strcmp(argv[1], "lstag")	== 0) lstag++;
+	else if (strcmp(argv[1], "lsartist")	== 0) lsart++;
+	else if (strcmp(argv[1], "lscharacter") == 0) lschar++;
+	else if (strcmp(argv[1], "lscopyright") == 0) lscopy++;
 	else if	(strcmp(argv[1], "find")	== 0) find++;
 	else if (strcmp(argv[1], "about")	== 0) about++;
 	else if (strcmp(argv[1], "help")	== 0) help++;
@@ -88,9 +94,9 @@ int main(int argc, char *argv[]) {
 	}
 
 	/* Commands */
-	while (ls == 1) {
+	if (ls == 1) {
 		while (argc > 2) {
-			fprintf(stderr, "%s: %s: Too many arguments.\n", argv[0], argv[2]);
+			fprintf(stderr, "%s: %s: Too many arguments.\n", argv[0], argv[1]);
 			return(1);
 		}
 		dbconnect(conninfo, &conn);
@@ -98,31 +104,63 @@ int main(int argc, char *argv[]) {
 		return(0);
 	}
 
-	while (lstag == 1) {
+	if (lstag == 1) {
+		while (argc > 2) {
+			fprintf(stderr, "%s: %s: Too many arguments.\n", argv[0], argv[1]);
+			return(1);
+		}
 		dbconnect(conninfo, &conn);
 		query(PQexec(conn, "SELECT name FROM public.tags;"), conninfo, &conn);
 		return(0);
 	}
 
-	while (find == 1) {
+	if (lsart == 1) {
 		dbconnect(conninfo, &conn);
-
-		const char *search_query = argv[3];
-		printf("%s\n", search_query); /* Causes a seg fault */
-
+		query(PQexec(conn, "SELECT name FROM public.artists;"), conninfo, &conn);
+		PQfinish(conn);
 		return(0);
 	}
 
-	while (about == 1) {
+	if (lschar == 1) {
+		dbconnect(conninfo, &conn);
+		query(PQexec(conn, "SELECT name FROM public.characters;"), conninfo, &conn);
+		PQfinish(conn);
+		return(0);
+	}
+
+	if (lscopy == 1) {
+		dbconnect(conninfo, &conn);
+		query(PQexec(conn, "SELECT name FROM public.copyrights;"), conninfo, &conn);
+		return(0);
+	}
+
+	if (find == 1) {
+		/* Debugging code */
+		printf("%s\n", argv[0]);
+		printf("%s\n", argv[1]);
+		printf("%s\n", argv[2]);
+
+		dbconnect(conninfo, &conn);
+
+		/* Query the database */
+//		search(PQexec(conn, "SELECT uuid, artist, copyrights, characters, tags FROM public.files WHERE tags LIKE '%s';", argv[2]), conninfo, &conn);
+//		PQexec(conn, "SELECT uuid, artist, copyrights, characters, tags FROM public.files WHERE tags LIKE '%s';", argv[2]);
+
+		/* disconnect from the database */
+		PQfinish(conn);
+		return(0);
+	}
+
+	if (about == 1) {
 		AGabout();
 		return(0);
 	}
-	while (help == 1) {
+	if (help == 1) {
 		AGhelp();
 	}
 
-	while (ver == 1) {
-		AGversion(0.2);
+	if (ver == 1) {
+		AGversion(0.3);
 		return(0);
 	}
 
@@ -131,44 +169,46 @@ int main(int argc, char *argv[]) {
 		return(1);
 	}
 	
-	while (rm == 1) {
+	if (rm == 1) {
 /*		dbconnect(conninfo, &conn);
-		malloc(sizeof(argv[3]));
-		char rmfile = argv[3]; 
+		malloc(sizeof(argv[2]));
+		char rmfile = argv[2]; 
 		free(*rmfile); */
 
 		fprintf(stderr, "This command has not been implemented.\n");
 		return(1);
 	}
-	while (del == 1) {
+	if (del == 1) {
 		fprintf(stderr, "This command has not been implemented.\n");
 		return(1);
 	}
 	
-	while (rmwiki == 1) {
+	if (rmwiki == 1) {
 		fprintf(stderr, "This command has not been implemented.\n");
 		return(1);
 	}
 
-	while (rmtag == 1) {
+	if (rmtag == 1) {
 		fprintf(stderr, "This command has not been implemented.\n");
 		return(1);
 	}
-	while (import == 1) {
-		fprintf(stderr, "This command has not been implemented.\n");
-		return(1);
-/*		if (argc < 3) {
+	if (import == 1) {
+/*		if (argc < 2) {
 			fprintf(stderr, "%s: import: No arguments provided.\n", argv[0]);
 			exit_nicely(conn);
-		}
-		dbconnect(conninfo, &conn); */
+	//	}
+		dbconnect(conninfo, &conn); 
+		PQfinish(conn);*/
+
+		fprintf(stderr, "This command has not been implemented.\n");
+		return(1);
 
 		/* allocate memory for the path to the file to import (infilename) */
-/*		malloc(sizeof(argv[3]));
+/*		malloc(sizeof(argv[2]));
 		char infilename;
-		strcat(infilename, argv[3]);
-//		[] = argv[3];
-//		infilename = argv[3];
+		strcat(infilename, argv[2]);
+//		[] = argv[2];
+//		infilename = argv[2];
 		printf("%s\n", infilename);
 		free(infilename); */
 
@@ -179,47 +219,47 @@ int main(int argc, char *argv[]) {
 		return(0); */
 	}
 
-	while (mkwiki == 1) {
+	if (mkwiki == 1) {
 		fprintf(stderr, "This command has not been implemented.\n");
 		return(1);
 	}
 
-	while (mktag == 1) {
+	if (mktag == 1) {
 		fprintf(stderr, "This command has not been implemented.\n");
 		return(1);
 	}
 
-	while (edit == 1) {
+	if (edit == 1) {
 		fprintf(stderr, "This command has not been implemented.\n");
 		return(1);
 	}
 
-	while (editwiki == 1) {
+	if (editwiki == 1) {
 		fprintf(stderr, "This command has not been implemented.\n");
 		return(1);
 	}
 
-	while (edittag == 1) {
+	if (edittag == 1) {
 		fprintf(stderr, "This command has not been implemented.\n");
 		return(1);
 	}
 
-	while (view == 1) {
+	if (view == 1) {
 		fprintf(stderr, "This command has not been implemented.\n");
 		return(1);
 	}
 
-	while (favs == 1) {
+	if (favs == 1) {
 		fprintf(stderr, "This command has not been implemented.\n");
 		return(1);
 	}
 
-	while (fav == 1) {
+	if (fav == 1) {
 		fprintf(stderr, "This command has not been implemented.\n");
 		return(1);
 	}
 
-	while (unfav == 1) {
+	if (unfav == 1) {
 		fprintf(stderr, "This command has not been implemented.\n");
 		return(1);
 	}

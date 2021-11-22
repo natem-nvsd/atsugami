@@ -63,12 +63,39 @@ extern int query(PGresult *res, char *conninfo, PGconn **conn) {
 	return(0);
 }
 
+extern int search(PGresult *res, char *conninfo, PGconn **conn) {
+	*conn = PQconnectdb(conninfo);
+	PQprintOpt	options = {0};
+	options.header		= 1;	/* Printoutput field headings and row count */
+	options.align		= 1;	/* Fill align the fields */
+	options.standard	= 0;	/* Old brain dead format */
+	options.html3		= 0;	/* Output HTML tables */
+	options.expanded	= 0;	/* Expand tables */
+	options.pager		= 0;	/* Use pager for output if needed */
+	options.fieldSep	= "|";	/* Field sparator */
+	options.tableOpt	= 0;	/* Attributes for HTML table element */
+	options.caption	= 0;	/* HTML table caption */
+//	options.*fieldName	= 1;	/* Null-terminated array of replacement field names */
+	if (PQresultStatus(res) != PGRES_TUPLES_OK) {
+		fprintf(stderr, "%s", PQerrorMessage(*conn));
+		PQclear(res);
+		exit_nicely(*conn);
+	}
+//	else {
+		PQprint(stdout, res, &options);
+/*		PQclear(res);
+		return(0); */
+//	}
+	PQclear(res);
+	return(0);
+}
+
 extern int AGabout() {
-	printf("Atsugami 0.2: Command-line image tagger and manager.\n"
-		"Atsugami is free software with ABSOLUTELY NO WARRANTY.\n"
-		"Source code: https://github.com/NateMorrison/Atsugami\n"
-		"For more information, see https://nvsd.ca/atsugami\n"
-		"XMPP chatroom: atsugami@conference.nvsd.ca\n");
+	printf("Atsugami 0.3\n"
+		"Copyright (C) 2021 Nate Morrison\n"
+		"License: ...\n"
+		"This is software is FREE SOFTWARE WITH ABSOLUTELY NO WARRANTY.\n"
+		);
 	return(0);
 }
 
