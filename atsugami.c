@@ -8,6 +8,7 @@
 *							*
 *	Usage:						*
 ********************************************************/
+#include <errno.h>
 #include <fcntl.h>
 #include "functions.h"
 #include <libpq-fe.h>
@@ -29,26 +30,47 @@ int main(int argc, char *argv[]) {
 	int i, j; */
 
 	/* Commands */
+	/* There are too many commands. Merge them into fewer commands, just with GNU-style flags (i.e. ls --wiki) */
+	/* Listing */
 	int ls			= 0;
 	int lstag		= 0;
-	int lsart		= 0; // NEW
-	int lschar		= 0; // NEW
-	int lscopy		= 0; // NEW
+	int lsart		= 0;
+	int lschar		= 0;
+	int lscopy		= 0;
 	int find		= 0;
+
+	/* Program meta */
 	int about		= 0;
 	int help		= 0;
 	int ver			= 0;
 	int wiki		= 0;
+
+	/* Deleting */
 	int rm			= 0;
-	int del			= 0;
-	int rmwiki		= 0;
 	int rmtag		= 0;
+	int rmart		= 0;
+	int rmchar		= 0;
+	int rmcopy		= 0;
+	int rmwiki		= 0;
+	int del			= 0;
+
+	/* Creating */
 	int import		= 0;
-	int mkwiki		= 0;
 	int mktag		= 0;
-	int edit		= 0;
-	int editwiki		= 0;
-	int edittag		= 0;
+	int mkart		= 0;
+	int mkchar		= 0;
+	int mkcopy		= 0;
+	int mkwiki		= 0;
+
+	/* Editing */
+	int ed			= 0;
+	int edtag		= 0;
+	int edart		= 0;
+	int edchar		= 0;
+	int edcopy		= 0;
+	int edwiki		= 0;
+
+	/* File meta */
 	int view		= 0;
 	int favs		= 0;
 	int fav			= 0;
@@ -67,20 +89,34 @@ int main(int argc, char *argv[]) {
 	else if (strcmp(argv[1], "lscharacter") == 0) lschar++;
 	else if (strcmp(argv[1], "lscopyright") == 0) lscopy++;
 	else if	(strcmp(argv[1], "find")	== 0) find++;
+
 	else if (strcmp(argv[1], "about")	== 0) about++;
 	else if (strcmp(argv[1], "help")	== 0) help++;
 	else if (strcmp(argv[1], "version")	== 0) ver++;
 	else if (strcmp(argv[1], "wiki")	== 0) wiki++;
+
 	else if (strcmp(argv[1], "rm")		== 0) rm++;
 	else if (strcmp(argv[1], "delete")	== 0) del++;
-	else if (strcmp(argv[1], "rmwiki")	== 0) rmwiki++;
 	else if (strcmp(argv[1], "rmtag")	== 0) rmtag++;
+	else if (strcmp(argv[1], "rmartist")	== 0) rmart++;
+	else if (strcmp(argv[1], "rmcharacter")	== 0) rmchar++;
+	else if (strcmp(argv[1], "rmcopyright")	== 0) rmcopy++;
+	else if (strcmp(argv[1], "rmwiki")	== 0) rmwiki++;
+
 	else if (strcmp(argv[1], "import")	== 0) import++;
-	else if (strcmp(argv[1], "mkwiki")	== 0) mkwiki++;
 	else if (strcmp(argv[1], "mktag")	== 0) mktag++;
-	else if (strcmp(argv[1], "edit")	== 0) edit++;
-	else if (strcmp(argv[1], "editwiki")	== 0) editwiki++;
-	else if (strcmp(argv[1], "edittag")	== 0) edittag++;
+	else if (strcmp(argv[1], "mkartist")	== 0) mkart++;
+	else if (strcmp(argv[1], "mkcharacter")	== 0) mkchar++;
+	else if (strcmp(argv[1], "mkcopyright")	== 0) mkcopy++;
+	else if (strcmp(argv[1], "mkwiki")	== 0) mkwiki++;
+
+	else if (strcmp(argv[1], "edit")	== 0) ed++;
+	else if (strcmp(argv[1], "edittag")	== 0) edtag++;
+	else if (strcmp(argv[1], "editartist")	== 0) edart++;
+	else if (strcmp(argv[1], "editcharacter") == 0) edchar++;
+	else if (strcmp(argv[1], "editcopyright") == 0) edcopy++;
+	else if (strcmp(argv[1], "editwiki")	== 0) edwiki++;
+
 	else if (strcmp(argv[1], "view")	== 0) view++;
 	else if (strcmp(argv[1], "favourites")	== 0) favs++;
 	else if (strcmp(argv[1], "favorites")	== 0) favs++;
@@ -90,14 +126,14 @@ int main(int argc, char *argv[]) {
 	else if (strcmp(argv[1], "unfavorite")	== 0) unfav++;
 	else {
 		fprintf(stderr, "%s: %s: Invalid command. See '%s help' for more details.\n", argv[0], argv[1], argv[0]);
-		return(1);
+		return(EINVAL);
 	}
 
 	/* Commands */
 	if (ls == 1) {
 		while (argc > 2) {
 			fprintf(stderr, "%s: %s: Too many arguments.\n", argv[0], argv[1]);
-			return(1);
+			return(7);
 		}
 		dbconnect(conninfo, &conn);
 		query(PQexec(conn, "SELECT uuid, artist, copyrights, characters, tags FROM public.files;"), conninfo, &conn);
@@ -105,10 +141,23 @@ int main(int argc, char *argv[]) {
 	}
 
 	if (lstag == 1) {
-		while (argc > 2) {
+		while (argc > 3) {
 			fprintf(stderr, "%s: %s: Too many arguments.\n", argv[0], argv[1]);
-			return(1);
+			return(7);
 		}
+
+		/***********************************************\
+		*************************************************
+		!!!!!! THIS CODE IS PRONE TO SQL INJECTION !!!!!!
+		*************************************************
+		\***********************************************/
+
+/*		char buffer[512];
+		int num=snprintf(buffer, sizeof(buffer), "SELECT name FROM public.tags WHERE name LIKE '%d%';", argv[3]);
+		printf("%d\n", num); */
+
+//		char query_string[] = "SELECT name FROM public.tags ";
+
 		dbconnect(conninfo, &conn);
 		query(PQexec(conn, "SELECT name FROM public.tags;"), conninfo, &conn);
 		return(0);
@@ -225,21 +274,22 @@ int main(int argc, char *argv[]) {
 	}
 
 	if (mktag == 1) {
+	/* INSERT INTO public.tags (uuid, name, created_at, updated_at) VALUES ( DEFAULT, 'tag_name', DEFAULT, DEFAULT); */
 		fprintf(stderr, "This command has not been implemented.\n");
 		return(1);
 	}
 
-	if (edit == 1) {
+	if (ed == 1) {
 		fprintf(stderr, "This command has not been implemented.\n");
 		return(1);
 	}
 
-	if (editwiki == 1) {
+	if (edwiki == 1) {
 		fprintf(stderr, "This command has not been implemented.\n");
 		return(1);
 	}
 
-	if (edittag == 1) {
+	if (edtag == 1) {
 		fprintf(stderr, "This command has not been implemented.\n");
 		return(1);
 	}

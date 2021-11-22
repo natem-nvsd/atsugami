@@ -122,11 +122,8 @@ extern int AGhelp() {
 		"	editwiki	[tag]	Edit a wiki page.\n"
 		"	edittag		[tag]	Rename a tag; this will rename its associated wiki page (if one exists).\n"
 		"	favourites	[UUID]	List your favourite/bookmarked files.\n"
-		"	favorites	[UUID]	Same as favourites.\n"
 		"	favourite	[UUID]	Add a file to your favourites list.\n"
-		"	favorite	[UUID]	Same as favourite; different spelling.\n"
 		"	unfavourite	[UUID]	Remove a file from your favourites list.\n"
-		"	unfavorite	[UUID]	Same as unfavourite.\n"
 		"\n"
 		"	version		Show the verionsion of the program.\n"
 		"	help		Show this menu.\n");
