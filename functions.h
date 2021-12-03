@@ -23,7 +23,6 @@ extern void exit_nicely(PGconn *conn) {
 	exit(1);
 }
 
-/* Let the Pointer Hell begin! */
 extern int dbconnect(char *conninfo, PGconn **conn) {
 	*conn = PQconnectdb(conninfo);
 	if (PQstatus(*conn) != CONNECTION_OK) {
@@ -35,6 +34,25 @@ extern int dbconnect(char *conninfo, PGconn **conn) {
 	}
 	return(0);
 }
+
+typedef struct __dynamicQuery {
+	char *command;
+	int nParams;
+	const Oid *paramTypes;
+	char *paramValues;
+	const int *paramLengths;
+	const int *paramFormats;
+	int resultFormats;
+} dynamicQuery;
+
+/*extern int dynamicQueryParams(PGconn *conn,
+			char *command,
+			int nParams,
+			const Oid *paramTypes,
+			char *paramValues,
+			const int *paramLengths,
+			const int *paramFormats,
+			int resultFormat); */
 
 extern int query(PGresult *res, char *conninfo, PGconn **conn) {
 	*conn = PQconnectdb(conninfo);
@@ -49,16 +67,14 @@ extern int query(PGresult *res, char *conninfo, PGconn **conn) {
 	options.tableOpt	= 0;	/* Attributes for HTML table element */
 	options.caption	= 0;	/* HTML table caption */
 //	options.*fieldName	= 1;	/* Null-terminated array of replacement field names */
+
 	if (PQresultStatus(res) != PGRES_TUPLES_OK) {
 		fprintf(stderr, "%s", PQerrorMessage(*conn));
 		PQclear(res);
 		exit_nicely(*conn);
 	}
-//	else {
-		PQprint(stdout, res, &options);
-/*		PQclear(res);
-		return(0); */
-//	}
+
+	PQprint(stdout, res, &options);
 	PQclear(res);
 	return(0);
 }

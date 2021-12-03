@@ -30,7 +30,7 @@ int main(int argc, char *argv[]) {
 	int i, j; */
 
 	/* Commands */
-	/* There are too many commands. Merge them into fewer commands, just with GNU-style flags (i.e. ls --wiki) */
+	/* There are too many commands. Merge them into fewer commands, just with GNU-style flags (e.g. ls --wiki) */
 	/* Listing */
 	int ls			= 0;
 	int lstag		= 0;
@@ -76,7 +76,6 @@ int main(int argc, char *argv[]) {
 	int fav			= 0;
 	int unfav		= 0;
 
-	printf("argc = %d\n", argc);
 	/* Check if enough arguments have been provided */
 	if (argv[1] == NULL) {
 		fprintf(stderr, "%s: Atsugami requires at least one argument. See '%s help' for more details.\n", argv[0], argv[0]);
@@ -125,49 +124,53 @@ int main(int argc, char *argv[]) {
 	else if (strcmp(argv[1], "unfavourite")	== 0) unfav++;
 	else if (strcmp(argv[1], "unfavorite")	== 0) unfav++;
 	else {
-		fprintf(stderr, "%s: %s: Invalid command. See '%s help' for more details.\n", argv[0], argv[1], argv[0]);
+		fprintf(stderr, "%s: %s: EINVAL: Invalid command. See '%s help' for more details.\n", argv[0], argv[1], argv[0]);
 		return(EINVAL);
 	}
 
 	/* Commands */
-	if (ls == 1) {
+	if (ls) {
 		while (argc > 2) {
-			fprintf(stderr, "%s: %s: Too many arguments.\n", argv[0], argv[1]);
-			return(7);
+			fprintf(stderr, "%s: %s: E2BIG: Too many arguments.\n", argv[0], argv[1]);
+			return(E2BIG);
 		}
 		dbconnect(conninfo, &conn);
 		query(PQexec(conn, "SELECT uuid, artist, copyrights, characters, tags FROM public.files;"), conninfo, &conn);
 		return(0);
 	}
 
-	if (lstag == 1) {
+	if (lstag) {
 		dbconnect(conninfo, &conn);
 		query(PQexec(conn, "SELECT name FROM public.tags;"), conninfo, &conn);
 		PQfinish(conn);
 		return(0);
 	}
 
-	if (lsart == 1) {
+	if (lsart) {
 		dbconnect(conninfo, &conn);
 		query(PQexec(conn, "SELECT name FROM public.artists;"), conninfo, &conn);
 		PQfinish(conn);
 		return(0);
 	}
 
-	if (lschar == 1) {
+	if (lschar) {
 		dbconnect(conninfo, &conn);
 		query(PQexec(conn, "SELECT name FROM public.characters;"), conninfo, &conn);
 		PQfinish(conn);
 		return(0);
 	}
 
-	if (lscopy == 1) {
+	if (lscopy) {
 		dbconnect(conninfo, &conn);
 		query(PQexec(conn, "SELECT name FROM public.copyrights;"), conninfo, &conn);
 		return(0);
 	}
 
-	if (find == 1) {
+	if (find) {
+		while (argv == NULL) {
+			fprintf(stderr, "%s: %s: One argument required.\n", argv[0], argv[1]);
+			return(1);
+		}
 		while (argc > 3) {
 			fprintf(stderr, "%s: %s: Too many arguments.\n", argv[0], argv[1]);
 			return(7);
@@ -178,21 +181,25 @@ int main(int argc, char *argv[]) {
 		!!!!!! THIS CODE IS PRONE TO SQL INJECTION !!!!!!
 		*************************************************
 		\***********************************************/
-		dbconnect(conninfo, &conn);
-		const char *values[1];
-		values[0] = argv[2];
-		const char *cmd[1];
-		cmd[0] = "SELECT name FROM public.tags WHERE name LIKE '%$0%';";
+		const int LEN = sizeof(argv[2]);
+		const char *paramValues[1];
 
-		PGresult *res = PQexecParams(conn,
-					     &cmd,
-//					     "SELECT name FROM public.tags WHERE name LIKE '%$1%';",
-					     1,
-					     NULL,
-					     &values[0],
-					     NULL,
-					     NULL,
-					     0);
+		int rowId;
+		int ret = sscanf(argv[2], "%d", &rowId);
+
+		char str[LEN];
+		snprintf(str, LEN, "%d", rowId);
+		paramValues[0] = str;
+
+		/* Connect to the database */
+		dbconnect(conninfo, &conn);
+
+		char *stm = "SELECT name FROM public.tags WHERE name LIKE '%$1%'";
+
+//		PGresult *res;
+//		res = PQexecParams(conn, stm[0], 1, NULL, &paramValues[0], NULL, NULL, 0);
+		PGresult *res = PQexecParams(conn, stm, 1, NULL, paramValues, NULL, NULL, 0);
+
 		PQprintOpt      options = {0};
 		options.header          = 1;    /* Printoutput field headings and row count */
 		options.align           = 1;    /* Fill align the fields */
@@ -216,15 +223,16 @@ int main(int argc, char *argv[]) {
 		return(0);
 	}
 
-	if (about == 1) {
+	if (about) {
 		AGabout();
 		return(0);
 	}
-	if (help == 1) {
+
+	if (help) {
 		AGhelp();
 	}
 
-	if (ver == 1) {
+	if (ver) {
 		AGversion(0.3);
 		return(0);
 	}
@@ -234,98 +242,72 @@ int main(int argc, char *argv[]) {
 		return(1);
 	}
 	
-	if (rm == 1) {
-/*		dbconnect(conninfo, &conn);
-		malloc(sizeof(argv[2]));
-		char rmfile = argv[2]; 
-		free(*rmfile); */
-
+	if (rm) {
 		fprintf(stderr, "This command has not been implemented.\n");
 		return(1);
 	}
-	if (del == 1) {
+
+	if (del) {
 		fprintf(stderr, "This command has not been implemented.\n");
 		return(1);
 	}
 	
-	if (rmwiki == 1) {
+	if (rmwiki) {
 		fprintf(stderr, "This command has not been implemented.\n");
 		return(1);
 	}
 
-	if (rmtag == 1) {
-		fprintf(stderr, "This command has not been implemented.\n");
-		return(1);
-	}
-	if (import == 1) {
-/*		if (argc < 2) {
-			fprintf(stderr, "%s: import: No arguments provided.\n", argv[0]);
-			exit_nicely(conn);
-	//	}
-		dbconnect(conninfo, &conn); 
-		PQfinish(conn);*/
-
-		fprintf(stderr, "This command has not been implemented.\n");
-		return(1);
-
-		/* allocate memory for the path to the file to import (infilename) */
-/*		malloc(sizeof(argv[2]));
-		char infilename;
-		strcat(infilename, argv[2]);
-//		[] = argv[2];
-//		infilename = argv[2];
-		printf("%s\n", infilename);
-		free(infilename); */
-
-		/* Allocate memory of the file to open (infile) */
-/*		FILE *infile = infilename;
-		malloc(sizeof(infile));
-		open(infile, 0000);
-		return(0); */
-	}
-
-	if (mkwiki == 1) {
+	if (rmtag) {
 		fprintf(stderr, "This command has not been implemented.\n");
 		return(1);
 	}
 
-	if (mktag == 1) {
-	/* INSERT INTO public.tags (uuid, name, created_at, updated_at) VALUES ( DEFAULT, 'tag_name', DEFAULT, DEFAULT); */
+	if (import) {
 		fprintf(stderr, "This command has not been implemented.\n");
 		return(1);
 	}
 
-	if (ed == 1) {
+	if (mkwiki) {
 		fprintf(stderr, "This command has not been implemented.\n");
 		return(1);
 	}
 
-	if (edwiki == 1) {
+	if (mktag) {
 		fprintf(stderr, "This command has not been implemented.\n");
 		return(1);
 	}
 
-	if (edtag == 1) {
+	if (ed) {
 		fprintf(stderr, "This command has not been implemented.\n");
 		return(1);
 	}
 
-	if (view == 1) {
+	if (edwiki) {
 		fprintf(stderr, "This command has not been implemented.\n");
 		return(1);
 	}
 
-	if (favs == 1) {
+	if (edtag) {
 		fprintf(stderr, "This command has not been implemented.\n");
 		return(1);
 	}
 
-	if (fav == 1) {
+	if (view) {
 		fprintf(stderr, "This command has not been implemented.\n");
 		return(1);
 	}
 
-	if (unfav == 1) {
+	if (favs) {
+		fprintf(stderr, "This command has not been implemented.\n");
+		return(1);
+	}
+
+	if (fav) {
+		fprintf(stderr, "This command has not been implemented.\n");
+		return(1);
+	}
+
+	if (unfav) {
 		fprintf(stderr, "This command has not been implemented.\n");
 		return(1);
 	}
