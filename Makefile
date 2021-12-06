@@ -1,6 +1,6 @@
 include config.mk
 
-SRC = atsugami-gtk.c #functions.c
+SRC = atsugami-gtk3.c #functions.c
 OBJ = ${SRC:.c=.o}
 
 all: options atsugami
@@ -17,7 +17,7 @@ options:
 atsugami: cleanobj
 #	${CC} -c ${SRC} ${CFLAGS} $<
 #	${CC} ${OBJ} -o atsugami ${LDFLAGS}
-	cc -g -o atsugami atsugami-gtk.c  `pkg-config --cflags --libs gtk+-2.0`
+	cc -g -o atsugami atsugami-gtk3.c  `pkg-config --cflags --libs gtk+-3.0`
 
 clean:
 	rm -f atsugami ${OBJ}
