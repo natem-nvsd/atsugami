@@ -1,31 +1,6 @@
 Atsugami
 ========
-Tool for managing and tagging your images from the command line.
-
-Command		Implementation status  
- ls		[✔]  
- lstag		[✔]  
- find		[✘]  
- help		[✔]  
- version	[✔]  
- wiki		[✘]  
- rm		[✘]  
- delete		[✘]  
- rmwiki		[✘]  
- rmtag		[✘]  
- import		[✘]  
- mkwiki		[✘]  
- mktag		[✘]  
- edit		[✘]  
- editwiki	[✘]  
- edittag	[✘]  
- view		[✘]  
- favourites	[✘]  
- favorites	[✘]  
- favourite	[✘]  
- favorite	[✘]  
- unfavourite	[✘]  
- unfavorite	[✘]  
+Tool for managing and tagging your images.
 
 ### Colours:
 ff8a8b: Artist		XTerm 204  
