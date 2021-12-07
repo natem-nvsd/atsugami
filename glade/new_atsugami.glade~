@@ -1,0 +1,563 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Generated with glade 3.38.1 -->
+<interface>
+  <requires lib="gtk+" version="3.24"/>
+  <object class="GtkIconFactory"/>
+  <object class="GtkAccelGroup" id="accelgroup1"/>
+  <object class="GtkImage" id="image1">
+    <property name="visible">True</property>
+    <property name="can-focus">False</property>
+    <property name="stock">gtk-open</property>
+  </object>
+  <object class="GtkImage" id="image2">
+    <property name="visible">True</property>
+    <property name="can-focus">False</property>
+    <property name="stock">gtk-help</property>
+  </object>
+  <object class="GtkWindow">
+    <property name="can-focus">False</property>
+    <property name="title" translatable="yes">Atsugami</property>
+    <property name="role">app</property>
+    <child>
+      <object class="GtkBox">
+        <property name="visible">True</property>
+        <property name="can-focus">False</property>
+        <property name="orientation">vertical</property>
+        <child>
+          <object class="GtkMenuBar">
+            <property name="visible">True</property>
+            <property name="can-focus">False</property>
+            <child>
+              <object class="GtkMenuItem">
+                <property name="visible">True</property>
+                <property name="can-focus">False</property>
+                <property name="label" translatable="yes">File</property>
+                <property name="use-underline">True</property>
+                <child type="submenu">
+                  <object class="GtkMenu">
+                    <property name="visible">True</property>
+                    <property name="can-focus">False</property>
+                    <child>
+                      <object class="GtkImageMenuItem">
+                        <property name="label" translatable="yes">Import</property>
+                        <property name="visible">True</property>
+                        <property name="can-focus">False</property>
+                        <property name="action-name">app.import</property>
+                        <property name="use-underline">True</property>
+                        <property name="use-stock">False</property>
+                        <property name="always-show-image">True</property>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkImageMenuItem">
+                        <property name="label" translatable="yes">Bulk import</property>
+                        <property name="visible">True</property>
+                        <property name="can-focus">False</property>
+                        <property name="action-name">app.importBulk</property>
+                        <property name="use-underline">True</property>
+                        <property name="use-stock">False</property>
+                        <property name="always-show-image">True</property>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkImageMenuItem">
+                        <property name="label" translatable="yes">Export</property>
+                        <property name="visible">True</property>
+                        <property name="can-focus">False</property>
+                        <property name="action-name">app.export</property>
+                        <property name="use-underline">True</property>
+                        <property name="use-stock">False</property>
+                        <property name="always-show-image">True</property>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkImageMenuItem">
+                        <property name="label">gtk-delete</property>
+                        <property name="visible">True</property>
+                        <property name="can-focus">False</property>
+                        <property name="action-name">app.deleteFile</property>
+                        <property name="use-underline">True</property>
+                        <property name="use-stock">True</property>
+                        <property name="always-show-image">True</property>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkSeparatorMenuItem">
+                        <property name="visible">True</property>
+                        <property name="can-focus">False</property>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkImageMenuItem">
+                        <property name="label">gtk-quit</property>
+                        <property name="visible">True</property>
+                        <property name="can-focus">False</property>
+                        <property name="action-name">app.quit</property>
+                        <property name="use-underline">True</property>
+                        <property name="use-stock">True</property>
+                        <property name="always-show-image">True</property>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+              </object>
+            </child>
+            <child>
+              <object class="GtkMenuItem">
+                <property name="visible">True</property>
+                <property name="can-focus">False</property>
+                <property name="label" translatable="yes">Edit</property>
+                <property name="use-underline">True</property>
+                <child type="submenu">
+                  <object class="GtkMenu">
+                    <property name="visible">True</property>
+                    <property name="can-focus">False</property>
+                    <child>
+                      <object class="GtkImageMenuItem">
+                        <property name="label" translatable="yes">Edit file</property>
+                        <property name="visible">True</property>
+                        <property name="can-focus">False</property>
+                        <property name="action-name">app.editFile</property>
+                        <property name="use-underline">True</property>
+                        <property name="use-stock">False</property>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkImageMenuItem">
+                        <property name="label">gtk-preferences</property>
+                        <property name="visible">True</property>
+                        <property name="can-focus">False</property>
+                        <property name="action-name">app.settings</property>
+                        <property name="use-underline">True</property>
+                        <property name="use-stock">True</property>
+                        <property name="always-show-image">True</property>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+              </object>
+            </child>
+            <child>
+              <object class="GtkMenuItem">
+                <property name="visible">True</property>
+                <property name="can-focus">False</property>
+                <property name="label" translatable="yes">Tags</property>
+                <child type="submenu">
+                  <object class="GtkMenu">
+                    <property name="visible">True</property>
+                    <property name="can-focus">False</property>
+                    <child>
+                      <object class="GtkImageMenuItem">
+                        <property name="label" translatable="yes">Add tag</property>
+                        <property name="visible">True</property>
+                        <property name="can-focus">False</property>
+                        <property name="action-name">app.addTag</property>
+                        <property name="use-underline">True</property>
+                        <property name="use-stock">False</property>
+                        <property name="always-show-image">True</property>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkImageMenuItem">
+                        <property name="label" translatable="yes">Add artist</property>
+                        <property name="visible">True</property>
+                        <property name="can-focus">False</property>
+                        <property name="action-name">app.addArtist</property>
+                        <property name="use-underline">True</property>
+                        <property name="use-stock">False</property>
+                        <property name="always-show-image">True</property>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkImageMenuItem">
+                        <property name="label" translatable="yes">Add copyright</property>
+                        <property name="visible">True</property>
+                        <property name="can-focus">False</property>
+                        <property name="action-name">app.addCopyright</property>
+                        <property name="use-underline">True</property>
+                        <property name="use-stock">False</property>
+                        <property name="always-show-image">True</property>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkImageMenuItem">
+                        <property name="label" translatable="yes">Add character</property>
+                        <property name="visible">True</property>
+                        <property name="can-focus">False</property>
+                        <property name="action-name">app.addChar</property>
+                        <property name="use-underline">True</property>
+                        <property name="use-stock">False</property>
+                        <property name="always-show-image">True</property>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkImageMenuItem">
+                        <property name="label" translatable="yes">List all tags</property>
+                        <property name="visible">True</property>
+                        <property name="can-focus">False</property>
+                        <property name="action-name">app.listTags</property>
+                        <property name="use-underline">True</property>
+                        <property name="use-stock">False</property>
+                        <property name="always-show-image">True</property>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+              </object>
+            </child>
+            <child>
+              <object class="GtkMenuItem">
+                <property name="visible">True</property>
+                <property name="can-focus">False</property>
+                <property name="label" translatable="yes">Wiki</property>
+                <property name="use-underline">True</property>
+                <child type="submenu">
+                  <object class="GtkMenu">
+                    <property name="visible">True</property>
+                    <property name="can-focus">False</property>
+                    <child>
+                      <object class="GtkImageMenuItem">
+                        <property name="label" translatable="yes">Add wiki</property>
+                        <property name="visible">True</property>
+                        <property name="can-focus">False</property>
+                        <property name="action-name">app.addWiki</property>
+                        <property name="use-underline">True</property>
+                        <property name="use-stock">False</property>
+                        <property name="always-show-image">True</property>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkImageMenuItem">
+                        <property name="label" translatable="yes">Wiki home page</property>
+                        <property name="visible">True</property>
+                        <property name="can-focus">False</property>
+                        <property name="action-name">app.wikiHome</property>
+                        <property name="use-underline">True</property>
+                        <property name="use-stock">False</property>
+                        <property name="always-show-image">True</property>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+              </object>
+            </child>
+            <child>
+              <object class="GtkMenuItem">
+                <property name="visible">True</property>
+                <property name="can-focus">False</property>
+                <property name="label" translatable="yes">View</property>
+                <property name="use-underline">True</property>
+                <child type="submenu">
+                  <object class="GtkMenu">
+                    <property name="visible">True</property>
+                    <property name="can-focus">False</property>
+                    <child>
+                      <object class="GtkImageMenuItem">
+                        <property name="visible">True</property>
+                        <property name="can-focus">False</property>
+                        <property name="action-name">app.viewTab</property>
+                        <property name="use-stock">False</property>
+                        <property name="always-show-image">True</property>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkImageMenuItem">
+                        <property name="visible">True</property>
+                        <property name="can-focus">False</property>
+                        <property name="action-name">app.viewExtern</property>
+                        <property name="use-stock">False</property>
+                        <property name="always-show-image">True</property>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+              </object>
+            </child>
+            <child>
+              <object class="GtkMenuItem">
+                <property name="visible">True</property>
+                <property name="can-focus">False</property>
+                <property name="label" translatable="yes">Help</property>
+                <property name="use-underline">True</property>
+                <child type="submenu">
+                  <object class="GtkMenu">
+                    <property name="visible">True</property>
+                    <property name="can-focus">False</property>
+                    <child>
+                      <object class="GtkImageMenuItem">
+                        <property name="label">Help</property>
+                        <property name="visible">True</property>
+                        <property name="can-focus">False</property>
+                        <property name="action-name">app.help</property>
+                        <property name="use-underline">True</property>
+                        <property name="image">image2</property>
+                        <property name="use-stock">False</property>
+                        <property name="accel-group">accelgroup1</property>
+                        <property name="always-show-image">True</property>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkImageMenuItem">
+                        <property name="label">gtk-about</property>
+                        <property name="visible">True</property>
+                        <property name="can-focus">False</property>
+                        <property name="action-name">app.about</property>
+                        <property name="use-underline">True</property>
+                        <property name="use-stock">True</property>
+                        <property name="always-show-image">True</property>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+              </object>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="position">0</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkInfoBar">
+            <property name="visible">True</property>
+            <property name="can-focus">False</property>
+            <child internal-child="action_area">
+              <object class="GtkButtonBox">
+                <property name="can-focus">False</property>
+                <property name="spacing">6</property>
+                <property name="layout-style">end</property>
+                <child>
+                  <placeholder/>
+                </child>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">False</property>
+                <property name="position">0</property>
+              </packing>
+            </child>
+            <child internal-child="content_area">
+              <object class="GtkBox">
+                <property name="can-focus">False</property>
+                <property name="spacing">16</property>
+                <child>
+                  <object class="GtkButton">
+                    <property name="visible">True</property>
+                    <property name="can-focus">True</property>
+                    <property name="receives-default">True</property>
+                    <property name="action-name">app.import</property>
+                    <property name="image">image1</property>
+                    <property name="always-show-image">True</property>
+                  </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="fill">True</property>
+                    <property name="position">0</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkButton">
+                    <property name="label" translatable="yes">Edit</property>
+                    <property name="visible">True</property>
+                    <property name="can-focus">True</property>
+                    <property name="receives-default">True</property>
+                    <property name="action-name">app.editFile</property>
+                  </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="fill">True</property>
+                    <property name="position">1</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkButton">
+                    <property name="label" translatable="yes">button</property>
+                    <property name="visible">True</property>
+                    <property name="can-focus">True</property>
+                    <property name="receives-default">True</property>
+                  </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="fill">True</property>
+                    <property name="position">2</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkButton">
+                    <property name="label" translatable="yes"> Wiki</property>
+                    <property name="visible">True</property>
+                    <property name="can-focus">True</property>
+                    <property name="receives-default">True</property>
+                    <property name="action-name">app.wikiHome</property>
+                  </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="fill">True</property>
+                    <property name="position">3</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkSearchEntry">
+                    <property name="visible">True</property>
+                    <property name="can-focus">True</property>
+                    <property name="primary-icon-name">edit-find-symbolic</property>
+                    <property name="primary-icon-activatable">False</property>
+                    <property name="primary-icon-sensitive">False</property>
+                    <property name="placeholder-text" translatable="yes">Search images</property>
+                  </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="fill">True</property>
+                    <property name="position">4</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkSearchEntry">
+                    <property name="visible">True</property>
+                    <property name="can-focus">True</property>
+                    <property name="primary-icon-name">edit-find-symbolic</property>
+                    <property name="primary-icon-activatable">False</property>
+                    <property name="primary-icon-sensitive">False</property>
+                    <property name="placeholder-text" translatable="yes">Search the wiki</property>
+                  </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="fill">True</property>
+                    <property name="position">5</property>
+                  </packing>
+                </child>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">False</property>
+                <property name="position">0</property>
+              </packing>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="position">1</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkInfoBar">
+            <property name="visible">True</property>
+            <property name="can-focus">False</property>
+            <property name="message-type">warning</property>
+            <property name="show-close-button">True</property>
+            <property name="revealed">False</property>
+            <child internal-child="action_area">
+              <object class="GtkButtonBox">
+                <property name="can-focus">False</property>
+                <property name="spacing">6</property>
+                <property name="layout-style">end</property>
+                <child>
+                  <placeholder/>
+                </child>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">False</property>
+                <property name="position">0</property>
+              </packing>
+            </child>
+            <child internal-child="content_area">
+              <object class="GtkBox">
+                <property name="can-focus">False</property>
+                <property name="spacing">16</property>
+                <child>
+                  <object class="GtkImage">
+                    <property name="visible">True</property>
+                    <property name="can-focus">False</property>
+                    <property name="stock">gtk-dialog-warning</property>
+                  </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="fill">True</property>
+                    <property name="position">0</property>
+                  </packing>
+                </child>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">False</property>
+                <property name="position">0</property>
+              </packing>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="position">2</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkInfoBar">
+            <property name="visible">True</property>
+            <property name="can-focus">False</property>
+            <property name="message-type">error</property>
+            <property name="revealed">False</property>
+            <child internal-child="action_area">
+              <object class="GtkButtonBox">
+                <property name="can-focus">False</property>
+                <property name="spacing">6</property>
+                <property name="layout-style">end</property>
+                <child>
+                  <placeholder/>
+                </child>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">False</property>
+                <property name="position">0</property>
+              </packing>
+            </child>
+            <child internal-child="content_area">
+              <object class="GtkBox">
+                <property name="can-focus">False</property>
+                <property name="spacing">16</property>
+                <child>
+                  <object class="GtkImage">
+                    <property name="visible">True</property>
+                    <property name="can-focus">False</property>
+                    <property name="stock">gtk-dialog-error</property>
+                  </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="fill">True</property>
+                    <property name="position">0</property>
+                  </packing>
+                </child>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">False</property>
+                <property name="position">0</property>
+              </packing>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="position">3</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkIconView">
+            <property name="visible">True</property>
+            <property name="can-focus">True</property>
+            <property name="margin-bottom">57</property>
+            <property name="margin">6</property>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="position">4</property>
+          </packing>
+        </child>
+      </object>
+    </child>
+  </object>
+</interface>

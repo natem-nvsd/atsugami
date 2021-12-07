@@ -13,8 +13,8 @@ GLIBLIB = `pkg-config --libs glib-2.0`
 
 GDKINC = -I/usr/local/include/gtk-2.0
 
-GTKINC = `pkg-config --cflags gtk+-2.0 gcr-3`
-GTKLIB = `pkg-config --libs gtk+-2.0 gcr-3`
+GTKINC = `pkg-config --cflags gtk+-3.0 gcr-3`
+GTKLIB = `pkg-config --libs gtk+-3.0 gcr-3`
 
 CAIROINC = `pkg-config --cflags cairo`
 CAIROLIB = `pkg-config --libs cairo`

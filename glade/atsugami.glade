@@ -5,17 +5,12 @@
   <object class="GtkImage" id="image1">
     <property name="visible">True</property>
     <property name="can-focus">False</property>
-    <property name="stock">gtk-open</property>
+    <property name="stock">gtk-edit</property>
   </object>
   <object class="GtkImage" id="image10">
     <property name="visible">True</property>
     <property name="can-focus">False</property>
     <property name="stock">gtk-dnd</property>
-  </object>
-  <object class="GtkImage" id="image11">
-    <property name="visible">True</property>
-    <property name="can-focus">False</property>
-    <property name="stock">gtk-preferences</property>
   </object>
   <object class="GtkImage" id="image12">
     <property name="visible">True</property>
@@ -26,41 +21,6 @@
     <property name="visible">True</property>
     <property name="can-focus">False</property>
     <property name="icon-name">image-x-generic</property>
-  </object>
-  <object class="GtkImage" id="image14">
-    <property name="visible">True</property>
-    <property name="can-focus">False</property>
-    <property name="icon-name">image-x-generic</property>
-  </object>
-  <object class="GtkImage" id="image2">
-    <property name="visible">True</property>
-    <property name="can-focus">False</property>
-    <property name="stock">gtk-dnd-multiple</property>
-  </object>
-  <object class="GtkImage" id="image3">
-    <property name="visible">True</property>
-    <property name="can-focus">False</property>
-    <property name="stock">gtk-save-as</property>
-  </object>
-  <object class="GtkImage" id="image4">
-    <property name="visible">True</property>
-    <property name="can-focus">False</property>
-    <property name="stock">gtk-edit</property>
-  </object>
-  <object class="GtkImage" id="image5">
-    <property name="visible">True</property>
-    <property name="can-focus">False</property>
-    <property name="stock">gtk-add</property>
-  </object>
-  <object class="GtkImage" id="image6">
-    <property name="visible">True</property>
-    <property name="can-focus">False</property>
-    <property name="stock">gtk-add</property>
-  </object>
-  <object class="GtkImage" id="image7">
-    <property name="visible">True</property>
-    <property name="can-focus">False</property>
-    <property name="stock">gtk-add</property>
   </object>
   <object class="GtkWindow">
     <property name="can-focus">False</property>
@@ -97,7 +57,8 @@
                     <property name="visible">True</property>
                     <property name="can-focus">True</property>
                     <property name="receives-default">True</property>
-                    <property name="image">image1</property>
+                    <property name="action-name">app.import</property>
+                    <property name="image">image12</property>
                     <property name="always-show-image">True</property>
                   </object>
                   <packing>
@@ -111,13 +72,14 @@
                     <property name="visible">True</property>
                     <property name="can-focus">True</property>
                     <property name="receives-default">True</property>
-                    <property name="image">image4</property>
+                    <property name="action-name">app.editFile</property>
+                    <property name="image">image1</property>
                     <property name="always-show-image">True</property>
                   </object>
                   <packing>
                     <property name="expand">False</property>
                     <property name="fill">True</property>
-                    <property name="position">1</property>
+                    <property name="position">4</property>
                   </packing>
                 </child>
                 <child>
@@ -125,39 +87,29 @@
                     <property name="visible">True</property>
                     <property name="can-focus">True</property>
                     <property name="receives-default">True</property>
+                    <property name="action-name">app.viewExtern</property>
+                    <property name="image">image13</property>
+                    <property name="always-show-image">True</property>
+                  </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="fill">True</property>
+                    <property name="position">5</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkButton">
+                    <property name="visible">True</property>
+                    <property name="can-focus">True</property>
+                    <property name="receives-default">True</property>
+                    <property name="action-name">app.wikiHome</property>
                     <property name="image">image10</property>
                     <property name="always-show-image">True</property>
                   </object>
                   <packing>
                     <property name="expand">False</property>
                     <property name="fill">True</property>
-                    <property name="position">2</property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkButton">
-                    <property name="label" translatable="yes">button</property>
-                    <property name="visible">True</property>
-                    <property name="can-focus">True</property>
-                    <property name="receives-default">True</property>
-                  </object>
-                  <packing>
-                    <property name="expand">False</property>
-                    <property name="fill">True</property>
-                    <property name="position">3</property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkButton">
-                    <property name="label" translatable="yes">button</property>
-                    <property name="visible">True</property>
-                    <property name="can-focus">True</property>
-                    <property name="receives-default">True</property>
-                  </object>
-                  <packing>
-                    <property name="expand">False</property>
-                    <property name="fill">True</property>
-                    <property name="position">4</property>
+                    <property name="position">6</property>
                   </packing>
                 </child>
                 <child>
@@ -171,7 +123,7 @@
                   <packing>
                     <property name="expand">False</property>
                     <property name="fill">True</property>
-                    <property name="position">5</property>
+                    <property name="position">9</property>
                   </packing>
                 </child>
               </object>
@@ -192,17 +144,12 @@
           <object class="GtkInfoBar">
             <property name="visible">True</property>
             <property name="can-focus">False</property>
+            <property name="message-type">error</property>
             <child internal-child="action_area">
               <object class="GtkButtonBox">
                 <property name="can-focus">False</property>
                 <property name="spacing">6</property>
                 <property name="layout-style">end</property>
-                <child>
-                  <placeholder/>
-                </child>
-                <child>
-                  <placeholder/>
-                </child>
                 <child>
                   <placeholder/>
                 </child>
@@ -218,7 +165,18 @@
                 <property name="can-focus">False</property>
                 <property name="spacing">16</property>
                 <child>
-                  <placeholder/>
+                  <object class="GtkImage">
+                    <property name="name">Err</property>
+                    <property name="visible">True</property>
+                    <property name="can-focus">False</property>
+                    <property name="stock">gtk-dialog-error</property>
+                    <property name="icon_size">3</property>
+                  </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="fill">True</property>
+                    <property name="position">0</property>
+                  </packing>
                 </child>
               </object>
               <packing>
@@ -232,6 +190,58 @@
             <property name="expand">False</property>
             <property name="fill">True</property>
             <property name="position">1</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkInfoBar">
+            <property name="visible">True</property>
+            <property name="can-focus">False</property>
+            <property name="message-type">warning</property>
+            <child internal-child="action_area">
+              <object class="GtkButtonBox">
+                <property name="can-focus">False</property>
+                <property name="spacing">6</property>
+                <property name="layout-style">end</property>
+                <child>
+                  <placeholder/>
+                </child>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">False</property>
+                <property name="position">0</property>
+              </packing>
+            </child>
+            <child internal-child="content_area">
+              <object class="GtkBox">
+                <property name="can-focus">False</property>
+                <property name="spacing">16</property>
+                <child>
+                  <object class="GtkImage">
+                    <property name="name">Err</property>
+                    <property name="visible">True</property>
+                    <property name="can-focus">False</property>
+                    <property name="stock">gtk-dialog-warning</property>
+                    <property name="icon_size">3</property>
+                  </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="fill">True</property>
+                    <property name="position">0</property>
+                  </packing>
+                </child>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">False</property>
+                <property name="position">0</property>
+              </packing>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="position">2</property>
           </packing>
         </child>
         <child>
@@ -289,7 +299,7 @@
           <packing>
             <property name="expand">False</property>
             <property name="fill">True</property>
-            <property name="position">2</property>
+            <property name="position">3</property>
           </packing>
         </child>
       </object>
@@ -385,7 +395,7 @@
                 <property name="can-focus">False</property>
                 <child>
                   <object class="GtkImageMenuItem">
-                    <property name="label" translatable="yes">Edit selected</property>
+                    <property name="label" translatable="yes">Edit file</property>
                     <property name="visible">True</property>
                     <property name="can-focus">False</property>
                     <property name="action-name">app.editFile</property>
@@ -448,7 +458,6 @@
                     <property name="can-focus">False</property>
                     <property name="action-name">app.addCopyright</property>
                     <property name="use-underline">True</property>
-                    <property name="image">image7</property>
                     <property name="use-stock">False</property>
                     <property name="always-show-image">True</property>
                   </object>
@@ -542,7 +551,6 @@
                     <property name="can-focus">False</property>
                     <property name="action-name">app.viewExtern</property>
                     <property name="use-underline">True</property>
-                    <property name="image">image13</property>
                     <property name="use-stock">False</property>
                     <property name="always-show-image">True</property>
                   </object>
@@ -590,12 +598,7 @@
       </object>
     </child>
   </object>
-  <object class="GtkImage" id="image8">
-    <property name="visible">True</property>
-    <property name="can-focus">False</property>
-    <property name="stock">gtk-justify-fill</property>
-  </object>
-  <object class="GtkImage" id="image9">
+  <object class="GtkImage" id="image7">
     <property name="visible">True</property>
     <property name="can-focus">False</property>
     <property name="stock">gtk-add</property>
