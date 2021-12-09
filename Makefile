@@ -1,7 +1,7 @@
 include config.mk
 
 TARGET=atsugami
-SRC=src/gtk.c #functions.c
+SRC=gtk.c
 OBJ=${SRC:.c=.o}
 
 all: options atsugami
@@ -16,9 +16,9 @@ options:
 	${CC} -c ${SRC} ${CFLAGS} $<
 
 atsugami: cleanobj
-#	${CC} -c ${SRC} ${CFLAGS} $<
-#	${CC} ${OBJ} -o atsugami ${LDFLAGS}
-	cc -g -o atsugami src/gtk.c  `pkg-config --cflags --libs gtk+-3.0` -I/usr/local/include -L/usr/local/lib -lpq
+	${CC} -c ${SRC} ${CFLAGS} $<
+	${CC} ${OBJ} -o atsugami ${LDFLAGS}
+#	cc -g -o atsugami gtk.c -rdynamic `pkg-config --cflags --libs gtk+-3.0` -I/usr/local/include -L/usr/local/lib -lpq
 
 clean:
 	rm -f atsugami ${OBJ}
@@ -29,6 +29,9 @@ cleanobj:
 install: atsugami 
 	cp -f atsugami ${DESTDIR}${PREFIX}/bin
 	chmod 755 ${DESTDIR}${PREFIX}/bin/atsugami
+	mkdir ${DESTDIR}${PREFIX}/share/atsugami
+	cp -f src/new_atsugami.glade ${DESTDIR}${PREFIX}/share/atsugami
+	chmod 644 ${DESTDIR}${PREFIX}/share/atsugami/new_atsugami.glade
 
 uninstall:
 	rm -f ${DESTDIR}${PREFIX}/bin/atsugami
