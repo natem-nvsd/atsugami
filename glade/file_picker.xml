@@ -1,0 +1,15 @@
+<object class="GtkFileFilter">
+  <mime-types>
+    <mime-type>image/gif</mime-type>
+    <mime-type>image/jpeg</mime-type>
+    <mime-type>image/png</mime-type>
+    <mime-type>image/svg+xml</mime-type>
+  </mime-types>
+  <patterns>
+    <pattern>*.gif</pattern>
+    <pattern>*.jpeg</pattern>
+    <pattern>*.jpg</pattern>
+    <pattern>*.png</pattern>
+    <pattern>*.svg</pattern>
+  </patterns>
+</object>

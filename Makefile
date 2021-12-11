@@ -18,7 +18,6 @@ options:
 atsugami: cleanobj
 	${CC} -c ${SRC} ${CFLAGS} $<
 	${CC} ${OBJ} -o atsugami ${LDFLAGS}
-#	cc -g -o atsugami gtk.c -rdynamic `pkg-config --cflags --libs gtk+-3.0` -I/usr/local/include -L/usr/local/lib -lpq
 
 clean:
 	rm -f atsugami ${OBJ}
