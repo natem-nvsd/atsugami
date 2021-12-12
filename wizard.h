@@ -52,7 +52,7 @@ static void on_assistant_prepare(GtkWidget *widget, GtkWidget *page, gpointer da
 	current_page = gtk_assistant_get_current_page(GTK_ASSISTANT(widget));
 	n_pages = gtk_assistant_get_n_pages(GTK_ASSISTANT(widget));
 
-	title = g_strdup_printf("Import wizard", current_page + 1, n_pages);
+	title = g_strdup_printf("assistant (%d of %d)", current_page + 1, n_pages);
 	gtk_window_set_title(GTK_WINDOW(widget), title);
 	g_free(title);
 
@@ -83,7 +83,7 @@ static void wizard_create_page0(GtkWidget *assistant) {
 	gtk_container_set_border_width(GTK_CONTAINER (box), 5);
 
 	image = gtk_image_new_from_file(import_file_path);
-	printf("%s\n", import_file_path);
+//	printf("%s\n", import_file_path);
 	gtk_box_pack_start(GTK_BOX(box), image, FALSE, FALSE, 0);
 
 	/* First label and text field */
