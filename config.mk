@@ -16,8 +16,8 @@ GDKINC = -I/usr/local/include/gtk-2.0
 GTKINC = `pkg-config --cflags gtk+-3.0 gcr-3`
 GTKLIB = `pkg-config --libs gtk+-3.0 gcr-3`
 
-#CAIROINC = `pkg-config --cflags cairo`
-#CAIROLIB = `pkg-config --libs cairo`
+CAIROINC = `pkg-config --cflags cairo`
+CAIROLIB = `pkg-config --libs cairo`
 
 GDKPIXBUFINC = `pkg-config --cflags gdk-pixbuf-2.0`
 GDKPIXBUFLIB = `pkg-config --libs gdk-pixbuf-2.0`
@@ -30,8 +30,8 @@ LPQINC = /usr/local/include
 LPQLIB = /usr/local/lib
 
 # includes and libs
-INCS = $(X11INC) $(GTKINC) $(GLIBINC) $(GDKPIXBUFINC) $(GDKINC)
-LIBS = $(X11LIB) $(GTKLIB) $(GLIBLIB) $(GDKPIXBUFLIB) -lgthread-2.0
+INCS = $(X11INC) $(GTKINC) $(GLIBINC) $(CAIROINC) $(GDKPIXBUFINC) $(GDKINC)
+LIBS = $(X11LIB) $(GTKLIB) $(GLIBLIB) $(CAIROLIB) $(GDKPIXBUFLIB) -lgthread-2.0
 
 # flags
 CPPFLAGS = -D_DEFAULT_SOURCE -D_BSD_SOURCE -D_POSIX_C_SOURCE=2 -DVERSION=\"${VERSION}\"

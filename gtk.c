@@ -15,6 +15,7 @@ static GtkWidget *progress_bar = NULL; */
 
 /* Postgres Variables */
 PGconn *conn;
+char import_query[] = "INSERT INTO public.files (path, has_children, child, parent_uuid, child_uuids, copyrights, characters, tags, width, height, source, format) VALUES ('";
 
 /* Quit function */
 static void quit_activate(GSimpleAction *action,
@@ -48,6 +49,7 @@ static void open_response_cb(GtkNativeDialog *dialog, gint response_id, gpointer
 		/* Copy the path into `import_file_path`, since `file_path` is cleared when the dialog is destroyed. */
 		strcpy(import_file_path, file_path);
 		printf("%s\n", import_file_path);
+		do_assistant();
 	}
 
 	gtk_native_dialog_destroy(GTK_NATIVE_DIALOG(native));
@@ -58,8 +60,6 @@ static void open_response_cb(GtkNativeDialog *dialog, gint response_id, gpointer
 static void import_activate(GSimpleAction *action, GVariant *parameter, gpointer user_data) {
 	GApplication *app = user_data;
 	GtkFileChooserNative *native;
-//	GtkFileFilter *filter = gtk_file_filter_new();
-//	gtk_file_filter_add_pattern(filter, "*.png");
 //	action = "app.wizard";
 	GtkBuilder *builder;
 	GtkFileFilter* filter;
@@ -93,9 +93,7 @@ static void importBulk_activate(GSimpleAction *action,
 }
 
 /* The "Help" function */
-static void help_activate(GSimpleAction *action,
-			  GVariant      *parameter,
-			  gpointer       user_data) {
+static void help_activate(GSimpleAction *action, GVariant *parameter, gpointer user_data) {
 //	GtkWidget *window = user_data;
 	GtkBuilder *builder = gtk_builder_new();
 	GtkWidget *help_dlg;
@@ -133,7 +131,7 @@ static GActionEntry win_entries[] = {
 	{ "help",   help_activate,   NULL, NULL, NULL },
 	{ "about",  about_activate,  NULL, NULL, NULL },
 	{ "wizard", do_assistant,    NULL, NULL, NULL },
-//	{ "importBulkWizard", wizard_activate, NULL, NULL, NULL },
+	//	{ "importBulkWizard", wizard_activate, NULL, NULL, NULL },
 };
 
 int main(int argc, char *argv[]) {
@@ -198,8 +196,8 @@ int main(int argc, char *argv[]) {
 	item = (GtkWidget*)gtk_builder_get_object(builder, "importBulk_button");
 	item = (GtkWidget*)gtk_builder_get_object(builder, "quit_button");
 	item = (GtkWidget*)gtk_builder_get_object(builder, "about_button");
-
-	item = (GtkWidget*)gtk_builder_get_object(builder, "importOpenWizard_button");
+	item = (GtkWidget*)gtk_builder_get_object(builder, "import_cancel_button");
+	item = (GtkWidget*)gtk_builder_get_object(builder, "import_ok_button");
 
 	gtk_widget_show_all(window);
 	gtk_main();

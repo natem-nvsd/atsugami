@@ -79,8 +79,8 @@ static void on_wizard_entry_changed(GtkWidget *widget, gpointer data) {
 static void wizard_create_page0(GtkWidget *assistant) {
 	GtkWidget *box, *image, *label0, *label1, *label2, *label3, *entry0, *entry1, *entry2, *entry3;
 
-	box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 48);
-	gtk_container_set_border_width(GTK_CONTAINER (box), 48);
+	box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 5);
+	gtk_container_set_border_width(GTK_CONTAINER (box), 5);
 
 	image = gtk_image_new_from_file(import_file_path);
 	printf("%s\n", import_file_path);
@@ -180,32 +180,28 @@ static void wizard_create_page3 (GtkWidget *assistant) {
   gtk_assistant_set_page_complete (GTK_ASSISTANT (assistant), progress_bar, FALSE);
 }
 
-GtkWidget *do_assistant(GtkWidget *do_widget) {
-  if (!assistant) {
-	assistant = gtk_assistant_new();
+//extern GtkWidget *do_assistant(GtkWidget *do_widget) {
+extern GtkWidget *do_assistant() {
+	if (!assistant) {
+		assistant = gtk_assistant_new();
 
-	gtk_window_set_default_size(GTK_WINDOW(assistant), 400, 500);
+		gtk_window_set_default_size(GTK_WINDOW(assistant), 400, 500);
 
-/*	gtk_window_set_screen (GTK_WINDOW (assistant),
-			       gtk_widget_get_screen (do_widget)); */
+/*		gtk_window_set_screen(GTK_WINDOW(assistant), gtk_widget_get_screen (do_widget)); */
 
-	wizard_create_page0(assistant);
-	wizard_create_page1(assistant);
-	wizard_create_page2(assistant);
-	wizard_create_page3(assistant);
+		wizard_create_page0(assistant);
+		wizard_create_page1(assistant);
+		wizard_create_page2(assistant);
+		wizard_create_page3(assistant);
 
-	g_signal_connect(G_OBJECT(assistant), "cancel",
-			 G_CALLBACK(on_assistant_close_cancel), &assistant);
-	g_signal_connect(G_OBJECT(assistant), "close",
-			 G_CALLBACK(on_assistant_close_cancel), &assistant);
-	g_signal_connect(G_OBJECT(assistant), "apply",
-			 G_CALLBACK(on_assistant_apply), NULL);
-	g_signal_connect(G_OBJECT(assistant), "prepare",
-			 G_CALLBACK(on_assistant_prepare), NULL);
+		g_signal_connect(G_OBJECT(assistant), "cancel", G_CALLBACK(on_assistant_close_cancel), &assistant);
+		g_signal_connect(G_OBJECT(assistant), "close", G_CALLBACK(on_assistant_close_cancel), &assistant);
+		g_signal_connect(G_OBJECT(assistant), "apply", G_CALLBACK(on_assistant_apply), NULL);
+		g_signal_connect(G_OBJECT(assistant), "prepare", G_CALLBACK(on_assistant_prepare), NULL);
 	}
 
-	if (!gtk_widget_get_visible (assistant))
-		gtk_widget_show (assistant);
+	if (!gtk_widget_get_visible(assistant))
+		gtk_widget_show(assistant);
 	else {
 		gtk_widget_destroy (assistant);
 		assistant = NULL;
