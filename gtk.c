@@ -1,4 +1,5 @@
 ﻿#include <errno.h>
+#include "error_dialogs.h"
 #include <glib/gstdio.h>
 #include <gtk/gtk.h>
 #include <libpq-fe.h>
@@ -53,18 +54,25 @@ static void open_response_cb(GtkNativeDialog *dialog, gint response_id, gpointer
 static void import_activate(GSimpleAction *action, GVariant *parameter, gpointer user_data) {
 	GApplication *app = user_data;
 	GtkFileChooserNative *native;
-	GtkFileFilter *filter;
+	GtkFileFilter *filter0;
+	GtkFileFilter *filter1;
 
 	native = gtk_file_chooser_native_new("Import File", NULL, GTK_FILE_CHOOSER_ACTION_OPEN, "_Import", "_Cancel");
 
-	filter = gtk_file_filter_new();
-	gtk_file_filter_add_pattern(filter, "*.gif");
-	gtk_file_filter_add_pattern(filter, "*.jpg");
-	gtk_file_filter_add_pattern(filter, "*.jpeg");
-	gtk_file_filter_add_pattern(filter, "*.png");
-	gtk_file_filter_add_pattern(filter, "*.svg");
-	gtk_file_filter_set_name(filter, "Image files");
-	gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(native), filter);
+	filter0 = gtk_file_filter_new();
+	gtk_file_filter_add_pattern(filter0, "*.gif");
+	gtk_file_filter_add_pattern(filter0, "*.jpg");
+	gtk_file_filter_add_pattern(filter0, "*.jpeg");
+	gtk_file_filter_add_pattern(filter0, "*.png");
+	gtk_file_filter_add_pattern(filter0, "*.svg");
+	gtk_file_filter_set_name(filter0, "Image files");
+	gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(native), filter0);
+
+	filter1 = gtk_file_filter_new();
+	gtk_file_filter_add_pattern(filter1, "*");
+	gtk_file_filter_set_name(filter1, "All files");
+	gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(native), filter1);
+
 
 	g_object_set_data_full(G_OBJECT(native), "app", g_object_ref(app), g_object_unref);
 	g_signal_connect(native, "response", G_CALLBACK(open_response_cb), native);
@@ -81,6 +89,7 @@ static void about_activate(GSimpleAction *action,
 	GtkWidget *about_dlg;
 
 	if (gtk_builder_add_from_file(builder,"atsugami.glade" , NULL) == 0) {
+//	if (gtk_builder_add_from_file(builder,"/usr/local/share/atsugami/atsugami.glade" , NULL) == 0) {
 		printf("gtk_builder_add_from_file FAILED\n");
 	}
 
@@ -94,6 +103,7 @@ static GActionEntry win_entries[] = {
 	{ "quit",   quit_activate,   NULL, NULL, NULL },
 	{ "import", import_activate, NULL, NULL, NULL },
 //	{ "importBulk", import_bulk_activate, NULL, NULL, NULL },
+	{ "importBulk", do_expander, NULL, NULL, NULL },
 //	{ "help",   help_activate,   NULL, NULL, NULL },
 	{ "about",  about_activate,  NULL, NULL, NULL },
 };
@@ -120,6 +130,7 @@ int main(int argc, char *argv[]) {
 	/* Open the .glade/XML file for the UI */
 	builder = gtk_builder_new();
 	if (gtk_builder_add_from_file(builder,"atsugami.glade" , NULL) == 0) {
+//	if (gtk_builder_add_from_file(builder, "/usr/local/share/atsugami/atsugami.glade", NULL) == 0) {
 		printf("gtk_builder_add_from_file FAILED\n");
 		return(1);
 	}
@@ -154,10 +165,6 @@ int main(int argc, char *argv[]) {
 
 	if (PQstatus(conn) == CONNECTION_OK) {
 		gtk_label_set_text(GTK_LABEL(errorLabel), "Connection to the database was successful.");
-	}
-
-	else {
-		gtk_label_set_text(GTK_LABEL(errorLabel), "No errors detected.");
 	}
 
 	/* buttons */

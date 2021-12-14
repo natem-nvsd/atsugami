@@ -28,9 +28,9 @@ cleanobj:
 install: atsugami 
 	cp -f atsugami ${DESTDIR}${PREFIX}/bin
 	chmod 755 ${DESTDIR}${PREFIX}/bin/atsugami
-	mkdir ${DESTDIR}${PREFIX}/share/atsugami
-	cp -f src/new_atsugami.glade ${DESTDIR}${PREFIX}/share/atsugami
-	chmod 644 ${DESTDIR}${PREFIX}/share/atsugami/new_atsugami.glade
+	mkdir -p ${DESTDIR}${PREFIX}/share/atsugami
+	cp -f atsugami.glade ${DESTDIR}${PREFIX}/share/atsugami/
+	chmod 644 ${DESTDIR}${PREFIX}/share/atsugami/atsugami.glade
 
 uninstall:
 	rm -f ${DESTDIR}${PREFIX}/bin/atsugami

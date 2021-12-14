@@ -35,7 +35,9 @@ LIBS = $(X11LIB) $(GTKLIB) $(GLIBLIB) $(CAIROLIB) $(GDKPIXBUFLIB) -lgthread-2.0
 
 # flags
 CPPFLAGS = -D_DEFAULT_SOURCE -D_BSD_SOURCE -D_POSIX_C_SOURCE=2 -DVERSION=\"${VERSION}\"
-CFLAGS   = -g -std=c11 -pedantic -Wall -Wno-deprecated-declarations -Os -D_FORTIFY_SOURCE=2 ${INCS} # Flags removed: -v
+								    # Gentoo users: "Muh optimizations"
+#CFLAGS   = -g -std=c11 -pedantic -Wall -Wno-deprecated-declarations -O3 -D_FORTIFY_SOURCE=2 ${INCS} # Flags removed: -v
+CFLAGS   = -g -std=c11 -pedantic -Wall -Wno-deprecated-declarations -D_FORTIFY_SOURCE=2 ${INCS} # Flags removed: -v
 LDFLAGS  += ${LIBS} -lpq
 #PQFLAGS = -lpq
 
