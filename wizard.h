@@ -10,7 +10,12 @@ static GdkPixbufLoader *pixbuf_loader = NULL;
 static guint load_timeout = 0;
 static GtkWidget *assistant = NULL;
 static GtkWidget *progress_bar = NULL;
-
+float workarea_width;
+float workarea_height;
+GtkWidget *image;
+GdkPixbuf *image_pixbuf;
+float width;
+float height;
 
 /* Import wizard */
 /* Wizard code from GTK3 demo application; modifications have been made. */
@@ -59,7 +64,7 @@ static void on_assistant_prepare(GtkWidget *widget, GtkWidget *page, gpointer da
 	gtk_window_set_title(GTK_WINDOW(widget), title);
 	g_free(title);
 
-	if (current_page == 3)
+	if (current_page == 4)
 		gtk_assistant_commit(GTK_ASSISTANT(widget));
 }
 
@@ -79,100 +84,30 @@ static void on_wizard_entry_changed(GtkWidget *widget, gpointer data) {
 		gtk_assistant_set_page_complete(assistant, current_page, FALSE);
 }
 
-static GdkPixbuf *frame;
-GtkWidget *image_preview;
-GdkPixbuf *image_preview_pixbuf;
-gint64 width;
-gint64 height;
-
-/* Load the pixbuf */
-static gboolean load_pixbuf(GError **error) {
-//	image_preview_pixbuf = gdk_pixbuf_new_from_file("/home/natem/Pictures/fba16c19-5e67-430c-a2d4-5c49a7c3be24.jpg", error);
-//	image_preview_pixbuf = gdk_pixbuf_new_from_file("fba16c19-5e67-430c-a2d4-5c49a7c3be24.jpg", error);
-	image_preview = gtk_image_new_from_file(import_file_path);
-
-	image_preview_pixbuf = gdk_pixbuf_new_from_file(import_file_path, error);
-
-	printf("===============================================================================================================================================================\n");
-	printf("gdk_pixbuf_new_from_file %s\n", image_preview_pixbuf);
-	printf("gdk_pixbuf_new_from_file %s\n", image_preview);
-	printf("load_pixbuf returns FALSE\n");
-
-	width =  gdk_pixbuf_get_width(image_preview_pixbuf);
-	height =  gdk_pixbuf_get_height(image_preview_pixbuf);
-	printf("Width: %ld\n", width);
-	printf("Height: %ld\n", height);
-	printf("===============================================================================================================================================================\n");
-//	return FALSE;
-	return TRUE;
-}
-
-/* draw callback */
-static gint draw_cb(GtkWidget *widget, cairo_t *cr, gpointer data) {
-	gdk_cairo_set_source_pixbuf(cr, frame, 0, 0);
-	cairo_paint(cr);
-
-	return TRUE;
-}
-
-static gboolean on_tick(GtkWidget *widget, GdkFrameClock *frame_clock, gpointer data) {
-/*	printf("%s\n", import_file_path);
-	image_preview = gdk_pixbuf_new_from_resource(import_file_path, NULL);
-	printf("Pixbuf *******\n");
-
-	width =  gdk_pixbuf_get_width(image_preview);
-	height =  gdk_pixbuf_get_height(image_preview);
-
-	printf("Width: %ld\n", width);
-	printf("Height: %ld\n", height);
-*/
-
-	gtk_widget_queue_draw(da);
-
-	return G_SOURCE_CONTINUE;
-}
-
 static void wizard_create_page0(GtkWidget *assistant) {
-	GtkWidget *box, /*container, *image,*/ *label0, *label1, *label2, *label3, *label4, *entry0, *entry1, *entry2, *entry3, *entry4;
-	GError *error;
+	GtkWidget *box, *image_preview, *label0, *label1, *label2, *label3, *label4, *entry0, *entry1, *entry2, *entry3, *entry4;
+	float aspect_ratio;
+	GdkPixbuf *image_preview_pixbuf;
 
-	error = NULL;
-	if (!load_pixbuf(&error)) {
-		printf("%s\n", error);
-		g_error_free(error);
-	}
-	else {
-//		gtk_widget_set_size_request(window, back_width, back_height);
+	image = gtk_image_new_from_file(import_file_path);
+	image_pixbuf = gdk_pixbuf_new_from_file(import_file_path, NULL);
 
-		frame = gdk_pixbuf_new(GDK_COLORSPACE_RGB, FALSE, 8, width, height);
+	/* width & height of the the image, respectively */
+	width  = gdk_pixbuf_get_width(image_pixbuf);
+	height = gdk_pixbuf_get_height(image_pixbuf);
 
-		da = gtk_drawing_area_new();
+	/* Calculate the aspect ratio */
+	aspect_ratio = width / height;
 
-		g_signal_connect(da, "draw", G_CALLBACK(draw_cb), NULL);
-
-//		gtk_container_add(GTK_CONTAINER(window), da);
-
-		gtk_widget_add_tick_callback(da, on_tick, NULL, NULL);
-	}
-
-//	image = import_file_path;
+	/* Resize the input image */
+	image_preview_pixbuf = gdk_pixbuf_scale_simple(image_pixbuf, (width * 0.25), (height * 0.25), GDK_INTERP_BILINEAR);
+	image_preview = gtk_image_new_from_pixbuf(image_preview_pixbuf);
 
 	box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 10);
-	gtk_container_set_border_width(GTK_CONTAINER (box), 10);
-	gtk_container_add(GTK_CONTAINER(box), da);
+	gtk_container_set_border_width(GTK_CONTAINER(box), 10);
 
-	printf("%s\n", import_file_path);
-
-//	gtk_box_pack_start(GTK_BOX(box), da, FALSE, FALSE, 0);
-//	gtk_widget_set_valign(da, GTK_ALIGN_CENTER);
-
-/*	GtkWidget *image = NULL;
-	GtkWidget *container = NULL; */
-//	gtk_box_pack_start(GTK_BOX(box), image, FALSE, FALSE, 0);
-//	gtk_box_pack_start(GTK_BOX(box), container, FALSE, FALSE, 0);
-
-//	gtk_widget_set_size_request(GTK_WIDGET(window), 20, 20);
-//	gtk_widget_set_size_request(GTK_ASSISTANT(assistant), 20, 20);
+//	image = gtk_image_new_from_pixbuf(image_pixbuf); /* THis doesn't work */
+	gtk_box_pack_start(GTK_BOX(box), image_preview, FALSE, FALSE, 0);
 
 	/* First label and text field */
 	label0 = gtk_label_new("Enter the artist\'s name here:");
@@ -237,11 +172,25 @@ static void wizard_create_page0(GtkWidget *assistant) {
 	/* Display the window */
 	gtk_widget_show_all(box); /* Don't mess with this code */
 	gtk_assistant_append_page(GTK_ASSISTANT(assistant), box);
-	gtk_assistant_set_page_title(GTK_ASSISTANT(assistant), box, "Page 1");
+	gtk_assistant_set_page_title(GTK_ASSISTANT(assistant), box, "Tagging");
 	gtk_assistant_set_page_type(GTK_ASSISTANT(assistant), box, GTK_ASSISTANT_PAGE_INTRO);
 }
 
 static void wizard_create_page1(GtkWidget *assistant) {
+	GtkWidget *box, *checkbutton;
+	box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 12);
+	gtk_container_set_border_width(GTK_CONTAINER(box), 12);
+
+	checkbutton = gtk_check_button_new_with_label("This is file has commentary");
+	gtk_box_pack_start(GTK_BOX(box), checkbutton, FALSE, FALSE, 0);
+
+	gtk_widget_show_all(box);
+	gtk_assistant_append_page(GTK_ASSISTANT(assistant), box);
+	gtk_assistant_set_page_complete(GTK_ASSISTANT(assistant), box, TRUE);
+	gtk_assistant_set_page_title(GTK_ASSISTANT(assistant), box, "Commentary");
+}
+
+static void wizard_create_page2(GtkWidget *assistant) {
 	GtkWidget *box, *checkbutton;
 	box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 12);
 	gtk_container_set_border_width(GTK_CONTAINER(box), 12);
@@ -252,57 +201,64 @@ static void wizard_create_page1(GtkWidget *assistant) {
 	gtk_widget_show_all(box);
 	gtk_assistant_append_page(GTK_ASSISTANT(assistant), box);
 	gtk_assistant_set_page_complete(GTK_ASSISTANT(assistant), box, TRUE);
-	gtk_assistant_set_page_title(GTK_ASSISTANT(assistant), box, "Page 2");
+//	gtk_assistant_set_page_title(GTK_ASSISTANT(assistant), box, "Hierarchal relations");
+	gtk_assistant_set_page_title(GTK_ASSISTANT(assistant), box, "Hierarchy");
 }
 
-static void wizard_create_page2 (GtkWidget *assistant) {
+static void wizard_create_page3(GtkWidget *assistant) {
   GtkWidget *label;
 
   label = gtk_label_new("This is a confirmation page, press 'Apply' to apply changes");
 
   gtk_widget_show (label);
-  gtk_assistant_append_page (GTK_ASSISTANT (assistant), label);
-  gtk_assistant_set_page_type (GTK_ASSISTANT (assistant), label, GTK_ASSISTANT_PAGE_CONFIRM);
-  gtk_assistant_set_page_complete (GTK_ASSISTANT (assistant), label, TRUE);
-  gtk_assistant_set_page_title (GTK_ASSISTANT (assistant), label, "Confirmation");
+  gtk_assistant_append_page(GTK_ASSISTANT(assistant), label);
+  gtk_assistant_set_page_type(GTK_ASSISTANT(assistant), label, GTK_ASSISTANT_PAGE_CONFIRM);
+  gtk_assistant_set_page_complete(GTK_ASSISTANT(assistant), label, TRUE);
+  gtk_assistant_set_page_title(GTK_ASSISTANT(assistant), label, "Confirmation");
 }
 
-static void wizard_create_page3 (GtkWidget *assistant) {
+static void wizard_create_page4(GtkWidget *assistant) {
   progress_bar = gtk_progress_bar_new ();
-  gtk_widget_set_halign (progress_bar, GTK_ALIGN_CENTER);
-  gtk_widget_set_valign (progress_bar, GTK_ALIGN_CENTER);
+  gtk_widget_set_halign(progress_bar, GTK_ALIGN_CENTER);
+  gtk_widget_set_valign(progress_bar, GTK_ALIGN_CENTER);
 
   gtk_widget_show (progress_bar);
-  gtk_assistant_append_page (GTK_ASSISTANT (assistant), progress_bar);
-  gtk_assistant_set_page_type (GTK_ASSISTANT (assistant), progress_bar, GTK_ASSISTANT_PAGE_PROGRESS);
-  gtk_assistant_set_page_title (GTK_ASSISTANT (assistant), progress_bar, "Applying changes");
+  gtk_assistant_append_page(GTK_ASSISTANT(assistant), progress_bar);
+  gtk_assistant_set_page_type(GTK_ASSISTANT(assistant), progress_bar, GTK_ASSISTANT_PAGE_PROGRESS);
+  gtk_assistant_set_page_title(GTK_ASSISTANT(assistant), progress_bar, "Applying changes");
 
   /* This prevents the assistant window from being
    * closed while we're "busy" applying changes.
    */
-  gtk_assistant_set_page_complete (GTK_ASSISTANT (assistant), progress_bar, FALSE);
+  gtk_assistant_set_page_complete(GTK_ASSISTANT (assistant), progress_bar, FALSE);
 }
 
 //extern GtkWidget *do_assistant(GtkWidget *do_widget) {
 extern GtkWidget *do_assistant() {
 	if (!assistant) {
+		/* Get the resolution of the user's screen */
+		GdkRectangle workarea = {0}; gdk_monitor_get_workarea(gdk_display_get_primary_monitor(gdk_display_get_default()), &workarea);
+		workarea_width  = workarea.width  * 0.5;
+		workarea_height = workarea.height * 0.75;
+
+		/* Create the assistant window */
 		assistant = gtk_assistant_new();
+		gtk_window_set_resizable(assistant, FALSE);
+		gtk_window_set_position(assistant, GTK_WIN_POS_CENTER_ALWAYS);
+		gtk_window_set_default_size(GTK_WINDOW(assistant), workarea_width, workarea_height);
 
-		gtk_window_set_default_size(GTK_WINDOW(assistant), 400, 500);
-
-/*		gtk_window_set_screen(GTK_WINDOW(assistant), gtk_widget_get_screen (do_widget)); */
-
+		/* Pages in the assistant */
 		wizard_create_page0(assistant);
 		wizard_create_page1(assistant);
 		wizard_create_page2(assistant);
 		wizard_create_page3(assistant);
+		wizard_create_page4(assistant);
 
 		g_signal_connect(G_OBJECT(assistant), "cancel", G_CALLBACK(on_assistant_close_cancel), &assistant);
 		g_signal_connect(G_OBJECT(assistant), "close", G_CALLBACK(on_assistant_close_cancel), &assistant);
 		g_signal_connect(G_OBJECT(assistant), "apply", G_CALLBACK(on_assistant_apply), NULL);
 		g_signal_connect(G_OBJECT(assistant), "prepare", G_CALLBACK(on_assistant_prepare), NULL);
 	}
-
 	if (!gtk_widget_get_visible(assistant))
 		gtk_widget_show(assistant);
 	else {

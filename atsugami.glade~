@@ -8,7 +8,8 @@
     <property name="window-position">center</property>
     <property name="type-hint">dialog</property>
     <property name="program-name">Atsugami</property>
-    <property name="version">0.47</property>
+    <property name="version">0.48</property>
+    <property name="copyright" translatable="yes">Nate Morrison</property>
     <property name="website">https://atsugami.nvsd.ca</property>
     <property name="authors">Nate Morrison</property>
     <property name="logo-icon-name">image-x-generic</property>

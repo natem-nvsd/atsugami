@@ -1,4 +1,11 @@
-﻿#include <errno.h>
+﻿/***********************************************\
+* TODO:						*
+* - Move all non-main functions into their own	*
+* *.c files					*
+* - 
+\***********************************************/
+
+#include <errno.h>
 #include "error_dialogs.h"
 #include <glib/gstdio.h>
 #include <gtk/gtk.h>
@@ -6,13 +13,6 @@
 #include <stdio.h>
 #include "variables.h"
 #include "wizard.h"
-
-/* GTK+ variables */
-/*static GdkPixbufLoader *pixbuf_loader = NULL;
-static guint load_timeout = 0;
-static GInputStream *image_stream = NULL;
-static GtkWidget *assistant = NULL;
-static GtkWidget *progress_bar = NULL; */
 
 /* Postgres Variables */
 PGconn *conn;
