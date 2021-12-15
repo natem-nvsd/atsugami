@@ -1,7 +1,5 @@
 ﻿/***********************************************\
 * TODO:						*
-* - Move all non-main functions into their own	*
-* *.c files					*
 * - 
 \***********************************************/
 #include "about.h"
@@ -72,21 +70,24 @@ int main(int argc, char *argv[]) {
 	gtk_widget_insert_action_group(window, "app", actions);
 
 	/* Warning and Error banners */
-	warnBanner = (GtkWidget*)gtk_builder_get_object(builder, "warnBanner");
-	errorBanner = (GtkWidget*)gtk_builder_get_object(builder, "errorBanner");
+	warnBanner = (GtkWidget*)gtk_builder_get_object(builder, "warning_banner");
+	errorBanner = (GtkWidget*)gtk_builder_get_object(builder, "error_banner");
 
 	/* Warning and Error labels */
 	warnLabel = (GtkWidget*)gtk_builder_get_object(builder, "warnLabel");
 	errorLabel = (GtkWidget*)gtk_builder_get_object(builder, "errorLabel");
 
-	/* Create a dialog if the connection fails */
+	/* Show an error info bar if the connection fails */
 	if (PQstatus(conn) != CONNECTION_OK) {
+		gtk_info_bar_set_revealed(errorBanner, TRUE);
+
 		char errMsg[1024];
 		sprintf(errMsg, "\n%s", PQerrorMessage(conn));
 		gtk_label_set_text(GTK_LABEL(errorLabel), errMsg);
 	}
 
 	if (PQstatus(conn) == CONNECTION_OK) {
+		gtk_info_bar_set_revealed(errorBanner, FALSE);
 		gtk_label_set_text(GTK_LABEL(errorLabel), "Connection to the database was successful.");
 	}
 
