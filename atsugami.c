@@ -214,7 +214,7 @@ int main(int argc, char *argv[]) {
 		if (PQresultStatus(res) != PGRES_TUPLES_OK) {
 			fprintf(stderr, "%s", PQerrorMessage(conn));
 			PQclear(res);
-			exit_nicely(conn);
+			exit_cleanly(conn);
 		}
 
 		PQprint(stdout, res, &options);

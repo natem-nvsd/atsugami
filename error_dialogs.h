@@ -48,7 +48,7 @@ extern GtkWidget *do_expander (GtkWidget *do_widget) {
       box = gtk_widget_get_parent (area);
       gtk_container_child_set (GTK_CONTAINER (gtk_widget_get_parent (box)), box,
                                "expand", TRUE, "fill", TRUE, NULL);
-      gtk_container_foreach (GTK_CONTAINER (area), do_not_expand, NULL);
+      gtk_container_foreach (GTK_CONTAINER (area), do_not_expand, NULL); 
 
       expander = gtk_expander_new ("Details:");
       sw = gtk_scrolled_window_new (NULL, NULL);

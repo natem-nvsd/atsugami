@@ -1,7 +1,7 @@
 include config.mk
 
 TARGET=atsugami
-SRC=gtk.c
+SRC=main.c about.c import.c wizard.c
 OBJ=${SRC:.c=.o}
 
 all: options atsugami
@@ -15,12 +15,16 @@ options:
 .c.o:
 	${CC} -c ${SRC} ${CFLAGS} $<
 
-atsugami: cleanobj
+atsugami: cleanbin
 	${CC} -c ${SRC} ${CFLAGS} $<
 	${CC} ${OBJ} -o atsugami ${LDFLAGS}
+	rm -f ${OBJ}
 
 clean:
 	rm -f atsugami ${OBJ}
+
+cleanbin:
+	rm -f atsugami
 
 cleanobj:
 	rm -f ${OBJ}
