@@ -1,7 +1,5 @@
 ﻿/* import.c */
 #include "import.h"
-#include <glib/gstdio.h>
-#include <glib.h>
 #include <gtk/gtk.h>
 #include "main.h"
 #include <string.h>
@@ -21,7 +19,6 @@ static void open_response_cb(GtkNativeDialog *dialog, gint response_id, gpointer
 
 		/* Copy the path into `import_file_path`, since `file_path` is cleared when the dialog is destroyed. */
 		strcpy(import_file_path, file_path);
-//		extern gchar import_file_path;
 
 		/* Run the wizard; the file chooser window is destroyed before the wizard opens. */
 		do_assistant();

@@ -29,21 +29,21 @@ favourited_at TIMESTAMP NOT NULL DEFAULT now()
 
 CREATE TABLE files (
 uuid UUID UNIQUE NOT NULL DEFAULT uuid_generate_v4(),
-id SERIAL NOT NULL,
-path TEXT UNIQUE NOT NULL,
-has_children BOOLEAN NOT NULL DEFAULT FALSE,
-child BOOLEAN NOT NULL DEFAULT FALSE,
-parent_uuid UUID[],
-children_uuids UUID[],
-artist TEXT[] NOT NULL,
-copyrights TEXT[] NOT NULL,
-characters TEXT[] NOT NULL,
+import_number SERIAL UNIQUE NOT NULL,
+path text UNIQUE NOT NULL,
+artist TEXT[] NOT NULL DEFAULT '{artist_request}',
+copyrights TEXT[] NOT NULL DEFAULT '{copyright_request}',
+characters TEXT[],
 tags TEXT[] NOT NULL,
+source text,
 width INTEGER NOT NULL,
 height INTEGER NOT NULL,
-source TEXT,
 format CHARACTER VARYING(4) NOT NULL,
-imported_at TIMESTAMP NOT NULL DEFAULT now(),
+is_parent BOOLEAN NOT NULL DEFAULT FALSE,
+is_child BOOLEAN NOT NULL DEFAULT FALSE,
+parent_uuid UUID,
+child_uuids UUID[],
+imported_at TIMESTAMP NOT NULL,
 updated_at TIMESTAMP NOT NULL DEFAULT now()
 );
 

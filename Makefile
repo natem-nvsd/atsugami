@@ -15,7 +15,7 @@ options:
 .c.o:
 	${CC} -c ${SRC} ${CFLAGS} $<
 
-atsugami: cleanbin
+atsugami: clean
 	${CC} -c ${SRC} ${CFLAGS} $<
 	${CC} ${OBJ} -o atsugami ${LDFLAGS}
 	rm -f ${OBJ}
@@ -31,6 +31,7 @@ cleanobj:
 
 install: atsugami 
 	cp -f atsugami ${DESTDIR}${PREFIX}/bin
+	strip ${DESTDIR}${PREFIX}/bin/atsugami
 	chmod 755 ${DESTDIR}${PREFIX}/bin/atsugami
 	mkdir -p ${DESTDIR}${PREFIX}/share/atsugami
 	cp -f atsugami.glade ${DESTDIR}${PREFIX}/share/atsugami/

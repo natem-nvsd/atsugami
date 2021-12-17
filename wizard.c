@@ -1,4 +1,5 @@
-﻿#include <gtk/gtk.h>
+﻿/* wizard.c */
+#include <gtk/gtk.h>
 #include "import.h"
 #include <libpq-fe.h>
 #include "main.h"
@@ -6,16 +7,24 @@
 #include "wizard.h"
 
 /* GTK+ variables */
+GtkWidget *entry0, *entry1, *entry2, *entry3, *entry4;
+GtkWidget *image;
+GdkPixbuf *image_pixbuf;
 static GtkWidget *assistant = NULL;
 static GtkWidget *progress_bar = NULL;
 float workarea_width;
 float workarea_height;
-GtkWidget *image;
-GdkPixbuf *image_pixbuf;
 float width;
 float height;
-GtkWidget *entry0, *entry1, *entry2, *entry3, *entry4;
+int int_width;
+int int_height;
+char char_width[6];
+char char_height[6];
+char parent_bool_char[5];
+char child_bool_char[5];
 char query_string[20480];
+bool parent_bool;
+bool child_bool;
 
 /* Wizard code from GTK3 demo application; modifications have been made. */
 static gboolean apply_changes_gradually(gpointer data) {
@@ -37,7 +46,7 @@ static gboolean apply_changes_gradually(gpointer data) {
 	}
 }
 
-static void on_assistant_apply (GtkWidget *widget, gpointer data) {
+static void on_assistant_apply(GtkWidget *widget, gpointer data) {
 	/* Start a timer to simulate changes taking a few seconds to apply. */
 	g_timeout_add(50, apply_changes_gradually, NULL);
 	const gchar *text0;
@@ -47,17 +56,76 @@ static void on_assistant_apply (GtkWidget *widget, gpointer data) {
 	const gchar *text4;
 
 	/* Create the query to submit to PostgreSQL */
-	strcpy(query_string, "INSERT INTO public.files (path, has_children, child, parent_uuid, child_uuids, artist, copyrights, characters, tags, width, height, source, format) VALUES ('");
+	strcpy(query_string, "INSERT INTO public.files (path, artist, copyrights, characters, tags, source, width, height, is_parent, is_child, parent_uuid, child_uuids, imported_at) VALUES ('");
+
+	/* add the file path to the query */
 	strcat(query_string, import_file_path);
-	strcat(query_string, "', '");
-	printf("%s\n", query_string);
+	strcat(query_string, "', '{");
 
 	/* Entry fields from page0 */
-	text0 = gtk_entry_get_text(GTK_ENTRY(entry0));
-	text1 = gtk_entry_get_text(GTK_ENTRY(entry1));
-	text2 = gtk_entry_get_text(GTK_ENTRY(entry2));
-	text3 = gtk_entry_get_text(GTK_ENTRY(entry3));
-	text4 = gtk_entry_get_text(GTK_ENTRY(entry4));
+	text0 = gtk_entry_get_text(GTK_ENTRY(entry0));	/* Artist */
+	if (text0 == NULL) {
+		strcat(query_string, "NULL");
+		strcat(query_string, "}', '{");
+	}
+	if (text0 != NULL) {
+		strcat(query_string, text0);
+		strcat(query_string, "}', '{");
+	}
+
+	text1 = gtk_entry_get_text(GTK_ENTRY(entry1));	/* Copyrights */
+	if (text1 == NULL) {
+		strcat(query_string, "NULL");
+		strcat(query_string, "}', '{");
+	}
+	if (text1 != NULL) {
+		strcat(query_string, text1);
+		strcat(query_string, "}', '{");
+	}
+
+	text2 = gtk_entry_get_text(GTK_ENTRY(entry2));	/* Characters */
+	if (text2 == NULL) {
+		strcat(query_string, "NULL");
+		strcat(query_string, "}', '{");
+	}
+	if (text2 != NULL) {
+		strcat(query_string, text2);
+		strcat(query_string, "}', '{");
+	}
+
+	text3 = gtk_entry_get_text(GTK_ENTRY(entry3));	/* Tags */
+	if (text3 == NULL) {
+		strcat(query_string, "NULL");
+		strcat(query_string, "}', '{");
+	}
+	if (text3 != NULL) {
+		strcat(query_string, text3);
+		strcat(query_string, "}', '{");
+	}
+
+	text4 = gtk_entry_get_text(GTK_ENTRY(entry4));	/* Source */
+	if (text4 == NULL) {
+		strcat(query_string, "NULL");
+		strcat(query_string, "}', ");
+	}
+	if (text4 != NULL) {
+		strcat(query_string, text4);
+		strcat(query_string, "}', ");
+	}
+
+	/* add the image resolution to the query */
+	strcat(query_string, char_width);
+		strcat(query_string, ", ");
+	strcat(query_string, char_height);
+		strcat(query_string, ", ");
+
+	/* add the values of is_parent and is_child */
+	strcat(query_string, parent_bool_char);
+		strcat(query_string, ", ");
+	strcat(query_string, child_bool_char);
+		strcat(query_string, ", '{");
+
+	printf("%s\n", query_string);
 
 	strcpy(import_file_path, ""); /* Clear import_file_path. The Postgres query will have been issued, and the transaction committed. */
 //	query(PQexec(conn, query), conninfo, &conn);
@@ -114,6 +182,14 @@ static void wizard_create_page0(GtkWidget *assistant) {
 	width  = gdk_pixbuf_get_width(image_pixbuf);
 	height = gdk_pixbuf_get_height(image_pixbuf);
 
+	/* Make int copies of width and height */
+	int_width  = (int)width;
+	int_height = (int)height;
+
+	/* Make char copies of int_width and int_height */
+	sprintf(char_width, "%d", int_width);
+	sprintf(char_height, "%d", int_height);
+
 	/* Calculate the aspect ratio */
 	aspect_ratio = width / height;
 
@@ -134,7 +210,7 @@ static void wizard_create_page0(GtkWidget *assistant) {
 
 	entry0 = gtk_entry_new();
 	gtk_entry_set_activates_default(GTK_ENTRY(entry0), TRUE);
-	gtk_widget_set_valign(entry0, GTK_ALIGN_CENTER);
+	gtk_widget_set_valign(entry0, GTK_ALIGN_START);
 	gtk_box_pack_start(GTK_BOX(box), entry0, TRUE, TRUE, 0);
 	g_signal_connect(G_OBJECT(entry0), "changed",
 	G_CALLBACK(on_wizard_entry_changed), assistant);
@@ -146,7 +222,7 @@ static void wizard_create_page0(GtkWidget *assistant) {
 
 	entry1 = gtk_entry_new();
 	gtk_entry_set_activates_default(GTK_ENTRY(entry1), TRUE);
-	gtk_widget_set_valign(entry1, GTK_ALIGN_CENTER);
+	gtk_widget_set_valign(entry1, GTK_ALIGN_START);
 	gtk_box_pack_start(GTK_BOX(box), entry1, TRUE, TRUE, 0);
 	g_signal_connect(G_OBJECT(entry1), "changed",
 	G_CALLBACK(on_wizard_entry_changed), assistant);
@@ -158,7 +234,7 @@ static void wizard_create_page0(GtkWidget *assistant) {
 
 	entry2 = gtk_entry_new();
 	gtk_entry_set_activates_default(GTK_ENTRY(entry2), TRUE);
-	gtk_widget_set_valign(entry2, GTK_ALIGN_CENTER);
+	gtk_widget_set_valign(entry2, GTK_ALIGN_START);
 	gtk_box_pack_start(GTK_BOX(box), entry2, TRUE, TRUE, 0);
 	g_signal_connect(G_OBJECT(entry2), "changed",
 	G_CALLBACK(on_wizard_entry_changed), assistant);
@@ -170,7 +246,7 @@ static void wizard_create_page0(GtkWidget *assistant) {
 
 	entry3 = gtk_entry_new();
 	gtk_entry_set_activates_default(GTK_ENTRY(entry3), TRUE);
-	gtk_widget_set_valign(entry3, GTK_ALIGN_CENTER);
+	gtk_widget_set_valign(entry3, GTK_ALIGN_START);
 	gtk_box_pack_start(GTK_BOX(box), entry3, TRUE, TRUE, 0);
 	g_signal_connect(G_OBJECT(entry3), "changed",
 	G_CALLBACK(on_wizard_entry_changed), assistant);
@@ -182,7 +258,7 @@ static void wizard_create_page0(GtkWidget *assistant) {
 
 	entry4 = gtk_entry_new();
 	gtk_entry_set_activates_default(GTK_ENTRY(entry4), TRUE);
-	gtk_widget_set_valign(entry4, GTK_ALIGN_CENTER);
+	gtk_widget_set_valign(entry4, GTK_ALIGN_START);
 	gtk_box_pack_start(GTK_BOX(box), entry4, TRUE, TRUE, 0);
 	g_signal_connect(G_OBJECT(entry4), "changed",
 	G_CALLBACK(on_wizard_entry_changed), assistant);
@@ -195,17 +271,40 @@ static void wizard_create_page0(GtkWidget *assistant) {
 }
 
 static void wizard_create_page1(GtkWidget *assistant) {
-	GtkWidget *box, *checkbutton;
+	GtkWidget *box, *check0, *check1, *check2, *entry0, *entry1, *label0;
+
 	box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 12);
 	gtk_container_set_border_width(GTK_CONTAINER(box), 12);
 
-	checkbutton = gtk_check_button_new_with_label("This is file has commentary");
-	gtk_box_pack_start(GTK_BOX(box), checkbutton, FALSE, FALSE, 0);
+	/* First check box */
+	check0 = gtk_check_button_new_with_label("This file is a parent");
+	gtk_box_pack_start(GTK_BOX(box), check0, FALSE, FALSE, 0);
 
+	/* Second check box */
+	check1 = gtk_check_button_new_with_label("This file is a child");
+	gtk_box_pack_start(GTK_BOX(box), check1, FALSE, FALSE, 0);
+
+	/* Third check box */
+	check2 = gtk_check_button_new_with_label("This file has children");
+	gtk_box_pack_start(GTK_BOX(box), check2, FALSE, FALSE, 0);
+
+	/* Child UUID entry */
+	label0 = gtk_label_new("Enter source URL here:");
+	gtk_widget_set_halign(label0, GTK_ALIGN_START);
+	gtk_box_pack_start(GTK_BOX(box), label0, FALSE, FALSE, 0);
+
+	entry0 = gtk_entry_new();
+	gtk_entry_set_activates_default(GTK_ENTRY(entry0), TRUE);
+	gtk_widget_set_valign(entry0, GTK_ALIGN_START);
+	gtk_box_pack_start(GTK_BOX(box), entry0, TRUE, TRUE, 0);
+	g_signal_connect(G_OBJECT(entry0), "changed",
+	G_CALLBACK(on_wizard_entry_changed), assistant);
+
+	/* SHow the box and its widgets */
 	gtk_widget_show_all(box);
 	gtk_assistant_append_page(GTK_ASSISTANT(assistant), box);
 	gtk_assistant_set_page_complete(GTK_ASSISTANT(assistant), box, TRUE);
-	gtk_assistant_set_page_title(GTK_ASSISTANT(assistant), box, "Commentary");
+	gtk_assistant_set_page_title(GTK_ASSISTANT(assistant), box, "Hierarchy");
 }
 
 static void wizard_create_page2(GtkWidget *assistant) {
@@ -213,13 +312,14 @@ static void wizard_create_page2(GtkWidget *assistant) {
 	box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 12);
 	gtk_container_set_border_width(GTK_CONTAINER(box), 12);
 
-	checkbutton = gtk_check_button_new_with_label("This is file has children");
+//	checkbutton = gtk_check_button_new_with_label("This is file has commentary");
+	checkbutton = gtk_check_button_new_with_label("NULL");
 	gtk_box_pack_start(GTK_BOX(box), checkbutton, FALSE, FALSE, 0);
 
 	gtk_widget_show_all(box);
 	gtk_assistant_append_page(GTK_ASSISTANT(assistant), box);
 	gtk_assistant_set_page_complete(GTK_ASSISTANT(assistant), box, TRUE);
-	gtk_assistant_set_page_title(GTK_ASSISTANT(assistant), box, "Hierarchy");
+	gtk_assistant_set_page_title(GTK_ASSISTANT(assistant), box, "Commentary");
 }
 
 static void wizard_create_page3(GtkWidget *assistant) {

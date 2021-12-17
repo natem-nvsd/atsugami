@@ -39,8 +39,8 @@ int main(int argc, char *argv[]) {
 	GtkWidget *window;
 	GtkBuilder *builder = NULL;
 
-	GtkWidget *warnBanner;
-	GtkWidget *errorBanner;
+	GtkWidget *warn_banner;
+	GtkWidget *error_banner;
 	GtkWidget *warnLabel;
 	GtkWidget *errorLabel;
 
@@ -52,8 +52,7 @@ int main(int argc, char *argv[]) {
 
 	/* Open the .glade/XML file for the UI */
 	builder = gtk_builder_new();
-	if (gtk_builder_add_from_file(builder,"atsugami.glade" , NULL) == 0) {
-//	if (gtk_builder_add_from_file(builder, "/usr/local/share/atsugami/atsugami.glade", NULL) == 0) {
+	if (gtk_builder_add_from_file(builder, GLADEFILE, NULL) == 0) {
 		printf("gtk_builder_add_from_file FAILED\n");
 		return(1);
 	}
@@ -70,8 +69,8 @@ int main(int argc, char *argv[]) {
 	gtk_widget_insert_action_group(window, "app", actions);
 
 	/* Warning and Error banners */
-	warnBanner = (GtkWidget*)gtk_builder_get_object(builder, "warning_banner");
-	errorBanner = (GtkWidget*)gtk_builder_get_object(builder, "error_banner");
+	warn_banner = (GtkWidget*)gtk_builder_get_object(builder, "warning_banner");
+	error_banner = (GtkWidget*)gtk_builder_get_object(builder, "error_banner");
 
 	/* Warning and Error labels */
 	warnLabel = (GtkWidget*)gtk_builder_get_object(builder, "warnLabel");
@@ -79,7 +78,7 @@ int main(int argc, char *argv[]) {
 
 	/* Show an error info bar if the connection fails */
 	if (PQstatus(conn) != CONNECTION_OK) {
-		gtk_info_bar_set_revealed(errorBanner, TRUE);
+		gtk_info_bar_set_revealed(error_banner, TRUE);
 
 		char errMsg[1024];
 		sprintf(errMsg, "\n%s", PQerrorMessage(conn));
@@ -87,7 +86,7 @@ int main(int argc, char *argv[]) {
 	}
 
 	if (PQstatus(conn) == CONNECTION_OK) {
-		gtk_info_bar_set_revealed(errorBanner, FALSE);
+		gtk_info_bar_set_revealed(error_banner, FALSE);
 		gtk_label_set_text(GTK_LABEL(errorLabel), "Connection to the database was successful.");
 	}
 
