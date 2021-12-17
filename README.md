@@ -7,8 +7,8 @@ Atsugami has a maximum supported image size of 999,999 square pixels; of course,
 
 # Dependencies  
 PostgreSQL (Tested on 14 and 14.1)  
-GTK3  
-C11-compliant C complier (Tested with Clang 11.0.1 have)
+GTK3
+C11-compliant C complier (Tested with Clang 11.0.1)  
 BSD make
 
 # Building  
@@ -16,11 +16,9 @@ BSD make
 
 
 # Installing  
-` sudo make install`  
+`sudo make install`  
 
 # To do:  
--	Wrap images in the import wizard with Pango  
--	Hide the error banner when an error has not been detected  
 -	Automatically construct a SQL query and submit it  
 
 ### Colours:
