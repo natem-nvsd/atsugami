@@ -6,27 +6,30 @@
 #include <stdio.h>
 #include "wizard.h"
 
-/* GTK+ variables */
-GtkWidget *entry0, *entry1, *entry2, *entry3, *entry4;
+/* Variables and pointers */
+PGresult *res;
+GtkWidget *entry0, *entry1, *entry2, *entry3, *entry4, *entry5, *entry6;
 GtkWidget *image;
 GdkPixbuf *image_pixbuf;
 static GtkWidget *assistant = NULL;
 static GtkWidget *progress_bar = NULL;
+
 float workarea_width;
 float workarea_height;
 float width;
 float height;
 int int_width;
 int int_height;
-char char_width[6];
+char char_width[6]; /* only corrupt, damaged, or malicisious images can over flow these two buffers; fix them */
 char char_height[6];
-char parent_bool_char[5];
-char child_bool_char[5];
-char query_string[20480];
+char query_string[20480]; /*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
+char child_uuids[2048];   /* THESE MUST BE FIXED TO PREVENT BUFFER OVERFLOWS */
+extern char psql_error[2048];    /*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
 bool parent_bool;
 bool child_bool;
+bool has_children;
 
-/* Wizard code from GTK3 demo application; modifications have been made. */
+/* Work bar from gtk3-demo program */
 static gboolean apply_changes_gradually(gpointer data) {
 	gdouble fraction;
 
@@ -54,6 +57,8 @@ static void on_assistant_apply(GtkWidget *widget, gpointer data) {
 	const gchar *text2;
 	const gchar *text3;
 	const gchar *text4;
+	const gchar *text5;
+	const gchar *text6;
 
 	/* Create the query to submit to PostgreSQL */
 	strcpy(query_string, "INSERT INTO public.files (path, artist, copyrights, characters, tags, source, width, height, is_parent, is_child, parent_uuid, child_uuids, imported_at) VALUES ('");
@@ -64,71 +69,111 @@ static void on_assistant_apply(GtkWidget *widget, gpointer data) {
 
 	/* Entry fields from page0 */
 	text0 = gtk_entry_get_text(GTK_ENTRY(entry0));	/* Artist */
-	if (text0 == NULL) {
-		strcat(query_string, "NULL");
-		strcat(query_string, "}', '{");
+	if (gtk_entry_get_text_length(entry0) == 0) {
+		strcat(query_string, "NULL}', '{");
 	}
-	if (text0 != NULL) {
+	if (gtk_entry_get_text_length(entry0) > 0) {
 		strcat(query_string, text0);
 		strcat(query_string, "}', '{");
 	}
 
+	/* Entry fields from page1 */
 	text1 = gtk_entry_get_text(GTK_ENTRY(entry1));	/* Copyrights */
-	if (text1 == NULL) {
-		strcat(query_string, "NULL");
-		strcat(query_string, "}', '{");
+	if (gtk_entry_get_text_length(entry1) == 0) {
+		strcat(query_string, "NULL}', '{");
 	}
-	if (text1 != NULL) {
+	if (gtk_entry_get_text_length(entry1) > 0) {
 		strcat(query_string, text1);
 		strcat(query_string, "}', '{");
 	}
 
+	/* Entry fields from page2 */
 	text2 = gtk_entry_get_text(GTK_ENTRY(entry2));	/* Characters */
-	if (text2 == NULL) {
-		strcat(query_string, "NULL");
-		strcat(query_string, "}', '{");
+	if (gtk_entry_get_text_length(entry2) == 0) {
+		strcat(query_string, "NULL}', '{");
 	}
-	if (text2 != NULL) {
+	if (gtk_entry_get_text_length(entry2) > 0) {
 		strcat(query_string, text2);
 		strcat(query_string, "}', '{");
 	}
 
+	/* Entry fields from page3 */
 	text3 = gtk_entry_get_text(GTK_ENTRY(entry3));	/* Tags */
-	if (text3 == NULL) {
-		strcat(query_string, "NULL");
-		strcat(query_string, "}', '{");
+	if (gtk_entry_get_text_length(entry3) == 0) {
+		strcat(query_string, "NULL}', '{");
 	}
-	if (text3 != NULL) {
+	if (gtk_entry_get_text_length(entry3) > 0) {
 		strcat(query_string, text3);
-		strcat(query_string, "}', '{");
+		strcat(query_string, "}', '");
 	}
 
+	/* Entry fields from page4 */
 	text4 = gtk_entry_get_text(GTK_ENTRY(entry4));	/* Source */
-	if (text4 == NULL) {
-		strcat(query_string, "NULL");
-		strcat(query_string, "}', ");
+	if (gtk_entry_get_text_length(entry4) == 0) {
+		strcat(query_string, "NULL', ");
 	}
-	if (text4 != NULL) {
+	if (gtk_entry_get_text_length(entry4) > 0) {
 		strcat(query_string, text4);
-		strcat(query_string, "}', ");
+		strcat(query_string, "', ");
 	}
 
 	/* add the image resolution to the query */
-	strcat(query_string, char_width);
-		strcat(query_string, ", ");
-	strcat(query_string, char_height);
-		strcat(query_string, ", ");
+	strcat(query_string, char_width); /* Width */
+	strcat(query_string, ", ");
 
-	/* add the values of is_parent and is_child */
-	strcat(query_string, parent_bool_char);
-		strcat(query_string, ", ");
-	strcat(query_string, child_bool_char);
+	strcat(query_string, char_height); /* Height */
+	strcat(query_string, ", ");
+
+	/* add the values of is_parent */
+	if (parent_bool == TRUE) {
+		strcat(query_string, "TRUE, ");
+	}
+	if (parent_bool == FALSE) {
+		strcat(query_string, "FALSE, ");
+	}
+
+	/* add the values of  is_child */
+	if (child_bool == TRUE) {
+		strcat(query_string, "TRUE, '");
+	}
+	if (child_bool == FALSE) {
+		strcat(query_string, "FALSE, ");
+	}
+	/* Parent UUID */
+	text5 = gtk_entry_get_text(GTK_ENTRY(entry5));
+	if (gtk_entry_get_text_length(entry5) == 0) {
+		strcat(query_string, "NULL, '{");
+	}
+	if (gtk_entry_get_text_length(entry5) > 0) {
+		strcat(query_string, text5);
 		strcat(query_string, ", '{");
+	}
 
-	printf("%s\n", query_string);
+	/* Child UUIDs */
+	text6 = gtk_entry_get_text(GTK_ENTRY(entry6));
+	if (gtk_entry_get_text_length(entry6) == 0) {
+		strcat(query_string, "NULL}', now());");
+	}
+	if (gtk_entry_get_text_length(entry6) > 0) {
+		strcat(query_string, text6);
+		strcat(query_string, "}', now());");
+	}
+	printf("%s\n\n", query_string);
+
+	PQexec(conn, query_string);
+	if (PQresultStatus(res) == PGRES_TUPLES_OK) {
+		printf("\nQUERY OK\n");
+	}
+
+	/* Show an error dialog if the query failed */
+	if (PQresultStatus(res) != PGRES_TUPLES_OK) {
+		strcpy(psql_error, PQerrorMessage(conn));
+		printf("%s\n", psql_error);
+//		postgres_error_activate();
+		PQclear(res);
+	}
 
 	strcpy(import_file_path, ""); /* Clear import_file_path. The Postgres query will have been issued, and the transaction committed. */
-//	query(PQexec(conn, query), conninfo, &conn);
 }
 
 static void on_assistant_close_cancel(GtkWidget *widget, gpointer data) {
@@ -171,7 +216,7 @@ static void on_wizard_entry_changed(GtkWidget *widget, gpointer data) {
 }
 
 static void wizard_create_page0(GtkWidget *assistant) {
-	GtkWidget *box, *image_preview, *label0, *label1, *label2, *label3, *label4 /*entry0, *entry1, *entry2, *entry3, *entry4*/;
+	GtkWidget *box, *image_preview, *label0, *label1, *label2, *label3, *label4;
 	float aspect_ratio;
 	GdkPixbuf *image_preview_pixbuf;
 
@@ -270,34 +315,72 @@ static void wizard_create_page0(GtkWidget *assistant) {
 	gtk_assistant_set_page_type(GTK_ASSISTANT(assistant), box, GTK_ASSISTANT_PAGE_INTRO);
 }
 
+/* Check button callback
+*
+*  THis would be soooooooooooo much easier in GTK4
+*  gtk_check_button_get_active();
+* https://docs.gtk.org/gtk4/method.CheckButton.get_active.html */
+static void is_parent_cb(GtkWidget *check_button, gpointer data) {
+	if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(check_button))) {
+		parent_bool = TRUE;
+	}
+	else {
+		g_print("%s off\n", gtk_button_get_label(GTK_BUTTON(check_button)));
+	}
+}
+
+static void is_child_cb(GtkWidget *check_button, gpointer data) {
+	if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(check_button))) {
+		child_bool = TRUE;
+	}
+	else {
+		g_print("%s off\n", gtk_button_get_label(GTK_BUTTON(check_button)));
+	}
+}
+
 static void wizard_create_page1(GtkWidget *assistant) {
-	GtkWidget *box, *check0, *check1, *check2, *entry0, *entry1, *label0;
+	GtkWidget *box, *check_button, *label0, *label1;
 
 	box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 12);
 	gtk_container_set_border_width(GTK_CONTAINER(box), 12);
 
 	/* First check box */
-	check0 = gtk_check_button_new_with_label("This file is a parent");
-	gtk_box_pack_start(GTK_BOX(box), check0, FALSE, FALSE, 0);
-
-	/* Second check box */
-	check1 = gtk_check_button_new_with_label("This file is a child");
-	gtk_box_pack_start(GTK_BOX(box), check1, FALSE, FALSE, 0);
-
-	/* Third check box */
-	check2 = gtk_check_button_new_with_label("This file has children");
-	gtk_box_pack_start(GTK_BOX(box), check2, FALSE, FALSE, 0);
+	check_button = gtk_check_button_new_with_label("This file is a parent");
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(check_button), FALSE);
+	g_signal_connect(check_button, "toggled", G_CALLBACK(is_parent_cb), NULL);
+	gtk_widget_set_valign(check_button, GTK_ALIGN_START);
+	gtk_box_pack_start(GTK_BOX(box), check_button, FALSE, FALSE, 0);
 
 	/* Child UUID entry */
-	label0 = gtk_label_new("Enter source URL here:");
+	label1 = gtk_label_new("Enter the UUID(s) of the child(ren) here:");
+	gtk_widget_set_halign(label1, GTK_ALIGN_START);
+	gtk_box_pack_start(GTK_BOX(box), label1, FALSE, FALSE, 0);
+
+	entry6 = gtk_entry_new();
+	gtk_entry_set_activates_default(GTK_ENTRY(entry6), TRUE);
+	gtk_widget_set_valign(entry6, GTK_ALIGN_START);
+	gtk_box_pack_start(GTK_BOX(box), entry6, TRUE, TRUE, 0);
+	g_signal_connect(G_OBJECT(entry6), "changed",
+	G_CALLBACK(on_wizard_entry_changed), assistant);
+
+//	parent_bool = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(check0));
+
+	/* Second check box */
+	check_button = gtk_check_button_new_with_label("This file is a child");
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(check_button), FALSE);
+	g_signal_connect(check_button, "toggled", G_CALLBACK(is_child_cb), NULL);
+	gtk_widget_set_valign(check_button, GTK_ALIGN_START);
+	gtk_box_pack_start(GTK_BOX(box), check_button, FALSE, FALSE, 0);
+	/* label */
+	label0 = gtk_label_new("Enter Parent UUID here:");
 	gtk_widget_set_halign(label0, GTK_ALIGN_START);
 	gtk_box_pack_start(GTK_BOX(box), label0, FALSE, FALSE, 0);
-
-	entry0 = gtk_entry_new();
-	gtk_entry_set_activates_default(GTK_ENTRY(entry0), TRUE);
-	gtk_widget_set_valign(entry0, GTK_ALIGN_START);
-	gtk_box_pack_start(GTK_BOX(box), entry0, TRUE, TRUE, 0);
-	g_signal_connect(G_OBJECT(entry0), "changed",
+	/* text box */
+	entry5 = gtk_entry_new();
+	gtk_entry_set_activates_default(GTK_ENTRY(entry5), TRUE);
+	gtk_widget_set_valign(entry5, GTK_ALIGN_START);
+	gtk_box_pack_start(GTK_BOX(box), entry5, TRUE, TRUE, 0);
+	g_signal_connect(G_OBJECT(entry5), "changed",
 	G_CALLBACK(on_wizard_entry_changed), assistant);
 
 	/* SHow the box and its widgets */

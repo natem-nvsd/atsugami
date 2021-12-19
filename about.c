@@ -7,7 +7,6 @@ void about_activate(GSimpleAction *action, GVariant *parameter, gpointer user_da
 	GtkBuilder *builder = gtk_builder_new();
 	GtkWidget *about_dlg;
 
-//	if (gtk_builder_add_from_file(builder, "atsugami.glade" , NULL) == 0) {
 	if (gtk_builder_add_from_file(builder, GLADEFILE, NULL) == 0) {
 		printf("gtk_builder_add_from_file FAILED\n");
 	}

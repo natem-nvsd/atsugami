@@ -1,10 +1,16 @@
 ﻿/***********************************************\
+* main.c: location of main() in Atsugami.	*
+*						*
 * TODO:						*
-* - 
+* - Re-write UI in C				*
+* - Create new error banner when uuid-ossp is	*
+* available/ENOENT				*
+*						*
 \***********************************************/
+
 #include "about.h"
 #include <errno.h>
-//#include "error_dialogs.h"
+#include "error_dialogs.h"
 #include <glib/gstdio.h>
 #include <gtk/gtk.h>
 #include "import.h"
@@ -26,10 +32,10 @@ static void quit_activate(GSimpleAction *action, GVariant *parameter, gpointer u
 static GActionEntry win_entries[] = {
 	{ "quit",   quit_activate,   NULL, NULL, NULL },
 	{ "import", import_activate, NULL, NULL, NULL },
-//	{ "importBulk", import_bulk_activate, NULL, NULL, NULL },
-//	{ "importBulk", do_expander, NULL, NULL, NULL },
+//	{ "import_bulk", import_bulk_activate, NULL, NULL, NULL },
+//	{ "import_bulk", error_activate, NULL, NULL, NULL },
 //	{ "help",   help_activate,   NULL, NULL, NULL },
-	{ "about",  about_activate,  NULL, NULL, NULL },
+	{ "about",  about_activate,  NULL, NULL, NULL }
 };
 
 int main(int argc, char *argv[]) {
@@ -38,7 +44,6 @@ int main(int argc, char *argv[]) {
 
 	GtkWidget *window;
 	GtkBuilder *builder = NULL;
-
 	GtkWidget *warn_banner;
 	GtkWidget *error_banner;
 	GtkWidget *warnLabel;

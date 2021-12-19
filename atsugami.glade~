@@ -10,7 +10,8 @@
     <property name="program-name">Atsugami</property>
     <property name="version">0.52</property>
     <property name="copyright" translatable="yes">Nate Morrison</property>
-    <property name="comments" translatable="yes">- images can now be imported</property>
+    <property name="comments" translatable="yes">- images can now be imported
+- Glade file integrity testing</property>
     <property name="website">https://atsugami.nvsd.ca</property>
     <property name="authors">Nate Morrison</property>
     <property name="logo-icon-name">image-x-generic</property>
@@ -95,7 +96,7 @@
                         <property name="label">Bulk import</property>
                         <property name="visible">True</property>
                         <property name="can-focus">False</property>
-                        <property name="action-name">app.import_bulk</property>
+                        <property name="action-name">app.importBulk</property>
                         <property name="use-underline">True</property>
                         <property name="image">image2</property>
                         <property name="use-stock">False</property>
