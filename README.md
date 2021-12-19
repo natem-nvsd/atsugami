@@ -2,20 +2,17 @@ Atsugami
 ========
 Tool for managing and tagging your images.
 
-# Limits  
+### Limits  
 Atsugami has a maximum supported image size of 999,999 square pixels; of course, you can change this in the code.
 
-# Dependencies  
+### Dependencies  
 PostgreSQL (Tested on 14 and 14.1)  
 GTK3
 C11-compliant C complier (Tested with Clang 11.0.1)  
 BSD make
 
-# Building  
+### Building  and installation
 `make`  
-
-
-# Installing  
 `sudo make install`  
 
 # To do:  

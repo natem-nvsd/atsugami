@@ -22,6 +22,7 @@ int int_width;
 int int_height;
 char char_width[6]; /* only corrupt, damaged, or malicisious images can over flow these two buffers; fix them */
 char char_height[6];
+char rating[13];
 char query_string[20480]; /*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
 char child_uuids[2048];   /* THESE MUST BE FIXED TO PREVENT BUFFER OVERFLOWS */
 extern char psql_error[2048];    /*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
@@ -61,7 +62,11 @@ static void on_assistant_apply(GtkWidget *widget, gpointer data) {
 	const gchar *text6;
 
 	/* Create the query to submit to PostgreSQL */
-	strcpy(query_string, "INSERT INTO public.files (path, artist, copyrights, characters, tags, source, width, height, is_parent, is_child, parent_uuid, child_uuids, imported_at) VALUES ('");
+	strcpy(query_string, "INSERT INTO public.files (rating, path, artist, copyrights, characters, tags, source, width, height, is_parent, is_child, parent_uuid, child_uuids, imported_at) VALUES ('");
+
+	/* add the rating to the query */
+	strcat(query_string, rating);
+	strcat(query_string, "', '");
 
 	/* add the file path to the query */
 	strcat(query_string, import_file_path);

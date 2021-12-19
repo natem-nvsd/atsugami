@@ -5,6 +5,7 @@
 * - Re-write UI in C				*
 * - Create new error banner when uuid-ossp is	*
 * available/ENOENT				*
+* - Add EXIF support				*
 *						*
 \***********************************************/
 
