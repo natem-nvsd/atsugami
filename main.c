@@ -23,7 +23,7 @@
 #include <stdio.h>
 
 PGconn *conn;
-char conninfo[] = "dbname=asugami"; /* Sets the database for dbconnect() */
+char conninfo[] = "dbname=atsugami"; /* Sets the database for dbconnect() */
 
 /* Quit function */
 static void quit_activate(GSimpleAction *action, GVariant *parameter, gpointer user_data) {
@@ -203,6 +203,7 @@ int main(int argc, char *argv[]) {
 	warn_area = gtk_info_bar_get_content_area(warn_bar);
 	gtk_container_add(GTK_CONTAINER(warn_area), warn_image);
 	gtk_container_add(GTK_CONTAINER(warn_area), warn_label);
+	gtk_info_bar_set_revealed(warn_bar, FALSE);
 	
 	/* Add warn_bar to vbox */
 	gtk_info_bar_set_message_type(warn_bar, GTK_MESSAGE_WARNING);
@@ -226,6 +227,7 @@ int main(int argc, char *argv[]) {
 	error_area = gtk_info_bar_get_content_area(error_bar);
 	gtk_container_add(GTK_CONTAINER(error_area), error_image);
 	gtk_container_add(GTK_CONTAINER(error_area), error_label);
+	gtk_info_bar_set_revealed(error_bar, FALSE);
 
 	/* Add error_bar to vbox */
 	gtk_info_bar_set_message_type(error_bar, GTK_MESSAGE_ERROR);
@@ -233,7 +235,9 @@ int main(int argc, char *argv[]) {
 
 	/* Show error info bar if the connection fails */
 	if (PQstatus(conn) != CONNECTION_OK) {
-		gtk_widget_show(error_bar);
+		//gtk_widget_show(error_bar);
+		//gtk_widget_set_no_show_all(error_widget, FALSE);
+		gtk_info_bar_set_revealed(error_bar, TRUE);
 
 		//int n = sizeof(PQerrorMessage(conn));
 		char errMsg[1024];
