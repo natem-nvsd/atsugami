@@ -105,7 +105,7 @@ extern GtkWidget *postgres_error_activate(GtkWidget *do_widget) {
 	gtk_text_view_set_editable(GTK_TEXT_VIEW(tv), FALSE);
 	gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(tv), GTK_WRAP_WORD);
 	gtk_text_buffer_set_text(GTK_TEXT_BUFFER(buffer), psql_error, -1);
-	fprintf(stderr, psql_error);
+	fprintf(stderr, "%s\n", psql_error);
 	gtk_container_add(GTK_CONTAINER(sw), tv);
 	gtk_container_add(GTK_CONTAINER(expander), sw);
 	gtk_box_pack_end(GTK_BOX(area), expander, TRUE, TRUE, 0);

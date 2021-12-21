@@ -23,9 +23,10 @@ int int_height;
 char char_width[6]; /* only corrupt, damaged, or malicisious images can over flow these two buffers; fix them */
 char char_height[6];
 char rating[13];
-char query_string[20480]; /*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
-char child_uuids[2048];   /* THESE MUST BE FIXED TO PREVENT BUFFER OVERFLOWS */
-extern char psql_error[2048];    /*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
+char query_string[20480];	/*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
+char child_uuids[2048];		/* THESE MUST BE FIXED TO PREVENT BUFFER OVERFLOWS */
+//static const char *restricted[] { "%", "--", ";", "\n", "\"", "'", "(", ")", "[", "]", "{", "}", };
+extern char psql_error[2048];	/*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
 bool parent_bool;
 bool child_bool;
 bool has_children;
@@ -45,7 +46,6 @@ static gboolean apply_changes_gradually(gpointer data) {
 	else {
 		/* Close automatically once changes are fully applied. */
 		gtk_widget_destroy(assistant);
-		assistant = NULL;
 		return G_SOURCE_REMOVE;
 	}
 }
@@ -172,8 +172,8 @@ static void on_assistant_apply(GtkWidget *widget, gpointer data) {
 
 	/* Show an error dialog if the query failed */
 	if (PQresultStatus(res) != PGRES_TUPLES_OK) {
-		strcpy(psql_error, PQerrorMessage(conn));
-		printf("%s\n", psql_error);
+//		strcpy(psql_error, PQerrorMessage(conn));
+//		printf("%s\n", psql_error);
 //		postgres_error_activate();
 		PQclear(res);
 	}
