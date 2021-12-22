@@ -25,7 +25,6 @@ char char_height[6];
 char rating[13];
 char query_string[20480];	/*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
 char child_uuids[2048];		/* THESE MUST BE FIXED TO PREVENT BUFFER OVERFLOWS */
-//static const char *restricted[] { "%", "--", ";", "\n", "\"", "'", "(", ")", "[", "]", "{", "}", };
 extern char psql_error[2048];	/*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
 bool parent_bool;
 bool child_bool;
@@ -172,9 +171,9 @@ static void on_assistant_apply(GtkWidget *widget, gpointer data) {
 
 	/* Show an error dialog if the query failed */
 	if (PQresultStatus(res) != PGRES_TUPLES_OK) {
-//		strcpy(psql_error, PQerrorMessage(conn));
-//		printf("%s\n", psql_error);
-//		postgres_error_activate();
+		strcpy(psql_error, PQerrorMessage(conn));
+		printf("%s\n", psql_error);
+		postgres_error_activate();
 		PQclear(res);
 	}
 
@@ -250,7 +249,6 @@ static void wizard_create_page0(GtkWidget *assistant) {
 	box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 10);
 	gtk_container_set_border_width(GTK_CONTAINER(box), 10);
 
-//	image = gtk_image_new_from_pixbuf(image_pixbuf); /* THis doesn't work */
 	gtk_box_pack_start(GTK_BOX(box), image_preview, FALSE, FALSE, 0);
 
 	/* First label and text field */
@@ -262,8 +260,7 @@ static void wizard_create_page0(GtkWidget *assistant) {
 	gtk_entry_set_activates_default(GTK_ENTRY(entry0), TRUE);
 	gtk_widget_set_valign(entry0, GTK_ALIGN_START);
 	gtk_box_pack_start(GTK_BOX(box), entry0, TRUE, TRUE, 0);
-	g_signal_connect(G_OBJECT(entry0), "changed",
-	G_CALLBACK(on_wizard_entry_changed), assistant);
+	g_signal_connect(G_OBJECT(entry0), "changed", G_CALLBACK(on_wizard_entry_changed), assistant);
 
 	/* Second label text field */
 	label1 = gtk_label_new("Enter copyrights here:");
@@ -274,8 +271,7 @@ static void wizard_create_page0(GtkWidget *assistant) {
 	gtk_entry_set_activates_default(GTK_ENTRY(entry1), TRUE);
 	gtk_widget_set_valign(entry1, GTK_ALIGN_START);
 	gtk_box_pack_start(GTK_BOX(box), entry1, TRUE, TRUE, 0);
-	g_signal_connect(G_OBJECT(entry1), "changed",
-	G_CALLBACK(on_wizard_entry_changed), assistant);
+	g_signal_connect(G_OBJECT(entry1), "changed", G_CALLBACK(on_wizard_entry_changed), assistant);
 
 	/* Third label and text field */
 	label2 = gtk_label_new("Enter character names here:");
@@ -286,8 +282,7 @@ static void wizard_create_page0(GtkWidget *assistant) {
 	gtk_entry_set_activates_default(GTK_ENTRY(entry2), TRUE);
 	gtk_widget_set_valign(entry2, GTK_ALIGN_START);
 	gtk_box_pack_start(GTK_BOX(box), entry2, TRUE, TRUE, 0);
-	g_signal_connect(G_OBJECT(entry2), "changed",
-	G_CALLBACK(on_wizard_entry_changed), assistant);
+	g_signal_connect(G_OBJECT(entry2), "changed", G_CALLBACK(on_wizard_entry_changed), assistant);
 
 	/* Fourth label and text field */
 	label3 = gtk_label_new("Enter tags here:");
@@ -298,8 +293,7 @@ static void wizard_create_page0(GtkWidget *assistant) {
 	gtk_entry_set_activates_default(GTK_ENTRY(entry3), TRUE);
 	gtk_widget_set_valign(entry3, GTK_ALIGN_START);
 	gtk_box_pack_start(GTK_BOX(box), entry3, TRUE, TRUE, 0);
-	g_signal_connect(G_OBJECT(entry3), "changed",
-	G_CALLBACK(on_wizard_entry_changed), assistant);
+	g_signal_connect(G_OBJECT(entry3), "changed", G_CALLBACK(on_wizard_entry_changed), assistant);
 
 	/* Fifth label and text field */
 	label4 = gtk_label_new("Enter source URL here:");
@@ -310,8 +304,7 @@ static void wizard_create_page0(GtkWidget *assistant) {
 	gtk_entry_set_activates_default(GTK_ENTRY(entry4), TRUE);
 	gtk_widget_set_valign(entry4, GTK_ALIGN_START);
 	gtk_box_pack_start(GTK_BOX(box), entry4, TRUE, TRUE, 0);
-	g_signal_connect(G_OBJECT(entry4), "changed",
-	G_CALLBACK(on_wizard_entry_changed), assistant);
+	g_signal_connect(G_OBJECT(entry4), "changed", G_CALLBACK(on_wizard_entry_changed), assistant);
 
 	/* Display the window */
 	gtk_widget_show_all(box); /* Don't mess with this code */

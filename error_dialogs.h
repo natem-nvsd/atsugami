@@ -1,6 +1,9 @@
 /* error_dialogs.h */
 #include <gtk/gtk.h>
 #include "main.h"
+
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+
 #ifndef FUNCTIONS_H_INCLUDED
 #define FUNCTIONS_H_INCLUDED
 

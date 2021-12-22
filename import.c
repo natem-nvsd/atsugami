@@ -29,7 +29,7 @@ static void open_response_cb(GtkNativeDialog *dialog, gint response_id, gpointer
 }
 
 /* The import window itself */
-extern void import_activate(GSimpleAction *action, GVariant *parameter, gpointer user_data) {
+extern void import_activate(gpointer user_data) {
 	GApplication *app = user_data;
 	GtkFileChooserNative *native;
 	GtkFileFilter *filter0;
