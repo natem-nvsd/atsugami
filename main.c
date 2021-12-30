@@ -268,7 +268,7 @@ int main(int argc, char *argv[]) {
 	g_signal_connect(favourite_button, "clicked", G_CALLBACK(NULL), NULL);
 	g_signal_connect(view_button, "clicked", G_CALLBACK(NULL), NULL);
 	g_signal_connect(wiki_button, "clicked", G_CALLBACK(NULL), NULL);
-	g_signal_connect(quit_button, "clicked", G_CALLBACK(gtk_main_quit), NULL); /* segfault when quit_activate called */
+	g_signal_connect(quit_button, "clicked", G_CALLBACK(gtk_main_quit), NULL);	/* segfault when quit_activate called */
 
 	/* Warning info bar */
 	GtkWidget *warn_widget, *warn_label, *warn_area, *warn_grid;
@@ -334,7 +334,7 @@ int main(int argc, char *argv[]) {
 	gtk_box_pack_start(GTK_BOX(vbox), giv, FALSE, FALSE, 0);
 	
 	/* Show items from the database on startup */
-	PQexec(conn, "SELECT path FROM public.files;");
+	PQexec(conn, "SELECT path FROM public.files;");	/* this doesn't return anything that can be used (or anything at all) */
 	// Show an error dialog if the query failed
 	/*	This is causing a segfault; fix later.
 	if (PQresultStatus(mainres) != PGRES_TUPLES_OK) {

@@ -1,6 +1,6 @@
 Atsugami
 ========
-[![a](https://github.com/natem-nvsd/atsugami/blob/master/readme_header_picture.png)]
+[![.](https://github.com/natem-nvsd/atsugami/blob/master/readme_header_picture.png)]
 
 ### Limits  
 Atsugami has a maximum supported image size of 999,999 square pixels; of course, you can change this in the code.
@@ -12,11 +12,8 @@ Clang
 BSD make  
 
 ### Building  and installation
-`make`  
-`sudo make install`  
-
-# To do:  
--	Automatically construct a SQL query and submit it  
+```make
+sudo make install```  
 
 ### Colours:
 ff8a8b: Artist		XTerm 204  
