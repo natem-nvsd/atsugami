@@ -2,9 +2,9 @@
 * main.c: location of main() in Atsugami.	*
 *						*
 * TODO:						*
-* - Re-write UI in C				*
+* - Re-write UI in C | rewrite About dialog	*
 * - Create new error banner when uuid-ossp is	*
-* available/ENOENT				*
+* ENOENT					*	
 * - Add EXIF support				*
 * - Fix incompatible pointers			*
 *						*
@@ -109,7 +109,7 @@ int main(int argc, char *argv[]) {
 
 	GtkWidget *help_menu_item;
 	GtkWidget *help_menu_button;
-	GtkWidget *about_menu_button;
+	GtkWidget *about_menu_item;
 
 	/* Create the menu bar */
 	menu_bar = gtk_menu_bar_new();
@@ -145,7 +145,7 @@ int main(int argc, char *argv[]) {
 
 	help_menu_item = gtk_menu_item_new_with_label("Help");
 	help_menu_button = gtk_menu_item_new_with_label("Help");
-	about_menu_button = gtk_menu_item_new_with_label("About");
+	about_menu_item = gtk_menu_item_new_with_label("About");
 
 	/* File menu */
 	gtk_menu_item_set_submenu(GTK_MENU_ITEM(file_menu_item), file_menu);
@@ -181,12 +181,14 @@ int main(int argc, char *argv[]) {
 	gtk_menu_item_set_submenu(GTK_MENU_ITEM(help_menu_item), help_menu);
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu_bar), help_menu_item);
 	gtk_menu_shell_append(GTK_MENU_SHELL(help_menu), help_menu_button);
-	gtk_menu_shell_append(GTK_MENU_SHELL(help_menu), about_menu_button);
+	gtk_menu_shell_append(GTK_MENU_SHELL(help_menu), about_menu_item);
 	gtk_box_pack_start(GTK_BOX(vbox), menu_bar, FALSE, FALSE, 0);
 
 	/* Menu bar callbacks */
 	g_signal_connect(import_menu_item, "activate", G_CALLBACK(import_activate), NULL);
-	g_signal_connect(quit_menu_item, "activate", G_CALLBACK(gtk_main_quit), NULL);
+	g_signal_connect(quit_menu_item,   "activate", G_CALLBACK(quit_activate), NULL);
+
+	g_signal_connect(about_menu_item, "activate", G_CALLBACK(about_activate), NULL);
 	//g_signal_connect(G_OBJECT(import_menu_item), "activate", G_CALLBACK(import_activate), NULL);
 
 	/* Toolbar */
@@ -236,8 +238,8 @@ int main(int argc, char *argv[]) {
 	search_tag_wrapper = gtk_tool_item_new();
 	search_wiki_wrapper = gtk_tool_item_new();
 
-	gtk_tool_item_set_proxy_menu_item(search_tag_wrapper, 0, search_by_tag);
-	gtk_tool_item_set_proxy_menu_item(search_wiki_wrapper, 0, search_wiki);
+	gtk_container_add(GTK_CONTAINER(search_tag_wrapper), GTK_WIDGET(search_by_tag));
+	gtk_container_add(GTK_CONTAINER(search_wiki_wrapper), GTK_WIDGET(search_wiki));
 
 	/* Add widgets to the toolbar */
 	gtk_toolbar_insert(toolbar, import_button, 0);

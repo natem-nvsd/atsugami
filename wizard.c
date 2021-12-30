@@ -18,8 +18,6 @@ float workarea_width;
 float workarea_height;
 float width;
 float height;
-int int_width;
-int int_height;
 char char_width[6]; /* only corrupt, damaged, or malicisious images can over flow these two buffers; fix them */
 char char_height[6];
 char rating[13];
@@ -30,28 +28,7 @@ bool parent_bool;
 bool child_bool;
 bool has_children;
 
-/* Work bar from gtk3-demo program */
-static gboolean apply_changes_gradually(gpointer data) {
-	gdouble fraction;
-
-	/* Work, work, work... */
-	fraction = gtk_progress_bar_get_fraction (GTK_PROGRESS_BAR (progress_bar));
-	fraction += 0.05;
-
-	if (fraction < 1.0) {
-		gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(progress_bar), fraction);
-		return G_SOURCE_CONTINUE;
-	}
-	else {
-		/* Close automatically once changes are fully applied. */
-		gtk_widget_destroy(assistant);
-		return G_SOURCE_REMOVE;
-	}
-}
-
 static void on_assistant_apply(GtkWidget *widget, gpointer data) {
-	/* Start a timer to simulate changes taking a few seconds to apply. */
-	g_timeout_add(50, apply_changes_gradually, NULL);
 	const gchar *text0;
 	const gchar *text1;
 	const gchar *text2;
@@ -61,11 +38,7 @@ static void on_assistant_apply(GtkWidget *widget, gpointer data) {
 	const gchar *text6;
 
 	/* Create the query to submit to PostgreSQL */
-	strcpy(query_string, "INSERT INTO public.files (rating, path, artist, copyrights, characters, tags, source, width, height, is_parent, is_child, parent_uuid, child_uuids, imported_at) VALUES ('");
-
-	/* add the rating to the query */
-	strcat(query_string, rating);
-	strcat(query_string, "', '");
+	strcpy(query_string, "INSERT INTO public.files (path, artist, copyrights, characters, tags, source, rating, width, height, is_parent, is_child, parent_uuid, child_uuids, imported_at) VALUES ('");
 
 	/* add the file path to the query */
 	strcat(query_string, import_file_path);
@@ -110,6 +83,10 @@ static void on_assistant_apply(GtkWidget *widget, gpointer data) {
 		strcat(query_string, text3);
 		strcat(query_string, "}', '");
 	}
+
+	/* add the rating to the query */
+	strcat(query_string, rating);
+	strcat(query_string, "', '");
 
 	/* Entry fields from page4 */
 	text4 = gtk_entry_get_text(GTK_ENTRY(entry4));	/* Source */
@@ -221,8 +198,11 @@ static void on_wizard_entry_changed(GtkWidget *widget, gpointer data) {
 
 static void wizard_create_page0(GtkWidget *assistant) {
 	GtkWidget *box, *image_preview, *label0, *label1, *label2, *label3, *label4;
-	float aspect_ratio;
-	GdkPixbuf *image_preview_pixbuf;
+	GdkPixbuf *image_preview_pixbuf = NULL;
+	int int_width;
+	int int_height;
+	int win_height;
+	int win_width;
 
 	image = gtk_image_new_from_file(import_file_path);
 	image_pixbuf = gdk_pixbuf_new_from_file(import_file_path, NULL);
@@ -239,12 +219,28 @@ static void wizard_create_page0(GtkWidget *assistant) {
 	sprintf(char_width, "%d", int_width);
 	sprintf(char_height, "%d", int_height);
 
-	/* Calculate the aspect ratio */
-	aspect_ratio = width / height;
+	gtk_window_get_size(GTK_WIDGET(assistant), &win_height, &win_width);
 
-	/* Resize the input image */
-	image_preview_pixbuf = gdk_pixbuf_scale_simple(image_pixbuf, (width * 0.25), (height * 0.25), GDK_INTERP_BILINEAR);
-	image_preview = gtk_image_new_from_pixbuf(image_preview_pixbuf);
+	printf("Window width: %d\n",  win_width);
+	printf("Window height: %d\n", win_height);
+	printf("Image width: %d\n",  int_width);
+	printf("Image height: %d\n", int_height);
+
+	/* Resize the input image
+	*  Lower resolution images will show up bigger (but less than their original resolution), and large images will be more
+	* appropriately sized */
+	if (int_width < win_width || int_height < win_height) {
+		image_preview_pixbuf = gdk_pixbuf_scale_simple(image_pixbuf, (width * 0.75), (height * 0.75), GDK_INTERP_BILINEAR);
+		image_preview = gtk_image_new_from_pixbuf(image_preview_pixbuf);
+	}
+	else if (int_width > win_width || int_height > win_height) {
+		image_preview_pixbuf = gdk_pixbuf_scale_simple(image_pixbuf, (width * 0.25), (height * 0.25), GDK_INTERP_BILINEAR);
+		image_preview = gtk_image_new_from_pixbuf(image_preview_pixbuf);
+	}
+	else if (int_width > win_width || int_height > win_height) {
+		image_preview_pixbuf = gdk_pixbuf_scale_simple(image_pixbuf, (width * 0.25), (height * 0.25), GDK_INTERP_BILINEAR);
+		image_preview = gtk_image_new_from_pixbuf(image_preview_pixbuf);
+	}
 
 	box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 10);
 	gtk_container_set_border_width(GTK_CONTAINER(box), 10);
@@ -259,17 +255,19 @@ static void wizard_create_page0(GtkWidget *assistant) {
 	entry0 = gtk_entry_new();
 	gtk_entry_set_activates_default(GTK_ENTRY(entry0), TRUE);
 	gtk_widget_set_valign(entry0, GTK_ALIGN_START);
+	gtk_entry_set_placeholder_text(entry0, "Values are separated by commas; spaces are optional.");
 	gtk_box_pack_start(GTK_BOX(box), entry0, TRUE, TRUE, 0);
 	g_signal_connect(G_OBJECT(entry0), "changed", G_CALLBACK(on_wizard_entry_changed), assistant);
 
 	/* Second label text field */
-	label1 = gtk_label_new("Enter copyrights here:");
+	label1 = gtk_label_new("Enter copyrights here, separated by commas (and spaces):");
 	gtk_widget_set_halign(label1, GTK_ALIGN_START);
 	gtk_box_pack_start(GTK_BOX(box), label1, FALSE, FALSE, 0);
 
 	entry1 = gtk_entry_new();
 	gtk_entry_set_activates_default(GTK_ENTRY(entry1), TRUE);
 	gtk_widget_set_valign(entry1, GTK_ALIGN_START);
+	gtk_entry_set_placeholder_text(entry1, "Values are separated by commas; spaces are optional.");
 	gtk_box_pack_start(GTK_BOX(box), entry1, TRUE, TRUE, 0);
 	g_signal_connect(G_OBJECT(entry1), "changed", G_CALLBACK(on_wizard_entry_changed), assistant);
 
@@ -281,6 +279,7 @@ static void wizard_create_page0(GtkWidget *assistant) {
 	entry2 = gtk_entry_new();
 	gtk_entry_set_activates_default(GTK_ENTRY(entry2), TRUE);
 	gtk_widget_set_valign(entry2, GTK_ALIGN_START);
+	gtk_entry_set_placeholder_text(entry2, "Values are separated by commas; spaces are optional.");
 	gtk_box_pack_start(GTK_BOX(box), entry2, TRUE, TRUE, 0);
 	g_signal_connect(G_OBJECT(entry2), "changed", G_CALLBACK(on_wizard_entry_changed), assistant);
 
@@ -292,6 +291,7 @@ static void wizard_create_page0(GtkWidget *assistant) {
 	entry3 = gtk_entry_new();
 	gtk_entry_set_activates_default(GTK_ENTRY(entry3), TRUE);
 	gtk_widget_set_valign(entry3, GTK_ALIGN_START);
+	gtk_entry_set_placeholder_text(entry3, "Values are separated by commas; spaces are optional.");
 	gtk_box_pack_start(GTK_BOX(box), entry3, TRUE, TRUE, 0);
 	g_signal_connect(G_OBJECT(entry3), "changed", G_CALLBACK(on_wizard_entry_changed), assistant);
 
@@ -303,8 +303,11 @@ static void wizard_create_page0(GtkWidget *assistant) {
 	entry4 = gtk_entry_new();
 	gtk_entry_set_activates_default(GTK_ENTRY(entry4), TRUE);
 	gtk_widget_set_valign(entry4, GTK_ALIGN_START);
+	gtk_entry_set_placeholder_text(entry4, "Values are separated by commas; spaces are optional.");
 	gtk_box_pack_start(GTK_BOX(box), entry4, TRUE, TRUE, 0);
 	g_signal_connect(G_OBJECT(entry4), "changed", G_CALLBACK(on_wizard_entry_changed), assistant);
+
+	/* Add a GTK combo box here */
 
 	/* Display the window */
 	gtk_widget_show_all(box); /* Don't mess with this code */

@@ -4,6 +4,7 @@
 //#define GLADEFILEHASH "a3dbbc3447a7d23c6eac31489b624194cc5d5fb5037373c14c940cbf9bb7d600"
 #define VERSION 0.53.2
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"
+#pragma clang diagnostic ignored "-Wincompatible-pointer-types"
 
 typedef _Bool bool;
 
