@@ -1,16 +1,16 @@
-﻿/***********************************************\
-* main.c: location of main() in Atsugami.	*
-*						*
-* TODO:						*
-* - Re-write UI in C | rewrite About dialog	*
-* - Create new error banner when uuid-ossp is	*
-* ENOENT					*	
-* - Add EXIF support				*
-* - Fix incompatible pointers			*
-*						*
-* - URGENT: prevent SQL injection		*
-*						*
-\***********************************************/
+﻿/***************************************************************\
+* main.c: location of main() in Atsugami.			*
+*								*
+* TODO:								*
+* - Re-write UI in C | rewrite About dialog			*
+* - Create new error banner when uuid-ossp is ENOENT		*
+* - Add EXIF support						*
+* - Fix incompatible pointers					*
+*								*
+* - URGENT: prevent SQL injection				*
+*								*
+* Glade is not a suitable replacement for hand-written code.	*
+\***************************************************************/
 
 #include "about.h"
 #include <errno.h>
@@ -21,9 +21,12 @@
 #include <libpq-fe.h>
 #include "main.h"
 #include <stdio.h>
+#include "wizard.h"
 
+PGresult *mainres;
 PGconn *conn;
 char conninfo[] = "dbname=atsugami"; /* Sets the database for dbconnect() */
+char main_psql_error[2048];
 
 /* Quit function */
 static void quit_activate(GSimpleAction *action, GVariant *parameter, gpointer user_data) {
@@ -52,8 +55,8 @@ int main(int argc, char *argv[]) {
 	GtkWidget *vbox;
 	GtkWidget *menu_bar;
 	GtkWidget *toolbar;
+	GtkWidget *giv;
 
-	//GtkIconFactory *gif;
 	GActionGroup *actions;
 	//GtkAccelGroup *accel_group;
 
@@ -69,7 +72,7 @@ int main(int argc, char *argv[]) {
 
 	/* Create the virtical box */
 	vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
-	gtk_container_set_border_width(GTK_CONTAINER(vbox), 10);
+	gtk_container_set_border_width(GTK_CONTAINER(vbox), 0);
 	gtk_container_add(GTK_CONTAINER(window), vbox);
 
 	/* Actions */
@@ -110,6 +113,28 @@ int main(int argc, char *argv[]) {
 	GtkWidget *help_menu_item;
 	GtkWidget *help_menu_button;
 	GtkWidget *about_menu_item;
+
+	// Toolbar
+	GtkWidget *import_button;
+	GtkWidget *bulk_import_button;
+	GtkWidget *edit_button;
+	GtkWidget *favourite_button;
+	GtkWidget *view_button;
+	GtkWidget *wiki_button;
+	GtkWidget *quit_button; 
+	GtkWidget *he_will_not_divide_us;
+	GtkWidget *search_by_tag;
+	GtkWidget *search_wiki;
+	GtkWidget *search_tag_wrapper;
+	GtkWidget *search_wiki_wrapper;
+
+	GtkImage *import_image;
+	GtkImage *bulk_import_image;
+	GtkImage *edit_image;
+	GtkImage *favourite_image;
+	GtkImage *view_image;
+	GtkImage *wiki_image;
+	GtkImage *quit_image;
 
 	/* Create the menu bar */
 	menu_bar = gtk_menu_bar_new();
@@ -186,31 +211,10 @@ int main(int argc, char *argv[]) {
 
 	/* Menu bar callbacks */
 	g_signal_connect(import_menu_item, "activate", G_CALLBACK(import_activate), NULL);
-	g_signal_connect(quit_menu_item,   "activate", G_CALLBACK(quit_activate), NULL);
-
+	g_signal_connect(quit_menu_item,   "activate", G_CALLBACK(gtk_main_quit), NULL);	/* segfault when quit_activate */
 	g_signal_connect(about_menu_item, "activate", G_CALLBACK(about_activate), NULL);
-	//g_signal_connect(G_OBJECT(import_menu_item), "activate", G_CALLBACK(import_activate), NULL);
 
 	/* Toolbar */
-	GtkWidget *import_button;
-	GtkWidget *bulk_import_button;
-	GtkWidget *edit_button;
-	GtkWidget *view_button;
-	GtkWidget *wiki_button;
-	GtkWidget *quit_button; 
-	GtkWidget *he_will_not_divide_us;
-	GtkWidget *search_by_tag;
-	GtkWidget *search_wiki;
-	GtkWidget *search_tag_wrapper;
-	GtkWidget *search_wiki_wrapper;
-
-	GtkImage *import_image;
-	GtkImage *bulk_import_image;
-	GtkImage *edit_image;
-	GtkImage *view_image;
-	GtkImage *wiki_image;
-	GtkImage *quit_image;
-
 	toolbar = gtk_toolbar_new();
 	gtk_toolbar_set_style(toolbar, GTK_TOOLBAR_BOTH_HORIZ);
 	gtk_box_pack_start(GTK_BOX(vbox), toolbar, FALSE, FALSE, 0);
@@ -220,13 +224,15 @@ int main(int argc, char *argv[]) {
 	bulk_import_image = gtk_image_new_from_stock("gtk-dnd-multiple", GTK_ICON_SIZE_LARGE_TOOLBAR);
 	edit_image = gtk_image_new_from_icon_name("gtk-edit", GTK_ICON_SIZE_LARGE_TOOLBAR);
 	view_image = gtk_image_new_from_icon_name("image-x-generic", GTK_ICON_SIZE_LARGE_TOOLBAR);
+	favourite_image = gtk_image_new_from_icon_name("emblem-favorite", GTK_ICON_SIZE_LARGE_TOOLBAR);
 	wiki_image = gtk_image_new_from_stock("gtk-file", GTK_ICON_SIZE_LARGE_TOOLBAR);
-	quit_image = gtk_image_new_from_stock("gtk-quit", GTK_ICON_SIZE_LARGE_TOOLBAR);
+	quit_image = gtk_image_new_from_icon_name("system-log-out", GTK_ICON_SIZE_LARGE_TOOLBAR);
 
 	/* Widgets */
 	import_button = gtk_tool_button_new(import_image, NULL);
 	bulk_import_button = gtk_tool_button_new(bulk_import_image, NULL);
 	edit_button = gtk_tool_button_new(edit_image, NULL);
+	favourite_button = gtk_tool_button_new(favourite_image, NULL);
 	view_button = gtk_tool_button_new(view_image, NULL);
 	wiki_button = gtk_tool_button_new(wiki_image, NULL);
 	quit_button = gtk_tool_button_new(quit_image, NULL);
@@ -238,6 +244,8 @@ int main(int argc, char *argv[]) {
 	search_tag_wrapper = gtk_tool_item_new();
 	search_wiki_wrapper = gtk_tool_item_new();
 
+	gtk_entry_set_placeholder_text(search_by_tag, "Search for images");
+	gtk_entry_set_placeholder_text(search_wiki, "Search the wiki");
 	gtk_container_add(GTK_CONTAINER(search_tag_wrapper), GTK_WIDGET(search_by_tag));
 	gtk_container_add(GTK_CONTAINER(search_wiki_wrapper), GTK_WIDGET(search_wiki));
 
@@ -245,17 +253,19 @@ int main(int argc, char *argv[]) {
 	gtk_toolbar_insert(toolbar, import_button, 0);
 	gtk_toolbar_insert(toolbar, bulk_import_button, 1);
 	gtk_toolbar_insert(toolbar, edit_button, 2);
-	gtk_toolbar_insert(toolbar, view_button, 3);
-	gtk_toolbar_insert(toolbar, wiki_button, 4);
-	gtk_toolbar_insert(toolbar, quit_button, 5);
-	gtk_toolbar_insert(toolbar, he_will_not_divide_us, 6);
-	gtk_toolbar_insert(toolbar, search_tag_wrapper, 7);
-	gtk_toolbar_insert(toolbar, search_wiki_wrapper, 8);
+	gtk_toolbar_insert(toolbar, favourite_button, 3);
+	gtk_toolbar_insert(toolbar, view_button, 4);
+	gtk_toolbar_insert(toolbar, wiki_button, 5);
+	gtk_toolbar_insert(toolbar, quit_button, 6);
+	gtk_toolbar_insert(toolbar, he_will_not_divide_us, 7);
+	gtk_toolbar_insert(toolbar, search_tag_wrapper, 8);
+	gtk_toolbar_insert(toolbar, search_wiki_wrapper, 9);
 
 	/* Toolbar callbacks */
 	g_signal_connect(import_button, "clicked", G_CALLBACK(import_activate), NULL);
 	g_signal_connect(bulk_import_button, "clicked", G_CALLBACK(import_activate), NULL);
 	g_signal_connect(edit_button, "clicked", G_CALLBACK(NULL), NULL);
+	g_signal_connect(favourite_button, "clicked", G_CALLBACK(NULL), NULL);
 	g_signal_connect(view_button, "clicked", G_CALLBACK(NULL), NULL);
 	g_signal_connect(wiki_button, "clicked", G_CALLBACK(NULL), NULL);
 	g_signal_connect(quit_button, "clicked", G_CALLBACK(gtk_main_quit), NULL); /* segfault when quit_activate called */
@@ -318,6 +328,25 @@ int main(int argc, char *argv[]) {
 		fprintf(stderr, "Atsugami: %s", PQerrorMessage(conn));
 		gtk_label_set_text(GTK_LABEL(error_label), errMsg);
 	}
+
+	/* Gtk Icon View */
+	giv = gtk_icon_view_new();
+	gtk_box_pack_start(GTK_BOX(vbox), giv, FALSE, FALSE, 0);
+	
+	/* Show items from the database on startup */
+	PQexec(conn, "SELECT path FROM public.files;");
+	// Show an error dialog if the query failed
+	/*	This is causing a segfault; fix later.
+	if (PQresultStatus(mainres) != PGRES_TUPLES_OK) {
+		strcpy(main_psql_error, PQerrorMessage(conn));
+		printf("%s\n", main_psql_error);
+		postgres_error_activate();
+		PQclear(mainres);
+	}
+	*/
+	printf("%s\n", mainres);
+	gtk_icon_view_select_path(giv, mainres);
+	PQclear(mainres);
 
 	/* Show window and vbox */
 	gtk_widget_show_all(vbox);

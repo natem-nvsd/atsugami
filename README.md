@@ -1,6 +1,7 @@
 Atsugami
 ========
 Tool for managing and tagging your images.
+<img>./readme_header_picture.png</img>
 
 ### Limits  
 Atsugami has a maximum supported image size of 999,999 square pixels; of course, you can change this in the code.

@@ -33,4 +33,4 @@ LDFLAGS  += ${LIBS} -lpq
 #PQFLAGS = -lpq
 
 # compiler and linker
-CC = cc
+CC = clang
