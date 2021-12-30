@@ -19,6 +19,7 @@ sudo make install
 
 ### Colours
 ```
+### Colours
 ff8a8b: Artist		XTerm 204  
 c797ff: Copyright	XTerm 135  
 35c64a: Character	XTerm 048  
