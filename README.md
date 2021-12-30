@@ -1,6 +1,6 @@
 Atsugami
 ========
-Tool for managing and tagging your images.
+Tool for managing and tagging your images.  
 <img>./readme_header_picture.png</img>
 
 ### Limits  
