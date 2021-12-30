@@ -7,9 +7,9 @@ Atsugami has a maximum supported image size of 999,999 square pixels; of course,
 
 ### Dependencies  
 PostgreSQL (Tested on 14 and 14.1)  
-GTK3
-Clang
-BSD make
+GTK3  
+Clang  
+BSD make  
 
 ### Building  and installation
 `make`  
