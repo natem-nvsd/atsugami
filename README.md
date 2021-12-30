@@ -1,6 +1,6 @@
 Atsugami
 ========
-[![Tool for managing and tagging your images](https://github.com/natem-nvsd/atsugami/blob/master/readme_header_picture.png)]
+[![a](https://github.com/natem-nvsd/atsugami/blob/master/readme_header_picture.png)]
 
 ### Limits  
 Atsugami has a maximum supported image size of 999,999 square pixels; of course, you can change this in the code.
