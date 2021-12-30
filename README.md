@@ -12,8 +12,8 @@ Clang
 BSD make  
 
 ### Building  and installation
-```make
-sudo make install```  
+```make```
+```sudo make install```
 
 ### Colours:
 ff8a8b: Artist		XTerm 204  
