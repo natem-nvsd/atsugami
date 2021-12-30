@@ -12,7 +12,7 @@ Clang
 BSD make  
 
 ### Building  and installation
-```make```
+```make```  
 ```sudo make install```
 
 ### Colours:
