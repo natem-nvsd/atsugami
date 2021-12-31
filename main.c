@@ -347,10 +347,9 @@ int main(int argc, char *argv[]) {
 
 	scrolled_window = gtk_scrolled_window_new(NULL, NULL);
 	icon_view = gtk_icon_view_new();
+
 	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrolled_window), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
-
 	gtk_box_pack_start(GTK_BOX(vbox), scrolled_window, FALSE, FALSE, 0);
-
 	gtk_container_add(GTK_CONTAINER(scrolled_window), icon_view);
 	
 	/* Show items from the database on startup */
