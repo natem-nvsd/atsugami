@@ -6,7 +6,6 @@
 * - Create new error banner when uuid-ossp is ENOENT		*
 * - Add EXIF support						*
 * - Fix incompatible pointers					*
-* - Add ratings to the import wizard				*
 * - Add searching						*
 * - Add icon view and/or widget factory to main window		*
 * - Resize the image in the wizard so the window fits on screen	*
@@ -57,7 +56,6 @@ int main(int argc, char *argv[]) {
 	GtkWidget *vbox;
 	GtkWidget *menu_bar;
 	GtkWidget *toolbar;
-	GtkWidget *giv;
 
 	GActionGroup *actions;
 	//GtkAccelGroup *accel_group;
@@ -240,6 +238,15 @@ int main(int argc, char *argv[]) {
 	quit_button = gtk_tool_button_new(quit_image, NULL);
 	he_will_not_divide_us = gtk_separator_tool_item_new();
 
+	/* Tooltips */
+	gtk_widget_set_tooltip_text(import_button, "Import an image to Atsugami");
+	gtk_widget_set_tooltip_text(bulk_import_button, "Import multiple images to Atsugami");
+	gtk_widget_set_tooltip_text(edit_button, "Edit the tags of the selected image");
+	gtk_widget_set_tooltip_text(favourite_button, "Add the selected image to your favourites");
+	gtk_widget_set_tooltip_text(view_button, "Open the selected image(s) in an external viewer");
+	gtk_widget_set_tooltip_text(wiki_button, "Open the wiki");
+	gtk_widget_set_tooltip_text(quit_button, "Exit Atsugami");
+
 	/* Search bars */
 	search_by_tag = gtk_search_entry_new();
 	search_wiki = gtk_search_entry_new();
@@ -335,27 +342,32 @@ int main(int argc, char *argv[]) {
 	}
 
 	/* Gtk Icon View */
-	giv = gtk_icon_view_new();
-	gtk_box_pack_start(GTK_BOX(vbox), giv, FALSE, FALSE, 0);
+	GtkWidget *scrolled_window;
+	GtkWidget *icon_view;
+
+	scrolled_window = gtk_scrolled_window_new(NULL, NULL);
+	icon_view = gtk_icon_view_new();
+	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrolled_window), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
+
+	gtk_box_pack_start(GTK_BOX(vbox), scrolled_window, FALSE, FALSE, 0);
+
+	gtk_container_add(GTK_CONTAINER(scrolled_window), icon_view);
 	
 	/* Show items from the database on startup */
 	GtkTreePath *tree_path;
 
 	tree_path = gtk_tree_path_new();
-	//mainres = PQexec(conn, "SELECT path FROM public.files;");
 	mainres = PQexecParams(conn, "SELECT path FROM public.files;", 0, NULL, NULL, NULL, 0, 0);
-	// Show an error dialog if the query failed
-	//	This is causing a segfault; fix later.
+	/* Show an error dialog if the query failed
+	*	This is causing a segfault; fix later. */
 	if (PQresultStatus(mainres) != PGRES_TUPLES_OK) {
 		strcpy(main_psql_error, PQerrorMessage(conn));
 		printf("%s\n", main_psql_error);
 		postgres_error_activate();
 		PQclear(mainres);
 	}
-	printf("Postgres returns:\n%s\n", mainres);
 	//gtk_icon_view_select_path(giv, mainres);	/* The result from postgres must be in plain text */
-	//gtk_icon_view_select_path(giv, mainres);
-	gtk_icon_view_select_path(giv, tree_path);
+	//gtk_icon_view_select_path(giv, mainres);	/* Get the result from pgprint() */
 	PQclear(mainres);
 
 	/* Show window and vbox */

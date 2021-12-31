@@ -436,7 +436,7 @@ static void wizard_create_page1(GtkWidget *assistant) {
 	/* Third check box */
 	check_button2 = gtk_check_button_new_with_label("This file has children");
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(check_button2), FALSE);
-	g_signal_connect(check_button2, "toggled", G_CALLBACK(is_child_cb), NULL);
+	g_signal_connect(check_button2, "toggled", G_CALLBACK(has_children_cb), NULL);
 	gtk_widget_set_valign(check_button2, GTK_ALIGN_START);
 	gtk_box_pack_start(GTK_BOX(box), check_button2, FALSE, FALSE, 0);
 
