@@ -10,12 +10,17 @@ Atsugami
 PostgreSQL (Tested on 14 and 14.1)  
 GTK3  
 Clang  
-[BSD make](https://github.com/natem-nvsd/bmake)
+[BSD make (bmake)](https://github.com/natem-nvsd/bmake)
 
 ### Building and installation
 ```
+# FreeBSD:
 make
 sudo make install
+
+# Linux:
+bmake
+sudo bmake install
 ```  
 
 ### Colours (will be implemented later)
