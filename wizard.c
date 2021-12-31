@@ -37,6 +37,8 @@ static void on_assistant_apply(GtkWidget *widget, gpointer data) {
 	const gchar *text6;
 	const gchar *textx;
 
+	//PQexec(conn, "BEGIN TRANSACTION;");
+
 	/* Create the query to submit to PostgreSQL */
 	strcpy(query_string, "INSERT INTO public.files (path, artist, copyrights, characters, tags, source, rating, width, height, is_parent, is_child, has_children, parent_uuid, child_uuids, imported_at) VALUES ('");
 
@@ -53,6 +55,24 @@ static void on_assistant_apply(GtkWidget *widget, gpointer data) {
 		strcat(query_string, text0);
 		strcat(query_string, "}', '{");
 	}
+	char artist_query_base[] = "INSERT INTO public.artists (name) VALUES ('";
+	gint artist_text_size;
+	gint artist_query_base_size;
+	int artist_query_size;
+
+	artist_text_size = sizeof(text0);
+	artist_query_base_size = 44;
+	artist_query_size = (artist_query_base_size + text0);
+
+	char artist_query[artist_query_size];
+	strcpy(artist_query, artist_query_base);
+	strcat(artist_query, text0);
+	strcat(artist_query, "') ON CONFLICT DO NOTHING;");
+
+	printf("artist_query_size = %d\n", artist_query_size);
+	printf("%s\n", artist_query);
+	PQexec(conn, artist_query);
+	strcpy(artist_query, "");	/* Clean the string */
 
 	/* Entry fields from page1 */
 	text1 = gtk_entry_get_text(GTK_ENTRY(entry1));	/* Copyrights */
@@ -63,6 +83,19 @@ static void on_assistant_apply(GtkWidget *widget, gpointer data) {
 		strcat(query_string, text1);
 		strcat(query_string, "}', '{");
 	}
+	char copyright_query_base[] = "INSERT INTO public.copyrights (name) VALUES ('";
+	gint copyright_text_size;
+	gint copyright_query_base_size;
+	int copyright_query_size;
+
+	copyright_text_size = sizeof(text1);
+	copyright_query_base_size = 47;
+	copyright_query_size = (copyright_query_base_size + text1);
+
+	char copyright_query[copyright_query_size];
+	strcpy(copyright_query, copyright_query_base);
+	strcat(copyright_query, text1);
+	strcat(copyright_query, "') ON CONFLICT DO NOTHING;"); 	/* i should use a macro for this */
 
 	/* Entry fields from page2 */
 	text2 = gtk_entry_get_text(GTK_ENTRY(entry2));	/* Characters */
@@ -73,6 +106,20 @@ static void on_assistant_apply(GtkWidget *widget, gpointer data) {
 		strcat(query_string, text2);
 		strcat(query_string, "}', '{");
 	}
+	char characters_query_base[] = "INSERT INTO public.characters (name) VALUES ('";
+	gint characters_text_size;
+	gint characters_query_base_size;
+	int characters_query_size;
+
+	characters_text_size = sizeof(text1);
+	characters_query_base_size = 47;
+	characters_query_size = (characters_query_base_size + text1);
+
+	char characters_query[characters_query_size];
+	strcpy(characters_query, characters_query_base);
+	strcat(characters_query, text2);
+	strcat(characters_query, "') ON CONFLICT DO NOTHING;"); 	/* i should use a macro for this */
+		/* This won't work for multiple characters */
 
 	/* Entry fields from page3 */
 	text3 = gtk_entry_get_text(GTK_ENTRY(entry3));	/* Tags */
@@ -147,7 +194,7 @@ static void on_assistant_apply(GtkWidget *widget, gpointer data) {
 	}
 	if (gtk_entry_get_text_length(entry6) > 0) {
 		strcat(query_string, text6);
-		strcat(query_string, "}', now());");
+		strcat(query_string, "}', now()) ON CONFLICT DO NOTHING;");
 	}
 	printf("%s\n\n", query_string);
 
@@ -164,7 +211,9 @@ static void on_assistant_apply(GtkWidget *widget, gpointer data) {
 		PQclear(res);
 	}
 
-	strcpy(import_file_path, ""); /* Clear import_file_path. The Postgres query will have been issued, and the transaction committed. */
+	//PQexec(conn, "COMMIT TRANSACTION");
+	strcpy(import_file_path, ""); /* Clear import_file_path. */
+	printf("\nTEST\n");
 }
 
 static void on_assistant_close_cancel(GtkWidget *widget, gpointer data) {

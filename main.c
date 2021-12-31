@@ -10,6 +10,7 @@
 * - Add icon view and/or widget factory to main window		*
 * - Resize the image in the wizard so the window fits on screen	*
 * - prevent SQL injection					*
+* - Create a file format for exported files			*
 *								*
 * Glade is not a suitable replacement for hand-written code.	*
 \***************************************************************/
@@ -29,6 +30,18 @@ PGresult *mainres;
 PGconn *conn;
 char conninfo[] = "dbname=atsugami"; /* Sets the database for dbconnect() */
 char main_psql_error[2048];
+gchar *parent;
+
+/* fill_store (c) GTK team */
+static void fill_store(GtkListStore *store) {
+	//GDir *dir;
+	const gchar *name;
+	GtkTreeIter iter;
+
+	/* clear store */
+	gtk_list_store_clear(store);
+
+}
 
 /* Quit function */
 static void quit_activate(GSimpleAction *action, GVariant *parameter, gpointer user_data) {
@@ -341,9 +354,11 @@ int main(int argc, char *argv[]) {
 		gtk_label_set_text(GTK_LABEL(error_label), errMsg);
 	}
 
-	/* Gtk Icon View */
+	/* Gtk Icon View 
+	* I hate writing this part */
 	GtkWidget *scrolled_window;
 	GtkWidget *icon_view;
+	GtkListStore *store;
 
 	scrolled_window = gtk_scrolled_window_new(NULL, NULL);
 	icon_view = gtk_icon_view_new();
@@ -353,9 +368,7 @@ int main(int argc, char *argv[]) {
 	gtk_container_add(GTK_CONTAINER(scrolled_window), icon_view);
 	
 	/* Show items from the database on startup */
-	GtkTreePath *tree_path;
-
-	tree_path = gtk_tree_path_new();
+	//tree_path = gtk_tree_path_new();
 	mainres = PQexecParams(conn, "SELECT path FROM public.files;", 0, NULL, NULL, NULL, 0, 0);
 	/* Show an error dialog if the query failed
 	*	This is causing a segfault; fix later. */
@@ -365,9 +378,16 @@ int main(int argc, char *argv[]) {
 		postgres_error_activate();
 		PQclear(mainres);
 	}
+	//char paths[] = sizeof(mainres);
 	//gtk_icon_view_select_path(giv, mainres);	/* The result from postgres must be in plain text */
 	//gtk_icon_view_select_path(giv, mainres);	/* Get the result from pgprint() */
 	PQclear(mainres);
+
+	/*
+	parent = g_strdup(paths);
+	store = create_store();
+	fill_store(store);
+	*/
 
 	/* Show window and vbox */
 	gtk_widget_show_all(vbox);
