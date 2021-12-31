@@ -8,7 +8,7 @@
 
 /* Variables and pointers */
 PGresult *res;
-GtkWidget *entry0, *entry1, *entry2, *entry3, *entry4, *entry5, *entry6;
+GtkWidget *entry0, *entry1, *entry2, *entry3, *entry4, *entry5, *entry6, *rating_entry;
 GtkWidget *image;
 GdkPixbuf *image_pixbuf;
 static GtkWidget *assistant = NULL;
@@ -20,13 +20,12 @@ float width;
 float height;
 char char_width[6]; /* only corrupt, damaged, or malicisious images can over flow these two buffers; fix them */
 char char_height[6];
-char rating[13];
 char query_string[20480];	/*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
 char child_uuids[2048];		/* THESE MUST BE FIXED TO PREVENT BUFFER OVERFLOWS */
 extern char psql_error[2048];	/*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
-bool parent_bool;
-bool child_bool;
-bool has_children;
+gboolean parent_bool = FALSE;
+gboolean child_bool = FALSE;
+gboolean has_children = FALSE;
 
 static void on_assistant_apply(GtkWidget *widget, gpointer data) {
 	const gchar *text0;
@@ -36,9 +35,10 @@ static void on_assistant_apply(GtkWidget *widget, gpointer data) {
 	const gchar *text4;
 	const gchar *text5;
 	const gchar *text6;
+	const gchar *textx;
 
 	/* Create the query to submit to PostgreSQL */
-	strcpy(query_string, "INSERT INTO public.files (path, artist, copyrights, characters, tags, source, rating, width, height, is_parent, is_child, parent_uuid, child_uuids, imported_at) VALUES ('");
+	strcpy(query_string, "INSERT INTO public.files (path, artist, copyrights, characters, tags, source, rating, width, height, is_parent, is_child, has_children, parent_uuid, child_uuids, imported_at) VALUES ('");
 
 	/* add the file path to the query */
 	strcat(query_string, import_file_path);
@@ -77,26 +77,27 @@ static void on_assistant_apply(GtkWidget *widget, gpointer data) {
 	/* Entry fields from page3 */
 	text3 = gtk_entry_get_text(GTK_ENTRY(entry3));	/* Tags */
 	if (gtk_entry_get_text_length(entry3) == 0) {
-		strcat(query_string, "NULL}', '{");
+		strcat(query_string, "NULL}', '");
 	}
 	if (gtk_entry_get_text_length(entry3) > 0) {
 		strcat(query_string, text3);
 		strcat(query_string, "}', '");
 	}
 
-	/* add the rating to the query */
-	strcat(query_string, rating);
-	strcat(query_string, "', '");
-
 	/* Entry fields from page4 */
 	text4 = gtk_entry_get_text(GTK_ENTRY(entry4));	/* Source */
 	if (gtk_entry_get_text_length(entry4) == 0) {
-		strcat(query_string, "NULL', ");
+		strcat(query_string, "NULL', '");
 	}
 	if (gtk_entry_get_text_length(entry4) > 0) {
 		strcat(query_string, text4);
-		strcat(query_string, "', ");
+		strcat(query_string, "', '");
 	}
+
+	textx = gtk_entry_get_text(GTK_ENTRY(rating_entry));	/* add the rating to the query */
+	printf("textx: %s\n", textx);
+	strcat(query_string, textx);
+	strcat(query_string, "', ");
 
 	/* add the image resolution to the query */
 	strcat(query_string, char_width); /* Width */
@@ -115,11 +116,20 @@ static void on_assistant_apply(GtkWidget *widget, gpointer data) {
 
 	/* add the values of  is_child */
 	if (child_bool == TRUE) {
-		strcat(query_string, "TRUE, '");
+		strcat(query_string, "TRUE, ");
 	}
 	if (child_bool == FALSE) {
 		strcat(query_string, "FALSE, ");
 	}
+	
+	/* Has children */
+	if (has_children == TRUE) {
+		strcat(query_string, "TRUE, ");
+	}
+	if (has_children == FALSE) {
+		strcat(query_string, "FALSE, ");
+	}
+
 	/* Parent UUID */
 	text5 = gtk_entry_get_text(GTK_ENTRY(entry5));
 	if (gtk_entry_get_text_length(entry5) == 0) {
@@ -176,7 +186,7 @@ static void on_assistant_prepare(GtkWidget *widget, GtkWidget *page, gpointer da
 	gtk_window_set_title(GTK_WINDOW(widget), title);
 	g_free(title);
 
-	if (current_page == 4)
+	if (current_page == 5)
 		gtk_assistant_commit(GTK_ASSISTANT(widget));
 }
 
@@ -197,7 +207,8 @@ static void on_wizard_entry_changed(GtkWidget *widget, gpointer data) {
 }
 
 static void wizard_create_page0(GtkWidget *assistant) {
-	GtkWidget *box, *image_preview, *label0, *label1, *label2, *label3, *label4;
+	GtkWidget *box, *image_preview, *label0, *label1, *label2, *label3, *label4, *label5;
+	GtkWidget *cbox;
 	GdkPixbuf *image_preview_pixbuf = NULL;
 	int int_width;
 	int int_height;
@@ -260,7 +271,7 @@ static void wizard_create_page0(GtkWidget *assistant) {
 	g_signal_connect(G_OBJECT(entry0), "changed", G_CALLBACK(on_wizard_entry_changed), assistant);
 
 	/* Second label text field */
-	label1 = gtk_label_new("Enter copyrights here, separated by commas (and spaces):");
+	label1 = gtk_label_new("Enter copyrights here:");
 	gtk_widget_set_halign(label1, GTK_ALIGN_START);
 	gtk_box_pack_start(GTK_BOX(box), label1, FALSE, FALSE, 0);
 
@@ -307,7 +318,21 @@ static void wizard_create_page0(GtkWidget *assistant) {
 	gtk_box_pack_start(GTK_BOX(box), entry4, TRUE, TRUE, 0);
 	g_signal_connect(G_OBJECT(entry4), "changed", G_CALLBACK(on_wizard_entry_changed), assistant);
 
-	/* Add a GTK combo box here */
+	/*Sixth label and text field; Add a GTK combo box here */
+	label5 = gtk_label_new("Rating:");
+	gtk_widget_set_halign(label5, GTK_ALIGN_START);
+	gtk_box_pack_start(GTK_BOX(box), label5, FALSE, FALSE, 0);
+
+	cbox = gtk_combo_box_text_new();
+	gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(cbox), "safe", "Safe");
+	gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(cbox), "questionable", "Questionable");
+	gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(cbox), "Explicit", "Explicit");
+	gtk_box_pack_start(GTK_BOX(box), cbox, FALSE, FALSE, 0);
+	/* Invisible entry field */
+	rating_entry = gtk_entry_new();
+	gtk_entry_set_activates_default(GTK_ENTRY(rating_entry), TRUE);
+	g_object_bind_property(cbox, "active-id", rating_entry, "text", G_BINDING_DEFAULT);
+	g_signal_connect(G_OBJECT(rating_entry), "changed", G_CALLBACK(on_wizard_entry_changed), assistant);
 
 	/* Display the window */
 	gtk_widget_show_all(box); /* Don't mess with this code */
@@ -321,41 +346,61 @@ static void wizard_create_page0(GtkWidget *assistant) {
 *  THis would be soooooooooooo much easier in GTK4
 *  gtk_check_button_get_active();
 * https://docs.gtk.org/gtk4/method.CheckButton.get_active.html */
+GtkWidget *pg1_label0, *pg1_label1, *check_button0, *check_button1, *check_button2;
+
+
 static void is_parent_cb(GtkWidget *check_button, gpointer data) {
-	if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(check_button))) {
+	if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(check_button0))) {
 		parent_bool = TRUE;
+		gtk_widget_set_sensitive(pg1_label1, TRUE);
+		gtk_widget_set_sensitive(entry6, TRUE);
 	}
 	else {
-		g_print("%s off\n", gtk_button_get_label(GTK_BUTTON(check_button)));
+		g_print("%s off\n", gtk_button_get_label(GTK_BUTTON(check_button0)));
+		gtk_widget_set_sensitive(pg1_label1, FALSE);
+		gtk_widget_set_sensitive(entry6, FALSE);
 	}
 }
 
 static void is_child_cb(GtkWidget *check_button, gpointer data) {
-	if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(check_button))) {
+	if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(check_button1))) {
 		child_bool = TRUE;
+		gtk_widget_set_sensitive(pg1_label0, TRUE);
+		gtk_widget_set_sensitive(entry5, TRUE);
 	}
 	else {
-		g_print("%s off\n", gtk_button_get_label(GTK_BUTTON(check_button)));
+		g_print("%s off\n", gtk_button_get_label(GTK_BUTTON(check_button1)));
+		gtk_widget_set_sensitive(pg1_label0, FALSE);
+		gtk_widget_set_sensitive(entry5, FALSE);
+	}
+}
+
+static void has_children_cb(GtkWidget *check_button, gpointer data) {
+	if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(check_button2))) {
+		has_children = TRUE;
+	}
+	else {
+		g_print("%s off\n", gtk_button_get_label(GTK_BUTTON(check_button2)));
 	}
 }
 
 static void wizard_create_page1(GtkWidget *assistant) {
-	GtkWidget *box, *check_button, *label0, *label1;
+	GtkWidget *box;
 
 	box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 12);
 	gtk_container_set_border_width(GTK_CONTAINER(box), 12);
 
 	/* First check box */
-	check_button = gtk_check_button_new_with_label("This file is a parent");
-	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(check_button), FALSE);
-	g_signal_connect(check_button, "toggled", G_CALLBACK(is_parent_cb), NULL);
-	gtk_widget_set_valign(check_button, GTK_ALIGN_START);
-	gtk_box_pack_start(GTK_BOX(box), check_button, FALSE, FALSE, 0);
+	check_button0 = gtk_check_button_new_with_label("This file is a parent");
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(check_button0), FALSE);
+	g_signal_connect(check_button0, "toggled", G_CALLBACK(is_parent_cb), NULL);
+	gtk_widget_set_valign(check_button0, GTK_ALIGN_START);
+	gtk_box_pack_start(GTK_BOX(box), check_button0, FALSE, FALSE, 0);
 
 	/* Child UUID entry */
-	label1 = gtk_label_new("Enter the UUID(s) of the child(ren) here:");
-	gtk_widget_set_halign(label1, GTK_ALIGN_START);
-	gtk_box_pack_start(GTK_BOX(box), label1, FALSE, FALSE, 0);
+	pg1_label1 = gtk_label_new("Enter the UUID(s) of the child(ren) here:");
+	gtk_widget_set_halign(pg1_label1, GTK_ALIGN_START);
+	gtk_box_pack_start(GTK_BOX(box), pg1_label1, FALSE, FALSE, 0);
 
 	entry6 = gtk_entry_new();
 	gtk_entry_set_activates_default(GTK_ENTRY(entry6), TRUE);
@@ -364,18 +409,19 @@ static void wizard_create_page1(GtkWidget *assistant) {
 	g_signal_connect(G_OBJECT(entry6), "changed",
 	G_CALLBACK(on_wizard_entry_changed), assistant);
 
-//	parent_bool = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(check0));
+	gtk_widget_set_sensitive(pg1_label1, FALSE);
+	gtk_widget_set_sensitive(entry6, FALSE);
 
 	/* Second check box */
-	check_button = gtk_check_button_new_with_label("This file is a child");
-	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(check_button), FALSE);
-	g_signal_connect(check_button, "toggled", G_CALLBACK(is_child_cb), NULL);
-	gtk_widget_set_valign(check_button, GTK_ALIGN_START);
-	gtk_box_pack_start(GTK_BOX(box), check_button, FALSE, FALSE, 0);
+	check_button1 = gtk_check_button_new_with_label("This file is a child");
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(check_button1), FALSE);
+	g_signal_connect(check_button1, "toggled", G_CALLBACK(is_child_cb), NULL);
+	gtk_widget_set_valign(check_button1, GTK_ALIGN_START);
+	gtk_box_pack_start(GTK_BOX(box), check_button1, FALSE, FALSE, 0);
 	/* label */
-	label0 = gtk_label_new("Enter Parent UUID here:");
-	gtk_widget_set_halign(label0, GTK_ALIGN_START);
-	gtk_box_pack_start(GTK_BOX(box), label0, FALSE, FALSE, 0);
+	pg1_label0 = gtk_label_new("Enter Parent UUID here:");
+	gtk_widget_set_halign(pg1_label0, GTK_ALIGN_START);
+	gtk_box_pack_start(GTK_BOX(box), pg1_label0, FALSE, FALSE, 0);
 	/* text box */
 	entry5 = gtk_entry_new();
 	gtk_entry_set_activates_default(GTK_ENTRY(entry5), TRUE);
@@ -383,6 +429,16 @@ static void wizard_create_page1(GtkWidget *assistant) {
 	gtk_box_pack_start(GTK_BOX(box), entry5, TRUE, TRUE, 0);
 	g_signal_connect(G_OBJECT(entry5), "changed",
 	G_CALLBACK(on_wizard_entry_changed), assistant);
+
+	gtk_widget_set_sensitive(pg1_label0, FALSE);
+	gtk_widget_set_sensitive(entry5, FALSE);
+
+	/* Third check box */
+	check_button2 = gtk_check_button_new_with_label("This file has children");
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(check_button2), FALSE);
+	g_signal_connect(check_button2, "toggled", G_CALLBACK(is_child_cb), NULL);
+	gtk_widget_set_valign(check_button2, GTK_ALIGN_START);
+	gtk_box_pack_start(GTK_BOX(box), check_button2, FALSE, FALSE, 0);
 
 	/* SHow the box and its widgets */
 	gtk_widget_show_all(box);
@@ -396,8 +452,8 @@ static void wizard_create_page2(GtkWidget *assistant) {
 	box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 12);
 	gtk_container_set_border_width(GTK_CONTAINER(box), 12);
 
-//	checkbutton = gtk_check_button_new_with_label("This is file has commentary");
-	checkbutton = gtk_check_button_new_with_label("NULL");
+	checkbutton = gtk_check_button_new_with_label("This is file has commentary");
+	gtk_widget_set_sensitive(checkbutton, FALSE);
 	gtk_box_pack_start(GTK_BOX(box), checkbutton, FALSE, FALSE, 0);
 
 	gtk_widget_show_all(box);

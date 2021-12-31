@@ -6,8 +6,11 @@
 * - Create new error banner when uuid-ossp is ENOENT		*
 * - Add EXIF support						*
 * - Fix incompatible pointers					*
-*								*
-* - URGENT: prevent SQL injection				*
+* - Add ratings to the import wizard				*
+* - Add searching						*
+* - Add icon view and/or widget factory to main window		*
+* - Resize the image in the wizard so the window fits on screen	*
+* - prevent SQL injection					*
 *								*
 * Glade is not a suitable replacement for hand-written code.	*
 \***************************************************************/
@@ -47,8 +50,7 @@ static GActionEntry app_entries[] = {
 };
 
 int main(int argc, char *argv[]) {
-	/* Connect to PostgreSQL */
-	conn = PQconnectdb(conninfo);
+	conn = PQconnectdb(conninfo);	/* Connect to PostgreSQL */
 
 	/* THis is in order of appearance */
 	GtkWidget *window;
@@ -249,6 +251,9 @@ int main(int argc, char *argv[]) {
 	gtk_container_add(GTK_CONTAINER(search_tag_wrapper), GTK_WIDGET(search_by_tag));
 	gtk_container_add(GTK_CONTAINER(search_wiki_wrapper), GTK_WIDGET(search_wiki));
 
+	gtk_search_entry_handle_event(search_by_tag, quit_activate);
+	//gtk_search_entry_handle_event(search_wiki, );
+
 	/* Add widgets to the toolbar */
 	gtk_toolbar_insert(toolbar, import_button, 0);
 	gtk_toolbar_insert(toolbar, bulk_import_button, 1);
@@ -334,18 +339,23 @@ int main(int argc, char *argv[]) {
 	gtk_box_pack_start(GTK_BOX(vbox), giv, FALSE, FALSE, 0);
 	
 	/* Show items from the database on startup */
-	PQexec(conn, "SELECT path FROM public.files;");	/* this doesn't return anything that can be used (or anything at all) */
+	GtkTreePath *tree_path;
+
+	tree_path = gtk_tree_path_new();
+	//mainres = PQexec(conn, "SELECT path FROM public.files;");
+	mainres = PQexecParams(conn, "SELECT path FROM public.files;", 0, NULL, NULL, NULL, 0, 0);
 	// Show an error dialog if the query failed
-	/*	This is causing a segfault; fix later.
+	//	This is causing a segfault; fix later.
 	if (PQresultStatus(mainres) != PGRES_TUPLES_OK) {
 		strcpy(main_psql_error, PQerrorMessage(conn));
 		printf("%s\n", main_psql_error);
 		postgres_error_activate();
 		PQclear(mainres);
 	}
-	*/
-	printf("%s\n", mainres);
-	gtk_icon_view_select_path(giv, mainres);
+	printf("Postgres returns:\n%s\n", mainres);
+	//gtk_icon_view_select_path(giv, mainres);	/* The result from postgres must be in plain text */
+	//gtk_icon_view_select_path(giv, mainres);
+	gtk_icon_view_select_path(giv, tree_path);
 	PQclear(mainres);
 
 	/* Show window and vbox */
