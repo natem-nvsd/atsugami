@@ -22,12 +22,34 @@ char char_width[6]; /* only corrupt, damaged, or malicisious images can over flo
 char char_height[6];
 char query_string[20480];	/*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
 char child_uuids[2048];		/* THESE MUST BE FIXED TO PREVENT BUFFER OVERFLOWS */
-		/*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
 gboolean parent_bool = FALSE;
 gboolean child_bool = FALSE;
 gboolean has_children = FALSE;
 
+/* Work bar from gtk3-demo program 
+* this is needed because of some legacy crap */
+static gboolean apply_changes_gradually(gpointer data) {
+	gdouble fraction;
+
+	/* Work, work, work... */
+	fraction = gtk_progress_bar_get_fraction (GTK_PROGRESS_BAR (progress_bar));
+	fraction += 0.05;
+
+	if (fraction < 1.0) {
+		gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(progress_bar), fraction);
+		return G_SOURCE_CONTINUE;
+	}
+	else {
+		/* Close automatically once changes are fully applied. */
+		gtk_widget_destroy(assistant);
+		assistant = NULL;
+		return G_SOURCE_REMOVE;
+	}
+}
+
 static void on_assistant_apply(GtkWidget *widget, gpointer data) {
+	/* Start a timer to simulate changes taking a few seconds to apply. */
+	g_timeout_add(50, apply_changes_gradually, NULL);
 	const gchar *text0;
 	const gchar *text1;
 	const gchar *text2;
@@ -197,24 +219,22 @@ static void on_assistant_apply(GtkWidget *widget, gpointer data) {
 		strcat(query_string, text6);
 		strcat(query_string, "}', now()) ON CONFLICT DO NOTHING;");
 	}
-	printf("%s\n\n", query_string);
 
 	PQexec(conn, query_string);
-	if (PQresultStatus(res) == PGRES_TUPLES_OK) {
-		printf("\nQUERY OK\n");
-	}
 
 	/* Show an error dialog if the query failed */
+	/*
 	if (PQresultStatus(res) != PGRES_TUPLES_OK) {
 		strcpy(psql_error, PQerrorMessage(conn));
 		printf("%s\n", psql_error);
 		postgres_error_activate();
 		PQclear(res);
 	}
+	*/
+	// AAAAAAaaaaaaaaaaaaaaaaaaaaaaandd this causes a segfault
 
 	//PQexec(conn, "COMMIT TRANSACTION");
 	strcpy(import_file_path, ""); /* Clear import_file_path. */
-	printf("\nTEST\n");
 }
 
 static void on_assistant_close_cancel(GtkWidget *widget, gpointer data) {

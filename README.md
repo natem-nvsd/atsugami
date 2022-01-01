@@ -4,7 +4,6 @@ Atsugami
 
 ### Notes
 *	Limit of 999,999x999,999px  
-*	Crashes when a file is imported
 
 ### Dependencies
 PostgreSQL (Tested on 14 and 14.1)  
