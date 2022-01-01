@@ -31,7 +31,7 @@ PGresult *mainres;
 PGconn *conn;
 char conninfo[] = "dbname=atsugami"; /* Sets the database for dbconnect() */
 char main_psql_error[2048];
-gchar *parent;
+//gchar *parent;
 
 /* fill_store (c) GTK team */
 /*static void fill_store(GtkListStore *store) {
@@ -55,8 +55,12 @@ static void quit_activate(gpointer user_data) {
 	gtk_widget_destroy(window);
 }
 
-static void new_artist_trigger(void) {	/* this is here because of gtk or clang idiocy */
+static void new_artist_trigger(void) {	// this is here because of gtk or clang idiocy
 	new_artist_activate();
+}
+
+static void new_copyright_trigger(void) {
+	new_copyright_activate();
 }
 
 int main(int argc, char *argv[]) {
@@ -90,9 +94,11 @@ int main(int argc, char *argv[]) {
 	GAction *import;
 	GAction *quit;
 	GAction *new_artist;
+	GAction *new_copyright;
 	import = gtk_action_new("import", "Import", "Import an image", NULL);
 	quit = gtk_action_new("quit", "Quit", "Quit the program", NULL);
 	new_artist = gtk_action_new("artist", "New artist", "Add a new artist to Atsugami", NULL);
+	new_copyright = gtk_action_new("copyright", "New copyright", "Add a new copyright to Atsugami", NULL);
 
 	/* Menus (e.g. File) */
 	GtkWidget *file_menu;
@@ -239,6 +245,7 @@ int main(int argc, char *argv[]) {
 	g_signal_connect(quit_menu_item,   "activate", G_CALLBACK(gtk_main_quit), NULL);	/* segfault when quit_activate */
 	g_signal_connect(about_menu_item, "activate", G_CALLBACK(about_activate), NULL);
 	g_signal_connect(new_artist_mi, "activate", G_CALLBACK(new_artist_trigger), NULL);
+	g_signal_connect(new_copyright_mi, "activate", G_CALLBACK(new_copyright_trigger), NULL);
 
 	/* Toolbar */
 	toolbar = gtk_toolbar_new();
@@ -371,7 +378,7 @@ int main(int argc, char *argv[]) {
 	* I hate writing this part */
 	GtkWidget *scrolled_window;
 	GtkWidget *icon_view;
-	GtkListStore *store;
+	//GtkListStore *store;
 	//char image_search_query_base = "SELECT path FROM public.files WHERE ____ @> ARRAY['";
 
 	scrolled_window = gtk_scrolled_window_new(NULL, NULL);

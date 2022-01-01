@@ -18,7 +18,6 @@ GtkWidget *dialog_window, *entry;
 static void on_artist_apply(GtkWidget *widget, gpointer data) {
 	char psql_error[2048];
 	const gchar *text;
-	int query_base_size = 70;
 	int query_size = (sizeof(text) + 70);
 
 	char query_base[] = "INSERT INTO public.artists (name) VALUES ('";
