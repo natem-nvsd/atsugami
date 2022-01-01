@@ -24,6 +24,9 @@
 #include <libpq-fe.h>
 #include "main.h"
 #include "new_artist.h"
+#include "new_character.h"
+#include "new_copyright.h"
+#include "new_tag.h"
 #include <stdio.h>
 #include "wizard.h"
 
@@ -61,6 +64,14 @@ static void new_artist_trigger(void) {	// this is here because of gtk or clang i
 
 static void new_copyright_trigger(void) {
 	new_copyright_activate();
+}
+
+static void new_character_trigger(void) {
+	new_character_activate();
+}
+
+static void new_tag_trigger(void) {
+	new_tag_activate();
 }
 
 int main(int argc, char *argv[]) {
@@ -246,6 +257,8 @@ int main(int argc, char *argv[]) {
 	g_signal_connect(about_menu_item, "activate", G_CALLBACK(about_activate), NULL);
 	g_signal_connect(new_artist_mi, "activate", G_CALLBACK(new_artist_trigger), NULL);
 	g_signal_connect(new_copyright_mi, "activate", G_CALLBACK(new_copyright_trigger), NULL);
+	g_signal_connect(new_character_mi, "activate", G_CALLBACK(new_character_trigger), NULL);
+	g_signal_connect(new_tag_mi, "activate", G_CALLBACK(new_tag_trigger), NULL);
 
 	/* Toolbar */
 	toolbar = gtk_toolbar_new();

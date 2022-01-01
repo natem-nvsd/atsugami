@@ -8,12 +8,10 @@
 #include <stdio.h>
 
 PGresult *copyres;
-//char conninfo[] = "dbname=atsugami"; /* Sets the database for dbconnect() */
-//char main_psql_error[2048];
 GtkWidget *diddley_dee_dialog, *damn_entry;
 
 static void on_copyright_apply(GtkWidget *widget, gpointer data) {
-	char psql_error[2048];
+	//char psql_error[2048];
 	const gchar *text;
 	int query_size = (sizeof(text) + 70);
 

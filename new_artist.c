@@ -16,7 +16,7 @@ GtkWidget *dialog_window, *entry;
 	//g_signal_connect(G_OBJECT(dialog_window), "prepare", G_CALLBACK(on_), NULL);
 
 static void on_artist_apply(GtkWidget *widget, gpointer data) {
-	char psql_error[2048];
+	//char psql_error[2048];
 	const gchar *text;
 	int query_size = (sizeof(text) + 70);
 
