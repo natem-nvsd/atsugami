@@ -1,7 +1,8 @@
 include config.mk
 
 TARGET=atsugami
-SRC=main.c about.c import.c wizard.c error_dialogs.c
+#SRC=main.c about.c import.c wizard.c new_artist.c error_dialogs.c 
+SRC=main.c about.c import.c wizard.c error_dialogs.c 
 OBJ=${SRC:.c=.o}
 
 all: options atsugami

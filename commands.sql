@@ -6,3 +6,4 @@ INSERT INTO public.files (uuid, path, artist, copyrights, characters, tags, sour
 
 INSERT INTO public.copyrights (name) VALUES ('touhou') ON CONFLICT DO NOTHING;
 UPDATE files SET path = '/home/natem/Pictures/81da0f7f-18c7-48f6-8705-b1f8845b5e51.png' WHERE uuid = '81da0f7f-18c7-48f6-8705-b1f8845b5e51';
+SELECT * FROM public.files WHERE artist @> ARRAY['rei_(tonbo0430)'];

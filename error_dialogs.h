@@ -9,6 +9,7 @@
 #define FUNCTIONS_H_INCLUDED
 
 //extern GtkWidget *error_activate(GtkWidget *do_widget);
-extern GtkWidget *postgres_error_activate(GtkWidget *do_widget);
+extern GtkWidget *error_activate();
+extern GtkWidget *postgres_error_activate();
 
 #endif

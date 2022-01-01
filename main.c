@@ -33,18 +33,20 @@ char main_psql_error[2048];
 gchar *parent;
 
 /* fill_store (c) GTK team */
-static void fill_store(GtkListStore *store) {
+/*static void fill_store(GtkListStore *store) {
 	//GDir *dir;
 	const gchar *name;
 	GtkTreeIter iter;
+	*/
 
 	/* clear store */
-	gtk_list_store_clear(store);
+//	gtk_list_store_clear(store);
 
-}
+//}
 
 /* Quit function */
-static void quit_activate(GSimpleAction *action, GVariant *parameter, gpointer user_data) {
+//static void quit_activate(GSimpleAction *action, GVariant *parameter, gpointer user_data) {
+static void quit_activate(gpointer user_data) {
 	/* This causes a seg fault when used as a callback */
 	GtkWidget *window = user_data;
 
@@ -52,14 +54,50 @@ static void quit_activate(GSimpleAction *action, GVariant *parameter, gpointer u
 	gtk_widget_destroy(window);
 }
 
-/* Index of app.* actions */
-static GActionEntry app_entries[] = {
-	{ "quit",   quit_activate,   NULL, NULL, NULL },
-	{ "import", import_activate, NULL, NULL, NULL },
-//	{ "import_bulk", import_bulk_activate, NULL, NULL, NULL },
-//	{ "help",   help_activate,   NULL, NULL, NULL },
-	{ "about",  about_activate,  NULL, NULL, NULL }
-};
+/* Quick and dirty solution */
+static void new_artist_activate(void) {		/* This shouldn't be in main.c. Move to another file soon */
+	GtkWidget *dialog_window, *label, *entry, *button0, *button1, *vbox, *hbox;
+
+	//dialog_window = gtk_window_new(GTK_WINDOW_POPUP);
+	dialog_window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+
+	vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
+	gtk_container_set_border_width(GTK_CONTAINER(vbox), 0);
+	gtk_container_add(GTK_CONTAINER(dialog_window), vbox);
+
+	/* label */
+	label = gtk_label_new("Enter the artist's name here:");
+	gtk_widget_set_valign(label, GTK_ALIGN_START);
+	gtk_box_pack_start(GTK_BOX(vbox), label, FALSE, FALSE, 0);
+
+	/* entry */
+	entry = gtk_entry_new();
+	gtk_entry_set_activates_default(GTK_ENTRY(entry), TRUE);
+	gtk_widget_set_valign(entry, GTK_ALIGN_START);
+	gtk_box_pack_start(GTK_BOX(vbox), entry, TRUE, TRUE, 0);
+
+	/* hbox */
+	hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
+	gtk_container_set_border_width(GTK_CONTAINER(hbox), 0);
+	gtk_container_add(GTK_CONTAINER(vbox), hbox);
+
+	/* buttons */
+	button0 = gtk_button_new();
+	gtk_box_pack_start(GTK_BOX(hbox), button0, TRUE, TRUE, 0);
+	gtk_button_set_label(button0, "Cancel");
+
+	button1 = gtk_button_new();
+	gtk_box_pack_start(GTK_BOX(hbox), button1, TRUE, TRUE, 0);
+	gtk_button_set_label(button1, "Add");
+
+	/* SHow the window */
+	gtk_window_set_resizable(dialog_window, FALSE);
+	gtk_window_set_position(dialog_window, GTK_WIN_POS_CENTER_ALWAYS);
+	gtk_window_set_default_size(GTK_WINDOW(dialog_window), 600, 400);
+	gtk_window_set_title(dialog_window, "Add artist");
+	gtk_widget_show_all(vbox);
+	gtk_widget_show_all(dialog_window);
+}
 
 int main(int argc, char *argv[]) {
 	conn = PQconnectdb(conninfo);	/* Connect to PostgreSQL */
@@ -80,7 +118,7 @@ int main(int argc, char *argv[]) {
 	g_signal_connect(window, "destroy", G_CALLBACK(gtk_main_quit), NULL);
 
 	actions = (GActionGroup*)g_simple_action_group_new();
-	g_action_map_add_action_entries(G_ACTION_MAP(actions), app_entries, G_N_ELEMENTS(app_entries), window);
+	//g_action_map_add_action_entries(G_ACTION_MAP(actions), app_entries, G_N_ELEMENTS(app_entries), window);
 	gtk_widget_insert_action_group(window, "app", actions);
 
 	/* Create the virtical box */
@@ -91,8 +129,10 @@ int main(int argc, char *argv[]) {
 	/* Actions */
 	GAction *import;
 	GAction *quit;
+	GAction *new_artist;
 	import = gtk_action_new("import", "Import", "Import an image", NULL);
 	quit = gtk_action_new("quit", "Quit", "Quit the program", NULL);
+	new_artist = gtk_action_new("artist", "New artist", "Add a new artist to Atsugami", NULL);
 
 	/* Menus (e.g. File) */
 	GtkWidget *file_menu;
@@ -116,6 +156,10 @@ int main(int argc, char *argv[]) {
 	GtkWidget *settings_menu_item;
 
 	GtkWidget *tags_menu_item;
+	GtkWidget *new_artist_mi;
+	GtkWidget *new_copyright_mi;
+	GtkWidget *new_character_mi;
+	GtkWidget *new_tag_mi;
 
 	GtkWidget *wiki_menu_item;
 
@@ -174,6 +218,10 @@ int main(int argc, char *argv[]) {
 	settings_menu_item = gtk_menu_item_new_with_label("Preferences");
 
 	tags_menu_item = gtk_menu_item_new_with_label("Tags");
+	new_artist_mi = gtk_menu_item_new_with_label("New artist");
+	new_copyright_mi = gtk_menu_item_new_with_label("New copyright");
+	new_character_mi = gtk_menu_item_new_with_label("New character");
+	new_tag_mi = gtk_menu_item_new_with_label("New tag");
 
 	wiki_menu_item = gtk_menu_item_new_with_label("Wiki");
 
@@ -204,6 +252,10 @@ int main(int argc, char *argv[]) {
 	/* Tags menu */
 	gtk_menu_item_set_submenu(GTK_MENU_ITEM(tags_menu_item), tags_menu);
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu_bar), tags_menu_item);
+	gtk_menu_shell_append(GTK_MENU_SHELL(tags_menu), new_artist_mi);
+	gtk_menu_shell_append(GTK_MENU_SHELL(tags_menu), new_copyright_mi);
+	gtk_menu_shell_append(GTK_MENU_SHELL(tags_menu), new_character_mi);
+	gtk_menu_shell_append(GTK_MENU_SHELL(tags_menu), new_tag_mi);
 
 	/* Wiki menu */
 	gtk_menu_item_set_submenu(GTK_MENU_ITEM(wiki_menu_item), wiki_menu);
@@ -226,6 +278,8 @@ int main(int argc, char *argv[]) {
 	g_signal_connect(import_menu_item, "activate", G_CALLBACK(import_activate), NULL);
 	g_signal_connect(quit_menu_item,   "activate", G_CALLBACK(gtk_main_quit), NULL);	/* segfault when quit_activate */
 	g_signal_connect(about_menu_item, "activate", G_CALLBACK(about_activate), NULL);
+	g_signal_connect(new_artist_mi, "activate", G_CALLBACK(new_artist_activate), NULL);
+	//g_signal_connect(new_artist_mi, "activate", G_CALLBACK(gtk_main_quit), NULL);
 
 	/* Toolbar */
 	toolbar = gtk_toolbar_new();
@@ -288,7 +342,7 @@ int main(int argc, char *argv[]) {
 
 	/* Toolbar callbacks */
 	g_signal_connect(import_button, "clicked", G_CALLBACK(import_activate), NULL);
-	g_signal_connect(bulk_import_button, "clicked", G_CALLBACK(import_activate), NULL);
+	//g_signal_connect(bulk_import_button, "clicked", G_CALLBACK(import_activate), NULL);
 	g_signal_connect(edit_button, "clicked", G_CALLBACK(NULL), NULL);
 	g_signal_connect(favourite_button, "clicked", G_CALLBACK(NULL), NULL);
 	g_signal_connect(view_button, "clicked", G_CALLBACK(NULL), NULL);
@@ -359,6 +413,7 @@ int main(int argc, char *argv[]) {
 	GtkWidget *scrolled_window;
 	GtkWidget *icon_view;
 	GtkListStore *store;
+	//char image_search_query_base = "SELECT path FROM public.files WHERE ____ @> ARRAY['";
 
 	scrolled_window = gtk_scrolled_window_new(NULL, NULL);
 	icon_view = gtk_icon_view_new();
@@ -390,6 +445,7 @@ int main(int argc, char *argv[]) {
 	*/
 
 	/* Show window and vbox */
+	gtk_window_set_title(window, "Atsugami");
 	gtk_widget_show_all(vbox);
 	gtk_widget_show_all(window);
 	gtk_main();

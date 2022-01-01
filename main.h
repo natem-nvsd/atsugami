@@ -1,6 +1,6 @@
 /* main.h */
-#define GLADEFILE "/usr/local/share/atsugami/atsugami.glade"
-//#define GLADEFILE "atsugami.glade"
+//#define GLADEFILE "/usr/local/share/atsugami/atsugami.glade"
+#define GLADEFILE "atsugami.glade"
 #define VERSION 0.56.2
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"
 #pragma clang diagnostic ignored "-Wincompatible-pointer-types"
@@ -17,5 +17,6 @@ typedef _Bool bool;
 extern PGconn *conn;
 //extern PGconn *res;
 extern char conninfo[];
+//static const char *restricted[] {"%", "--", ";", "\n", "\"", "'", "[", "]", "{", "}"};
 
 #endif

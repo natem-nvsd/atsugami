@@ -10,7 +10,7 @@
     <property name="version">0.56.2</property>
     <property name="copyright" translatable="yes">Nate Morrison</property>
     <property name="comments" translatable="yes">A program for managing and tagging your images</property>
-    <property name="website">https://atsugami.nvsd.ca</property>
+    <property name="website">https://atsugami.moe</property>
     <property name="authors">Nate Morrison</property>
     <property name="logo-icon-name">image-x-generic</property>
     <child internal-child="vbox">
