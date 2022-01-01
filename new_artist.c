@@ -10,10 +10,46 @@
 PGresult *artres;
 //char conninfo[] = "dbname=atsugami"; /* Sets the database for dbconnect() */
 //char main_psql_error[2048];
+GtkWidget *dialog_window, *entry;
+
+	//g_signal_connect(G_OBJECT(dialog_window), "close", G_CALLBACK(on_artist_close), NULL);
+	//g_signal_connect(G_OBJECT(dialog_window), "prepare", G_CALLBACK(on_), NULL);
+
+static void on_artist_apply(GtkWidget *widget, gpointer data) {
+	char psql_error[2048];
+	const gchar *text;
+	int query_base_size = 70;
+	int query_size = (sizeof(text) + 70);
+
+	char query_base[] = "INSERT INTO public.artists (name) VALUES ('";
+	char artist_query[query_size];
+
+	strcpy(artist_query, query_base);
+
+	text = gtk_entry_get_text(GTK_ENTRY(entry));
+	/*
+	if (gtk_entry_get_text_length(GTK_ENTRY(entry) == 0)) {
+		fprintf(stderr, "This cannot be null\n");		// add an info bar here
+	} */
+	//if (gtk_entry_get_text_length(GTK_ENTRY(entry) > 0)) {
+		strcat(artist_query, text);
+	//}
+
+	strcat(artist_query, "') ON CONFLICT DO NOTHING;");
+	PQexec(conn, artist_query);
+	strcpy(artist_query, "");	// clear the query string
+
+	// the query is done, now the window must be destroyed
+	gtk_widget_destroy(dialog_window);
+}
+
+static void on_artist_cancel(GtkWidget *widget, gpointer data) {
+	gtk_widget_destroy(dialog_window);
+}
 
 /* Quick and dirty solution */
-extern void new_artist_activate(void) {		/* This shouldn't be in main.c. Move to another file soon */
-	GtkWidget *dialog_window, *label, *entry, *button0, *button1, *vbox, *hbox;
+extern void new_artist_activate(void) {
+	GtkWidget *label, *button0, *button1, *vbox, *hbox;
 
 	//dialog_window = gtk_window_new(GTK_WINDOW_POPUP);
 	dialog_window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
@@ -33,7 +69,7 @@ extern void new_artist_activate(void) {		/* This shouldn't be in main.c. Move to
 	gtk_widget_set_valign(entry, GTK_ALIGN_START);
 	gtk_box_pack_start(GTK_BOX(vbox), entry, TRUE, TRUE, 0);
 
-	/* hbox */
+	/* hbox */		// replace with gtk button box
 	hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
 	gtk_container_set_border_width(GTK_CONTAINER(hbox), 0);
 	gtk_container_add(GTK_CONTAINER(vbox), hbox);
@@ -42,10 +78,12 @@ extern void new_artist_activate(void) {		/* This shouldn't be in main.c. Move to
 	button0 = gtk_button_new();
 	gtk_box_pack_start(GTK_BOX(hbox), button0, TRUE, TRUE, 0);
 	gtk_button_set_label(button0, "Cancel");
+	g_signal_connect(button0, "clicked", G_CALLBACK(on_artist_cancel), NULL);
 
 	button1 = gtk_button_new();
 	gtk_box_pack_start(GTK_BOX(hbox), button1, TRUE, TRUE, 0);
 	gtk_button_set_label(button1, "Add");
+	g_signal_connect(button1, "clicked", G_CALLBACK(on_artist_apply), NULL);
 
 	/* SHow the window */
 	gtk_window_set_resizable(dialog_window, FALSE);

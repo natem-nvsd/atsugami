@@ -22,7 +22,7 @@ char char_width[6]; /* only corrupt, damaged, or malicisious images can over flo
 char char_height[6];
 char query_string[20480];	/*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
 char child_uuids[2048];		/* THESE MUST BE FIXED TO PREVENT BUFFER OVERFLOWS */
-extern char psql_error[2048];	/*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
+		/*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
 gboolean parent_bool = FALSE;
 gboolean child_bool = FALSE;
 gboolean has_children = FALSE;
@@ -36,6 +36,7 @@ static void on_assistant_apply(GtkWidget *widget, gpointer data) {
 	const gchar *text5;
 	const gchar *text6;
 	const gchar *textx;
+	char psql_error[2048];
 
 	//PQexec(conn, "BEGIN TRANSACTION;");
 
