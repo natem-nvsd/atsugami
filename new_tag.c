@@ -4,7 +4,7 @@
 #include "import.h"
 #include <libpq-fe.h>
 #include "main.h"
-#include "new_tag.h"
+#include "new.h"
 #include <stdio.h>
 
 PGresult *tagres;

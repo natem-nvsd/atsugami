@@ -4,7 +4,7 @@
 #include "import.h"
 #include <libpq-fe.h>
 #include "main.h"
-#include "new_character.h"
+#include "new.h"
 #include <stdio.h>
 
 PGresult *characterres;
@@ -43,13 +43,17 @@ static void on_character_cancel(GtkWidget *widget, gpointer data) {
 
 /* Quick and dirty solution */
 extern void new_character_activate(void) {
-	GtkWidget *label, *button0, *button1, *vbox, *hbox;
+	GtkWidget *label, *button0, *button1, *vbox, *bbox;
+	GtkAccelGroup *accel_group;
+	accel_group = gtk_accel_group_new;
+	//gtk_widget_add_accelerator(character_dialog, "activate", accel_group, GDK_KEY_Escape, NULL, GTK_ACCEL_VISIBLE);
+	//g_signal_connect(character_dialog, "key_press_event", G_CALLBACK(
 
 	//character_dialog = gtk_window_new(GTK_WINDOW_POPUP);
 	character_dialog = gtk_window_new(GTK_WINDOW_TOPLEVEL);
 
-	vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
-	gtk_container_set_border_width(GTK_CONTAINER(vbox), 0);
+	vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 10);
+	gtk_container_set_border_width(GTK_CONTAINER(vbox), 10);
 	gtk_container_add(GTK_CONTAINER(character_dialog), vbox);
 
 	/* label */
@@ -63,26 +67,25 @@ extern void new_character_activate(void) {
 	gtk_widget_set_valign(entry_2_electric_boogaloo, GTK_ALIGN_START);
 	gtk_box_pack_start(GTK_BOX(vbox), entry_2_electric_boogaloo, TRUE, TRUE, 0);
 
-	/* hbox */		// replace with gtk button box
-	hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
-	gtk_container_set_border_width(GTK_CONTAINER(hbox), 0);
-	gtk_container_add(GTK_CONTAINER(vbox), hbox);
+	/* bbox */		// replace with gtk button box
+	bbox = gtk_button_box_new(GTK_ORIENTATION_HORIZONTAL);
+	gtk_container_add(GTK_CONTAINER(vbox), bbox);
 
 	/* buttons */
 	button0 = gtk_button_new();
-	gtk_box_pack_start(GTK_BOX(hbox), button0, TRUE, TRUE, 0);
+	gtk_box_pack_start(GTK_BOX(bbox), button0, TRUE, TRUE, 0);
 	gtk_button_set_label(button0, "Cancel");
 	g_signal_connect(button0, "clicked", G_CALLBACK(on_character_cancel), NULL);
 
 	button1 = gtk_button_new();
-	gtk_box_pack_start(GTK_BOX(hbox), button1, TRUE, TRUE, 0);
+	gtk_box_pack_start(GTK_BOX(bbox), button1, TRUE, TRUE, 0);
 	gtk_button_set_label(button1, "Add");
 	g_signal_connect(button1, "clicked", G_CALLBACK(on_character_apply), NULL);
 
 	/* SHow the window */
 	gtk_window_set_resizable(character_dialog, FALSE);
 	gtk_window_set_position(character_dialog, GTK_WIN_POS_CENTER_ALWAYS);
-	gtk_window_set_default_size(GTK_WINDOW(character_dialog), 600, 400);
+	gtk_window_set_default_size(GTK_WINDOW(character_dialog), 300, 100);
 	gtk_window_set_title(character_dialog, "Add character");
 	gtk_widget_show_all(vbox);
 	gtk_widget_show_all(character_dialog);

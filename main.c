@@ -23,10 +23,7 @@
 #include "import.h"
 #include <libpq-fe.h>
 #include "main.h"
-#include "new_artist.h"
-#include "new_character.h"
-#include "new_copyright.h"
-#include "new_tag.h"
+#include "new.h"
 #include <stdio.h>
 #include "wizard.h"
 
@@ -74,6 +71,11 @@ static void new_tag_trigger(void) {
 	new_tag_activate();
 }
 
+extern void destroy_window(gpointer user_data) {	/* this doesn't close the program, only destroys a window */
+	GtkWidget *window = user_data;
+	gtk_widget_destroy(window);
+}
+
 int main(int argc, char *argv[]) {
 	conn = PQconnectdb(conninfo);	/* Connect to PostgreSQL */
 
@@ -84,7 +86,7 @@ int main(int argc, char *argv[]) {
 	GtkWidget *toolbar;
 
 	GActionGroup *actions;
-	//GtkAccelGroup *accel_group;
+	GtkAccelGroup *accel_group;
 
 	gtk_init(&argc, &argv); /* Initialize GTK */
 
@@ -281,8 +283,8 @@ int main(int argc, char *argv[]) {
 	favourite_button = gtk_tool_button_new(favourite_image, NULL);
 	view_button = gtk_tool_button_new(view_image, NULL);
 	wiki_button = gtk_tool_button_new(wiki_image, NULL);
-	quit_button = gtk_tool_button_new(quit_image, NULL);
-	he_will_not_divide_us = gtk_separator_tool_item_new();
+	quit_button = gtk_tool_button_new(quit_image, NULL);		/* replace this with a toggle button for safe mode; */
+	he_will_not_divide_us = gtk_separator_tool_item_new();		/* the icon view and/or icon factory must be done first */
 
 	/* Tooltips */
 	gtk_widget_set_tooltip_text(import_button, "Import an image to Atsugami");

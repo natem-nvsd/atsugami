@@ -4,7 +4,7 @@
 #include "import.h"
 #include <libpq-fe.h>
 #include "main.h"
-#include "new_copyright.h"
+#include "new.h"
 #include <stdio.h>
 
 PGresult *copyres;
@@ -43,13 +43,13 @@ static void on_copyright_cancel(GtkWidget *widget, gpointer data) {
 
 /* Quick and dirty solution */
 extern void new_copyright_activate(void) {
-	GtkWidget *label, *button0, *button1, *vbox, *hbox;
+	GtkWidget *label, *button0, *button1, *vbox, *bbox;
 
 	//diddley_dee_dialog = gtk_window_new(GTK_WINDOW_POPUP);
 	diddley_dee_dialog = gtk_window_new(GTK_WINDOW_TOPLEVEL);
 
-	vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
-	gtk_container_set_border_width(GTK_CONTAINER(vbox), 0);
+	vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 10);
+	gtk_container_set_border_width(GTK_CONTAINER(vbox), 10);
 	gtk_container_add(GTK_CONTAINER(diddley_dee_dialog), vbox);
 
 	/* label */
@@ -63,26 +63,25 @@ extern void new_copyright_activate(void) {
 	gtk_widget_set_valign(damn_entry, GTK_ALIGN_START);
 	gtk_box_pack_start(GTK_BOX(vbox), damn_entry, TRUE, TRUE, 0);
 
-	/* hbox */		// replace with gtk button box
-	hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
-	gtk_container_set_border_width(GTK_CONTAINER(hbox), 0);
-	gtk_container_add(GTK_CONTAINER(vbox), hbox);
+	/* bbox */		// replace with gtk button box
+	bbox = gtk_button_box_new(GTK_ORIENTATION_HORIZONTAL);
+	gtk_container_add(GTK_CONTAINER(vbox), bbox);
 
 	/* buttons */
 	button0 = gtk_button_new();
-	gtk_box_pack_start(GTK_BOX(hbox), button0, TRUE, TRUE, 0);
+	gtk_box_pack_start(GTK_BOX(bbox), button0, TRUE, TRUE, 0);
 	gtk_button_set_label(button0, "Cancel");
 	g_signal_connect(button0, "clicked", G_CALLBACK(on_copyright_cancel), NULL);
 
 	button1 = gtk_button_new();
-	gtk_box_pack_start(GTK_BOX(hbox), button1, TRUE, TRUE, 0);
+	gtk_box_pack_start(GTK_BOX(bbox), button1, TRUE, TRUE, 0);
 	gtk_button_set_label(button1, "Add");
 	g_signal_connect(button1, "clicked", G_CALLBACK(on_copyright_apply), NULL);
 
 	/* SHow the window */
 	gtk_window_set_resizable(diddley_dee_dialog, FALSE);
 	gtk_window_set_position(diddley_dee_dialog, GTK_WIN_POS_CENTER_ALWAYS);
-	gtk_window_set_default_size(GTK_WINDOW(diddley_dee_dialog), 600, 400);
+	gtk_window_set_default_size(GTK_WINDOW(diddley_dee_dialog), 300, 100);
 	gtk_window_set_title(diddley_dee_dialog, "Add copyright");
 	gtk_widget_show_all(vbox);
 	gtk_widget_show_all(diddley_dee_dialog);
