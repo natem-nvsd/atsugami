@@ -15,3 +15,20 @@ void about_activate(GSimpleAction *action, GVariant *parameter, gpointer user_da
 	gtk_dialog_run(GTK_DIALOG (about_dlg));
 	gtk_widget_hide(about_dlg);
 }
+/*
+extern void about_activate(GSimpleAction *action, GVariant *parameter, gpointer user_data) {
+	GtkWidget *about_dialog;
+	//gchar *authors = "Nate Morrison";
+
+	about_dialog = gtk_about_dialog_new();
+
+	// define the values of the window
+	//gtk_about_dialog_set_authors(about_dialog, authors);
+
+	gtk_about_dialog_set_logo_icon_name(about_dialog, "image-x-generic");
+
+	// SHow the dialog
+	gtk_window_set_position(about_dialog, GTK_WIN_POS_CENTER_ALWAYS);
+	gtk_show_about_dialog(about_dialog, "title", ("About ExampleCode"), NULL);
+}
+*/

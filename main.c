@@ -84,6 +84,7 @@ int main(int argc, char *argv[]) {
 	GtkWidget *vbox;
 	GtkWidget *menu_bar;
 	GtkWidget *toolbar;
+	GtkWidget *tab_bar;
 
 	GActionGroup *actions;
 	GtkAccelGroup *accel_group;
@@ -389,6 +390,10 @@ int main(int argc, char *argv[]) {
 		gtk_label_set_text(GTK_LABEL(error_label), errMsg);
 	}
 
+	/* Tab bar */
+	tab_bar =  gtk_notebook_new();
+	gtk_container_add(GTK_CONTAINER(vbox), tab_bar);
+
 	/* Gtk Icon View 
 	* I hate writing this part */
 	GtkWidget *scrolled_window;
@@ -400,8 +405,12 @@ int main(int argc, char *argv[]) {
 	icon_view = gtk_icon_view_new();
 
 	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrolled_window), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
-	gtk_box_pack_start(GTK_BOX(vbox), scrolled_window, FALSE, FALSE, 0);
+	//gtk_box_pack_start(GTK_BOX(vbox), scrolled_window, FALSE, FALSE, 0);
+	gtk_container_add(GTK_CONTAINER(tab_bar), scrolled_window);
 	gtk_container_add(GTK_CONTAINER(scrolled_window), icon_view);
+	//gtk_container_add(GTK_CONTAINER(tab_bar), icon_view);
+
+	gtk_notebook_set_tab_label_text(tab_bar, scrolled_window, "Home");
 	
 	/* Show items from the database on startup */
 	//tree_path = gtk_tree_path_new();
