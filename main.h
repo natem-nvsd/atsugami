@@ -2,7 +2,7 @@
 //#define GLADEFILE "/usr/local/share/atsugami/atsugami.glade"
 #define GLADEFILE "atsugami.glade"
 #define CSSFILE "atsugami.css"
-#define VERSION 0.61
+#define VERSION 0.62
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"
 #pragma clang diagnostic ignored "-Wincompatible-pointer-types"
 #pragma clang diagnostic ignored "-Wimplicit-function-declaration"

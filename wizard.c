@@ -12,7 +12,7 @@ GtkWidget *entry0, *entry1, *entry2, *entry3, *entry4, *entry5, *entry6, *rating
 GtkWidget *image;
 GdkPixbuf *image_pixbuf;
 static GtkWidget *assistant = NULL;
-static GtkWidget *progress_bar = NULL;
+//static GtkWidget *progress_bar = NULL;
 const gchar *text0;
 const gchar *text1;
 const gchar *text2;
@@ -34,30 +34,7 @@ gboolean parent_bool = FALSE;
 gboolean child_bool = FALSE;
 gboolean has_children = FALSE;
 
-/* Work bar from gtk3-demo program 
-* this is needed because of some legacy crap */
-static gboolean apply_changes_gradually(gpointer data) {
-	gdouble fraction;
-
-	/* Work, work, work... */
-	fraction = gtk_progress_bar_get_fraction (GTK_PROGRESS_BAR (progress_bar));
-	fraction += 0.05;
-
-	if (fraction < 1.0) {
-		gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(progress_bar), fraction);
-		return G_SOURCE_CONTINUE;
-	}
-	else {
-		/* Close automatically once changes are fully applied. */
-		gtk_widget_destroy(assistant);
-		assistant = NULL;
-		return G_SOURCE_REMOVE;
-	}
-}
-
 static void on_assistant_apply(GtkWidget *widget, gpointer data) {
-	/* Start a timer to simulate changes taking a few seconds to apply. */
-	g_timeout_add(50, apply_changes_gradually, NULL);
 	char psql_error[2048];
 
 	//PQexec(conn, "BEGIN TRANSACTION;");
@@ -590,21 +567,6 @@ static void wizard_create_page3(GtkWidget *assistant) {
 	gtk_assistant_set_page_title(GTK_ASSISTANT(assistant), label, "Confirmation");
 }
 
-static void wizard_create_page4(GtkWidget *assistant) {
-	progress_bar = gtk_progress_bar_new();
-	gtk_widget_set_halign(progress_bar, GTK_ALIGN_CENTER);
-	gtk_widget_set_valign(progress_bar, GTK_ALIGN_CENTER);
-
-	gtk_widget_show(progress_bar);
-	gtk_assistant_append_page(GTK_ASSISTANT(assistant), progress_bar);
-	gtk_assistant_set_page_type(GTK_ASSISTANT(assistant), progress_bar, GTK_ASSISTANT_PAGE_PROGRESS);
-	gtk_assistant_set_page_title(GTK_ASSISTANT(assistant), progress_bar, "Applying changes");
-
-	/* This prevents the assistant window from being
-	* closed while we're "busy" applying changes. */
-	gtk_assistant_set_page_complete(GTK_ASSISTANT (assistant), progress_bar, FALSE);
-}
-
 extern GtkWidget *do_assistant() {
 	if (!assistant) {
 		/* Get the resolution of the user's screen */
@@ -618,12 +580,11 @@ extern GtkWidget *do_assistant() {
 		gtk_window_set_position(assistant, GTK_WIN_POS_CENTER_ALWAYS);
 		gtk_window_set_default_size(GTK_WINDOW(assistant), workarea_width, workarea_height);
 
-		/* Pages in the assistant */
+		/* Pages in the wizard */
 		wizard_create_page0(assistant);
 		wizard_create_page1(assistant);
 		wizard_create_page2(assistant);
 		wizard_create_page3(assistant);
-		wizard_create_page4(assistant);
 
 		g_signal_connect(G_OBJECT(assistant), "cancel", G_CALLBACK(on_assistant_close_cancel), &assistant);
 		g_signal_connect(G_OBJECT(assistant), "close", G_CALLBACK(on_assistant_close_cancel), &assistant);
