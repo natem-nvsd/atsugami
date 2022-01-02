@@ -2,6 +2,12 @@ Atsugami
 ========
 [![.](https://github.com/natem-nvsd/atsugami/blob/master/readme_header_picture.png)]
 
+### Development goals
+0.70:	Icon view, searching, tag preview, editing, working tabs, favourites, bulk import (maybe), the wiki, settings dialog, help dialog  
+0.80:	Fix broken things, clean up things, there will be 0 GTK warnings or errors or incompatible pointers  
+0.90:	...  
+1.0:	Everything will be working and implemented. Builds for Linux, Mac, and Windows will be in [Releases](https://github.com/natem-nvsd/atsugami/releases)  
+
 ### Notes
 *	Limit of 999,999x999,999px  
 
