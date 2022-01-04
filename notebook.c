@@ -24,23 +24,25 @@ static void pixbuf_loader_and_store_filler(GtkListStore *list_store) {
 	int i;		// Current row
 	GtkTreeIter tree_iter;
 
-	for (i = 0; i < x; i++) {
-		gtk_list_store_clear(list_store);
-		note_res = PQexec(conn, "SELECT path FROM public.files ORDER BY imported_at ASC;");
+	note_res = PQexec(conn, "SELECT path FROM public.files ORDER BY imported_at ASC;");	// execute the query once to save time and resources
+
+	gtk_list_store_clear(list_store);	// clear the list store
+	for (i = 0; i < x; i++) {		// multithreading would make this much faster
+		//gtk_list_store_clear(list_store);
+		//note_res = PQexec(conn, "SELECT path FROM public.files ORDER BY imported_at ASC;");
 		x = PQntuples(note_res);	// get the number of rows returned by the query
 		file_path = PQgetvalue(note_res, i, 0);	// get the path from the query
-		thumb = gdk_pixbuf_new_from_file_at_scale(file_path, 180, -1, TRUE, NULL);
+		thumb = gdk_pixbuf_new_from_file_at_scale(file_path, 180, 180, TRUE, NULL);
 
 		//g_assert(thumb);
-
 		gtk_list_store_append(list_store, &tree_iter);
 		gtk_list_store_set(list_store, &tree_iter, COL_PATH, file_path, COL_PIXBUF, thumb, -1);
-
 		printf("Current path: %s\n", file_path);
 
-		PQclear(note_res);
 		file_path = "";
+//		g_free(thumb);
 	}
+	PQclear(note_res);
 
 }
 
