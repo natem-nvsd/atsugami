@@ -24,6 +24,7 @@
 #include <libpq-fe.h>
 #include "main.h"
 #include "new.h"
+#include "notebook.h"
 #include <stdio.h>
 #include "wizard.h"
 
@@ -32,18 +33,7 @@ PGconn *conn;
 char conninfo[] = "dbname=atsugami"; /* Sets the database for dbconnect() */
 char main_psql_error[2048];
 //gchar *parent;
-
-/* fill_store (c) GTK team */
-/*static void fill_store(GtkListStore *store) {
-	//GDir *dir;
-	const gchar *name;
-	GtkTreeIter iter;
-	*/
-
-	/* clear store */
-//	gtk_list_store_clear(store);
-
-//}
+GtkWidget *tab_bar;
 
 /* Quit function */
 //static void quit_activate(GSimpleAction *action, GVariant *parameter, gpointer user_data) {
@@ -71,6 +61,10 @@ static void new_tag_trigger(void) {
 	new_tag_activate();
 }
 
+static void home_trigger(void) {
+	home_page();
+}
+
 extern void destroy_window(gpointer user_data) {	/* this doesn't close the program, only destroys a window */
 	GtkWidget *window = user_data;
 	gtk_widget_destroy(window);
@@ -84,7 +78,6 @@ int main(int argc, char *argv[]) {
 	GtkWidget *vbox;
 	GtkWidget *menu_bar;
 	GtkWidget *toolbar;
-	GtkWidget *tab_bar;
 
 	GActionGroup *actions;
 	GtkAccelGroup *accel_group;
@@ -158,7 +151,7 @@ int main(int argc, char *argv[]) {
 	GtkWidget *favourite_button;
 	GtkWidget *view_button;
 	GtkWidget *wiki_button;
-	GtkWidget *quit_button; 
+	GtkWidget *home_button; 
 	GtkWidget *he_will_not_divide_us;
 	GtkWidget *search_by_tag;
 	GtkWidget *search_wiki;
@@ -171,7 +164,7 @@ int main(int argc, char *argv[]) {
 	GtkImage *favourite_image;
 	GtkImage *view_image;
 	GtkImage *wiki_image;
-	GtkImage *quit_image;
+	GtkImage *home_image;
 
 	/* Create the menu bar */
 	menu_bar = gtk_menu_bar_new();
@@ -275,7 +268,7 @@ int main(int argc, char *argv[]) {
 	view_image = gtk_image_new_from_icon_name("image-x-generic", GTK_ICON_SIZE_LARGE_TOOLBAR);
 	favourite_image = gtk_image_new_from_icon_name("emblem-favorite", GTK_ICON_SIZE_LARGE_TOOLBAR);
 	wiki_image = gtk_image_new_from_stock("gtk-file", GTK_ICON_SIZE_LARGE_TOOLBAR);
-	quit_image = gtk_image_new_from_icon_name("system-log-out", GTK_ICON_SIZE_LARGE_TOOLBAR);
+	home_image = gtk_image_new_from_icon_name("go-home", GTK_ICON_SIZE_LARGE_TOOLBAR);
 
 	/* Widgets */
 	import_button = gtk_tool_button_new(import_image, NULL);
@@ -284,7 +277,7 @@ int main(int argc, char *argv[]) {
 	favourite_button = gtk_tool_button_new(favourite_image, NULL);
 	view_button = gtk_tool_button_new(view_image, NULL);
 	wiki_button = gtk_tool_button_new(wiki_image, NULL);
-	quit_button = gtk_tool_button_new(quit_image, NULL);		/* replace this with a toggle button for safe mode; */
+	home_button = gtk_tool_button_new(home_image, NULL);		/* replace this with a toggle button for safe mode; */
 	he_will_not_divide_us = gtk_separator_tool_item_new();		/* the icon view and/or icon factory must be done first */
 
 	/* Tooltips */
@@ -294,7 +287,7 @@ int main(int argc, char *argv[]) {
 	gtk_widget_set_tooltip_text(favourite_button, "Add the selected image to your favourites");
 	gtk_widget_set_tooltip_text(view_button, "Open the selected image(s) in an external viewer");
 	gtk_widget_set_tooltip_text(wiki_button, "Open the wiki");
-	gtk_widget_set_tooltip_text(quit_button, "Exit Atsugami");
+	gtk_widget_set_tooltip_text(home_button, "Go home");
 
 	/* Search bars */
 	search_by_tag = gtk_search_entry_new();
@@ -317,7 +310,7 @@ int main(int argc, char *argv[]) {
 	gtk_toolbar_insert(toolbar, favourite_button, 3);
 	gtk_toolbar_insert(toolbar, view_button, 4);
 	gtk_toolbar_insert(toolbar, wiki_button, 5);
-	gtk_toolbar_insert(toolbar, quit_button, 6);
+	gtk_toolbar_insert(toolbar, home_button, 6);
 	gtk_toolbar_insert(toolbar, he_will_not_divide_us, 7);
 	gtk_toolbar_insert(toolbar, search_tag_wrapper, 8);
 	gtk_toolbar_insert(toolbar, search_wiki_wrapper, 9);
@@ -329,7 +322,7 @@ int main(int argc, char *argv[]) {
 	g_signal_connect(favourite_button, "clicked", G_CALLBACK(NULL), NULL);
 	g_signal_connect(view_button, "clicked", G_CALLBACK(NULL), NULL);
 	g_signal_connect(wiki_button, "clicked", G_CALLBACK(NULL), NULL);
-	g_signal_connect(quit_button, "clicked", G_CALLBACK(gtk_main_quit), NULL);	/* segfault when quit_activate called */
+	g_signal_connect(home_button, "clicked", G_CALLBACK(home_trigger), NULL);	/* segfault when quit_activate called */
 
 	/* Warning info bar */
 	GtkWidget *warn_widget, *warn_label, *warn_area, *warn_grid;
@@ -392,47 +385,9 @@ int main(int argc, char *argv[]) {
 
 	/* Tab bar */
 	tab_bar =  gtk_notebook_new();
+	gtk_notebook_set_scrollable(tab_bar, TRUE);
 	gtk_container_add(GTK_CONTAINER(vbox), tab_bar);
-
-	/* Gtk Icon View 
-	* I hate writing this part */
-	GtkWidget *scrolled_window;
-	GtkWidget *icon_view;
-	//GtkListStore *store;
-	//char image_search_query_base = "SELECT path FROM public.files WHERE ____ @> ARRAY['";
-
-	scrolled_window = gtk_scrolled_window_new(NULL, NULL);
-	icon_view = gtk_icon_view_new();
-
-	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrolled_window), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
-	//gtk_box_pack_start(GTK_BOX(vbox), scrolled_window, FALSE, FALSE, 0);
-	gtk_container_add(GTK_CONTAINER(tab_bar), scrolled_window);
-	gtk_container_add(GTK_CONTAINER(scrolled_window), icon_view);
-	//gtk_container_add(GTK_CONTAINER(tab_bar), icon_view);
-
-	gtk_notebook_set_tab_label_text(tab_bar, scrolled_window, "Home");
-	
-	/* Show items from the database on startup */
-	//tree_path = gtk_tree_path_new();
-	mainres = PQexecParams(conn, "SELECT path FROM public.files;", 0, NULL, NULL, NULL, 0, 0);
-	/* Show an error dialog if the query failed
-	*	This is causing a segfault; fix later. */
-	if (PQresultStatus(mainres) != PGRES_TUPLES_OK) {
-		strcpy(main_psql_error, PQerrorMessage(conn));
-		printf("%s\n", main_psql_error);
-		postgres_error_activate();
-		PQclear(mainres);
-	}
-	//char paths[] = sizeof(mainres);
-	//gtk_icon_view_select_path(giv, mainres);	/* The result from postgres must be in plain text */
-	//gtk_icon_view_select_path(giv, mainres);	/* Get the result from pgprint() */
-	PQclear(mainres);
-
-	/*
-	parent = g_strdup(paths);
-	store = create_store();
-	fill_store(store);
-	*/
+	home_page();
 
 	/* Show window and vbox */
 	gtk_window_set_title(window, "Atsugami");

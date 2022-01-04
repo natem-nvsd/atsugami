@@ -35,7 +35,7 @@ gboolean child_bool = FALSE;
 gboolean has_children = FALSE;
 
 static void on_assistant_apply(GtkWidget *widget, gpointer data) {
-	char psql_error[2048];
+	//char psql_error[2048];
 
 	//PQexec(conn, "BEGIN TRANSACTION;");
 
@@ -413,7 +413,7 @@ static void wizard_create_page0(GtkWidget *assistant) {
 	cbox = gtk_combo_box_text_new();
 	gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(cbox), "safe", "Safe");
 	gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(cbox), "questionable", "Questionable");
-	gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(cbox), "Explicit", "Explicit");
+	gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(cbox), "explicit", "Explicit");
 	gtk_box_pack_start(GTK_BOX(box), cbox, FALSE, FALSE, 0);
 
 	revealer5 = gtk_revealer_new();

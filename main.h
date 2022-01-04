@@ -20,5 +20,6 @@ extern PGconn *conn;
 extern char conninfo[];
 extern void destroy_window(gpointer user_data);
 //static const char *restricted[] {"%", "--", ";", "\n", "\"", "'", "[", "]", "{", "}"};
+extern GtkWidget *tab_bar;
 
 #endif

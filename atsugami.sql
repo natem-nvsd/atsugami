@@ -7,16 +7,22 @@ created_at TIMESTAMP NOT NULL DEFAULT now(),
 updated_at TIMESTAMP NOT NULL DEFAULT now()
 );
 
-CREATE TABLE copyrights (
-uuid UUID UNIQUE PRIMARY KEY NOT NULL DEFAULT uuid_generate_v4(),
-name TEXT UNIQUE NOT NULL,
-created_at TIMESTAMP NOT NULL DEFAULT now(),
-updated_at TIMESTAMP NOT NULL DEFAULT now()
+CREATE TABLE blacklisted_tags (
+uuid UUID NOT NULL,
+name TEXT NOT NULL,
+blacklisted_at TIMESTAMP NOT NULL DEFAULT now()
 );
 
 CREATE TABLE characters (
 uuid UUID UNIQUE NOT NULL DEFAULT uuid_generate_v4(),
 copyright_uuid UUID NOT NULL DEFAULT uuid_generate_v4(),
+name TEXT UNIQUE NOT NULL,
+created_at TIMESTAMP NOT NULL DEFAULT now(),
+updated_at TIMESTAMP NOT NULL DEFAULT now()
+);
+
+CREATE TABLE copyrights (
+uuid UUID UNIQUE PRIMARY KEY NOT NULL DEFAULT uuid_generate_v4(),
 name TEXT UNIQUE NOT NULL,
 created_at TIMESTAMP NOT NULL DEFAULT now(),
 updated_at TIMESTAMP NOT NULL DEFAULT now()
@@ -56,18 +62,18 @@ created_at TIMESTAMP NOT NULL DEFAULT now(),
 updated_at TIMESTAMP NOT NULL DEFAULT now()
 );
 
-CREATE TABLE translated_commentary (
-uuid REFCURSOR NOT NULL,
-title TEXT NOT NULL,
-body TEXT NOT NULL,
-created_at TIMESTAMP NOT NULL DEFAULT now(),
-updated_at TIMESTAMP NOT NULL DEFAULT now()
-);
-
 CREATE TABLE tags (
 uuid UUID UNIQUE NOT NULL DEFAULT uuid_generate_v4(),
 name TEXT UNIQUE NOT NULL,
 file_count SERIAL NOT NULL,
+created_at TIMESTAMP NOT NULL DEFAULT now(),
+updated_at TIMESTAMP NOT NULL DEFAULT now()
+);
+
+CREATE TABLE translated_commentary (
+uuid REFCURSOR NOT NULL,
+title TEXT NOT NULL,
+body TEXT NOT NULL,
 created_at TIMESTAMP NOT NULL DEFAULT now(),
 updated_at TIMESTAMP NOT NULL DEFAULT now()
 );
