@@ -257,15 +257,8 @@ static void wizard_create_page0(GtkWidget *assistant) {
 	GtkWidget *box, *cbox, *image_preview;
 	GtkWidget *label0, *label1, *label2, *label3, *label4, *label5, *revealer_label;
 	GtkWidget *revealer0, *revealer1, *revealer2, *revealer3, *revealer4, *revealer5;
-	GtkStyleContext *css_context;
-	GtkCssProvider *css;
 
-	css = gtk_css_provider_new();
-	css_context = gtk_style_context_new();
 	revealer_label = gtk_label_new("Text fields cannot contain the following characters: % -- ; ' \" [ ] { }");
-
-	gtk_css_provider_load_from_path(css, CSSFILE, NULL);
-	gtk_style_context_add_class(css_context, "revealer_label_text");
 
 	GdkPixbuf *image_preview_pixbuf = NULL;
 	int int_width, int_height, win_height, win_width;
@@ -326,8 +319,6 @@ static void wizard_create_page0(GtkWidget *assistant) {
 	g_signal_connect(G_OBJECT(entry0), "changed", G_CALLBACK(on_wizard_entry_changed), assistant);
 
 	revealer0 = gtk_revealer_new();
-	css_context = gtk_widget_get_style_context(revealer_label);
-	css_context = gtk_widget_get_style_context(entry0);
 
 	gtk_widget_set_halign(revealer_label, GTK_ALIGN_START);
 	gtk_box_pack_start(GTK_BOX(box), revealer_label, FALSE, FALSE, 0);
@@ -345,7 +336,6 @@ static void wizard_create_page0(GtkWidget *assistant) {
 	g_signal_connect(G_OBJECT(entry1), "changed", G_CALLBACK(on_wizard_entry_changed), assistant);
 
 	revealer1 = gtk_revealer_new();
-	css_context = gtk_widget_get_style_context(entry1);
 
 	gtk_widget_set_halign(revealer_label, GTK_ALIGN_START);
 	gtk_box_pack_start(GTK_BOX(box), revealer_label, FALSE, FALSE, 0);
@@ -361,7 +351,6 @@ static void wizard_create_page0(GtkWidget *assistant) {
 	gtk_entry_set_placeholder_text(entry2, "Values are separated by commas; spaces are optional.");
 	gtk_box_pack_start(GTK_BOX(box), entry2, TRUE, TRUE, 0);
 	g_signal_connect(G_OBJECT(entry2), "changed", G_CALLBACK(on_wizard_entry_changed), assistant);
-	css_context = gtk_widget_get_style_context(entry2);
 
 	revealer2 = gtk_revealer_new();
 
@@ -379,7 +368,6 @@ static void wizard_create_page0(GtkWidget *assistant) {
 	gtk_entry_set_placeholder_text(entry3, "Values are separated by commas; spaces are optional.");
 	gtk_box_pack_start(GTK_BOX(box), entry3, TRUE, TRUE, 0);
 	g_signal_connect(G_OBJECT(entry3), "changed", G_CALLBACK(on_wizard_entry_changed), assistant);
-	css_context = gtk_widget_get_style_context(entry3);
 
 	revealer3 = gtk_revealer_new();
 
@@ -397,7 +385,6 @@ static void wizard_create_page0(GtkWidget *assistant) {
 	gtk_entry_set_placeholder_text(entry4, "Values are separated by commas; spaces are optional.");
 	gtk_box_pack_start(GTK_BOX(box), entry4, TRUE, TRUE, 0);
 	g_signal_connect(G_OBJECT(entry4), "changed", G_CALLBACK(on_wizard_entry_changed), assistant);
-	css_context = gtk_widget_get_style_context(entry4);
 
 	revealer4 = gtk_revealer_new();
 
@@ -408,7 +395,6 @@ static void wizard_create_page0(GtkWidget *assistant) {
 	label5 = gtk_label_new("Rating:");
 	gtk_widget_set_halign(label5, GTK_ALIGN_START);
 	gtk_box_pack_start(GTK_BOX(box), label5, FALSE, FALSE, 0);
-	css_context = gtk_widget_get_style_context(entry5);
 
 	cbox = gtk_combo_box_text_new();
 	gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(cbox), "safe", "Safe");

@@ -1,8 +1,7 @@
 /* main.h */
 //#define GLADEFILE "/usr/local/share/atsugami/atsugami.glade"
 #define GLADEFILE "atsugami.glade"
-#define CSSFILE "atsugami.css"
-#define VERSION 0.62
+#define VERSION 0.66
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"
 #pragma clang diagnostic ignored "-Wincompatible-pointer-types"
 #pragma clang diagnostic ignored "-Wimplicit-function-declaration"
@@ -20,6 +19,6 @@ extern PGconn *conn;
 extern char conninfo[];
 extern void destroy_window(gpointer user_data);
 //static const char *restricted[] {"%", "--", ";", "\n", "\"", "'", "[", "]", "{", "}"};
-extern GtkWidget *tab_bar;
+extern GtkWidget *notebook;
 
 #endif

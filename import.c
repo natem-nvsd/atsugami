@@ -3,7 +3,7 @@
 #include <gtk/gtk.h>
 #include "main.h"
 #include <string.h>
-#include "wizard.h"
+#include "import_wizard.h"
 //#include "gtk_functions.h"
 
 gchar import_file_path[10240];
@@ -21,7 +21,8 @@ static void open_response_cb(GtkNativeDialog *dialog, gint response_id, gpointer
 		strcpy(import_file_path, file_path);
 
 		/* Run the wizard; the file chooser window is destroyed before the wizard opens. */
-		do_assistant();
+		//do_assistant();
+		import_wizard();
 	}
 
 	gtk_native_dialog_destroy(GTK_NATIVE_DIALOG(native));

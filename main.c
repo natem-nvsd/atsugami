@@ -26,14 +26,15 @@
 #include "new.h"
 #include "notebook.h"
 #include <stdio.h>
-#include "wizard.h"
+//#include "wizard.h"
+#include "import_wizard.h"
 
 PGresult *mainres;
 PGconn *conn;
 char conninfo[] = "dbname=atsugami"; /* Sets the database for dbconnect() */
 char main_psql_error[2048];
 //gchar *parent;
-GtkWidget *tab_bar;
+GtkWidget *notebook;
 
 /* Quit function */
 //static void quit_activate(GSimpleAction *action, GVariant *parameter, gpointer user_data) {
@@ -43,6 +44,11 @@ static void quit_activate(gpointer user_data) {
 
 	PQfinish(conn);
 	gtk_widget_destroy(window);
+}
+
+static void import_trigger(void) {
+	//import_wizard();
+	import_wizard();
 }
 
 static void new_artist_trigger(void) {	// this is here because of gtk or clang idiocy
@@ -96,6 +102,9 @@ int main(int argc, char *argv[]) {
 	vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
 	gtk_container_set_border_width(GTK_CONTAINER(vbox), 0);
 	gtk_container_add(GTK_CONTAINER(window), vbox);
+
+	/* keyboard shortcuts */
+	accel_group = gtk_accel_group_new();
 
 	/* Actions */
 	GAction *import;
@@ -157,6 +166,7 @@ int main(int argc, char *argv[]) {
 	GtkWidget *search_wiki;
 	GtkWidget *search_tag_wrapper;
 	GtkWidget *search_wiki_wrapper;
+	GtkWidget *import_debug;
 
 	GtkImage *import_image;
 	GtkImage *bulk_import_image;
@@ -165,6 +175,7 @@ int main(int argc, char *argv[]) {
 	GtkImage *view_image;
 	GtkImage *wiki_image;
 	GtkImage *home_image;
+	GtkImage *debug_image;
 
 	/* Create the menu bar */
 	menu_bar = gtk_menu_bar_new();
@@ -269,6 +280,7 @@ int main(int argc, char *argv[]) {
 	favourite_image = gtk_image_new_from_icon_name("emblem-favorite", GTK_ICON_SIZE_LARGE_TOOLBAR);
 	wiki_image = gtk_image_new_from_stock("gtk-file", GTK_ICON_SIZE_LARGE_TOOLBAR);
 	home_image = gtk_image_new_from_icon_name("go-home", GTK_ICON_SIZE_LARGE_TOOLBAR);
+	debug_image = gtk_image_new_from_icon_name("list_add", GTK_ICON_SIZE_LARGE_TOOLBAR);
 
 	/* Widgets */
 	import_button = gtk_tool_button_new(import_image, NULL);
@@ -279,6 +291,7 @@ int main(int argc, char *argv[]) {
 	wiki_button = gtk_tool_button_new(wiki_image, NULL);
 	home_button = gtk_tool_button_new(home_image, NULL);		/* replace this with a toggle button for safe mode; */
 	he_will_not_divide_us = gtk_separator_tool_item_new();		/* the icon view and/or icon factory must be done first */
+	import_debug = gtk_tool_button_new(debug_image, NULL);
 
 	/* Tooltips */
 	gtk_widget_set_tooltip_text(import_button, "Import an image to Atsugami");
@@ -314,6 +327,7 @@ int main(int argc, char *argv[]) {
 	gtk_toolbar_insert(toolbar, he_will_not_divide_us, 7);
 	gtk_toolbar_insert(toolbar, search_tag_wrapper, 8);
 	gtk_toolbar_insert(toolbar, search_wiki_wrapper, 9);
+	gtk_toolbar_insert(toolbar, import_debug, 10);
 
 	/* Toolbar callbacks */
 	g_signal_connect(import_button, "clicked", G_CALLBACK(import_activate), NULL);
@@ -323,6 +337,7 @@ int main(int argc, char *argv[]) {
 	g_signal_connect(view_button, "clicked", G_CALLBACK(NULL), NULL);
 	g_signal_connect(wiki_button, "clicked", G_CALLBACK(NULL), NULL);
 	g_signal_connect(home_button, "clicked", G_CALLBACK(home_trigger), NULL);	/* segfault when quit_activate called */
+	g_signal_connect(import_debug, "clicked", G_CALLBACK(import_trigger), NULL);
 
 	/* Warning info bar */
 	GtkWidget *warn_widget, *warn_label, *warn_area, *warn_grid;
@@ -384,10 +399,18 @@ int main(int argc, char *argv[]) {
 	}
 
 	/* Tab bar */
-	tab_bar =  gtk_notebook_new();
-	gtk_notebook_set_scrollable(tab_bar, TRUE);
-	gtk_container_add(GTK_CONTAINER(vbox), tab_bar);
+	notebook =  gtk_notebook_new();
+
+	gtk_notebook_set_scrollable(notebook, TRUE);
+	gtk_container_add(GTK_CONTAINER(vbox), notebook);
+
 	home_page();
+
+	/* Nobody here but us chickens! */
+	GtkWidget *chicken_label;
+	chicken_label = gtk_label_new("Nobody here but us chickens!");
+	gtk_widget_set_halign(chicken_label, GTK_ALIGN_START);
+	gtk_box_pack_start(GTK_BOX(vbox), chicken_label, FALSE, FALSE, 0);
 
 	/* Show window and vbox */
 	gtk_window_set_title(window, "Atsugami");
