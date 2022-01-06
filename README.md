@@ -1,6 +1,6 @@
 Atsugami
 ========
-[Images not included[.](https://github.com/natem-nvsd/atsugami/blob/master/readme_header_picture.png)]
+![Images not included](https://github.com/natem-nvsd/atsugami/blob/master/readme_header_picture.png)
 
 ### Development goals
 0.70:	Icon view, searching, tag preview, editing, working tabs, favourites, bulk import (maybe), the wiki, settings dialog, help dialog  
