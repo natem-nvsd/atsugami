@@ -485,8 +485,7 @@ static void wizard_create_page1(GtkWidget *assistant) {
 	gtk_entry_set_activates_default(GTK_ENTRY(entry6), TRUE);
 	gtk_widget_set_valign(entry6, GTK_ALIGN_START);
 	gtk_box_pack_start(GTK_BOX(box), entry6, TRUE, TRUE, 0);
-	g_signal_connect(G_OBJECT(entry6), "changed",
-	G_CALLBACK(on_wizard_entry_changed), assistant);
+	g_signal_connect(G_OBJECT(entry6), "changed", G_CALLBACK(on_wizard_entry_changed), assistant);
 
 	gtk_widget_set_sensitive(pg1_label1, FALSE);
 	gtk_widget_set_sensitive(entry6, FALSE);
@@ -506,8 +505,7 @@ static void wizard_create_page1(GtkWidget *assistant) {
 	gtk_entry_set_activates_default(GTK_ENTRY(entry5), TRUE);
 	gtk_widget_set_valign(entry5, GTK_ALIGN_START);
 	gtk_box_pack_start(GTK_BOX(box), entry5, TRUE, TRUE, 0);
-	g_signal_connect(G_OBJECT(entry5), "changed",
-	G_CALLBACK(on_wizard_entry_changed), assistant);
+	g_signal_connect(G_OBJECT(entry5), "changed", G_CALLBACK(on_wizard_entry_changed), assistant);
 
 	gtk_widget_set_sensitive(pg1_label0, FALSE);
 	gtk_widget_set_sensitive(entry5, FALSE);

@@ -175,12 +175,6 @@ static void import_button_cb(GtkWidget *widget, gpointer user_data) {
 	else
 		strcat(query_string, "FALSE, ");
 	
-	/* Has children */
-	if (has_children == TRUE)
-		strcat(query_string, "TRUE, ");
-	else
-		strcat(query_string, "FALSE, ");
-	
 	/* Parent UUID */
 	text5 = gtk_entry_get_text(GTK_ENTRY(entry5));
 	if (gtk_entry_get_text_length(entry5) == 0)
@@ -204,9 +198,7 @@ static void import_button_cb(GtkWidget *widget, gpointer user_data) {
 	PQclear(wiz_res);
 
 	char get_uuid_from_path[2048];
-	char new_file_path[2048];
 	char uuid[38];
-	char new_file_query[2048];
 
 	/* Get the uuid of the file just imported */
 	strcpy(uuid, PQgetvalue(wiz_res, 0, 0));
@@ -216,15 +208,63 @@ static void import_button_cb(GtkWidget *widget, gpointer user_data) {
 	PQexec(conn, get_uuid_from_path);
 
 	/* Move the file to a the storage directory */
-	strcpy(new_file_path, STORDIR);
-	strcat(new_file_path, "/files/");
-	strcat(new_file_path, uuid);
-	//system("mv %s %s", import_file_path, new_file_path);
+	char mv_command[71 + sizeof(import_file_path)];
+
+	strcpy(mv_command, "mv ");
+	strcat(mv_command, import_file_path);
+	strcat(mv_command, " ");
+	strcat(mv_command, STORDIR);
+	strcat(mv_command, "/files/");
+	strcat(mv_command, uuid);
+	system(mv_command);
 
 	/* Update the file's entry in Postgres */
+	char new_path_query[152];
+
+	strcpy(new_path_query, "UPDATE public.files SET path = '");
+	strcat(new_path_query, getenv("HOME"));
+	strcat(new_path_query, "/.config/atsugami/files/");
+	strcat(new_path_query, uuid);
+	strcat(new_path_query, "'WHERE uuid = '");
+	strcat(new_path_query, uuid);
+	strcat(new_path_query, "';");
+	PQexec(conn, new_path_query);
 
 	strcpy(import_file_path, ""); /* Clear import_file_path. */
+	PQclear(wiz_res);
+
+	gtk_notebook_detach_tab(notebook, scrolled_window);
 }
+
+/* Check box callbacks */
+GtkWidget *pg1_label0, *pg1_label1, *check_button0, *check_button1, *check_button2;
+
+static void is_parent_cb(GtkWidget *check_button, gpointer data) {
+	if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(check_button0))) {
+		parent_bool = TRUE;
+		gtk_widget_set_sensitive(pg1_label1, TRUE);
+		gtk_widget_set_sensitive(entry6, TRUE);
+	}
+	else {
+		g_print("%s off\n", gtk_button_get_label(GTK_BUTTON(check_button0)));
+		gtk_widget_set_sensitive(pg1_label1, FALSE);
+		gtk_widget_set_sensitive(entry6, FALSE);
+	}
+}
+
+static void is_child_cb(GtkWidget *check_button, gpointer data) {
+	if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(check_button1))) {
+		child_bool = TRUE;
+		gtk_widget_set_sensitive(pg1_label0, TRUE);
+		gtk_widget_set_sensitive(entry5, TRUE);
+	}
+	else {
+		g_print("%s off\n", gtk_button_get_label(GTK_BUTTON(check_button1)));
+		gtk_widget_set_sensitive(pg1_label0, FALSE);
+		gtk_widget_set_sensitive(entry5, FALSE);
+	}
+}
+
 
 extern void import_wizard(GtkWidget *import_page, gpointer user_data) {
 	import_page = gtk_box_new(GTK_ORIENTATION_VERTICAL, 10);
@@ -342,6 +382,48 @@ extern void import_wizard(GtkWidget *import_page, gpointer user_data) {
 	gtk_entry_set_activates_default(GTK_ENTRY(rating_entry), TRUE);
 	g_object_bind_property(cbox, "active-id", rating_entry, "text", G_BINDING_DEFAULT);
 	//g_signal_connect(G_OBJECT(rating_entry), "changed", G_CALLBACK(on_wizard_entry_changed), assistant);
+
+	/* First check box */
+	check_button0 = gtk_check_button_new_with_label("This file is a parent");
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(check_button0), FALSE);
+	g_signal_connect(check_button0, "toggled", G_CALLBACK(is_parent_cb), NULL);
+	gtk_widget_set_valign(check_button0, GTK_ALIGN_START);
+	gtk_box_pack_start(GTK_BOX(import_page), check_button0, FALSE, FALSE, 0);
+
+	/* Child UUID entry */
+	pg1_label1 = gtk_label_new("Enter the UUID(s) of the child(ren) here:");
+	gtk_widget_set_halign(pg1_label1, GTK_ALIGN_START);
+	gtk_box_pack_start(GTK_BOX(import_page), pg1_label1, FALSE, FALSE, 0);
+	
+	entry6 = gtk_entry_new();
+	gtk_entry_set_activates_default(GTK_ENTRY(entry6), TRUE);
+	gtk_widget_set_valign(entry6, GTK_ALIGN_START);
+	gtk_box_pack_start(GTK_BOX(import_page), entry6, TRUE, TRUE, 0);
+	//g_signal_connect(G_OBJECT(entry6), "changed", G_CALLBACK(on_wizard_entry_changed), assistant);
+	
+	gtk_widget_set_sensitive(pg1_label1, FALSE);
+	gtk_widget_set_sensitive(entry6, FALSE);
+	
+	/* Second check box */
+	check_button1 = gtk_check_button_new_with_label("This file is a child");
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(check_button1), FALSE);
+	g_signal_connect(check_button1, "toggled", G_CALLBACK(is_child_cb), NULL);
+	gtk_widget_set_valign(check_button1, GTK_ALIGN_START);
+	gtk_box_pack_start(GTK_BOX(import_page), check_button1, FALSE, FALSE, 0);
+	/* label */
+	pg1_label0 = gtk_label_new("Enter Parent UUID here:");
+	gtk_widget_set_halign(pg1_label0, GTK_ALIGN_START);
+	gtk_box_pack_start(GTK_BOX(import_page), pg1_label0, FALSE, FALSE, 0);
+
+	/* text box */                                                                                                                                     
+	entry5 = gtk_entry_new();
+	gtk_entry_set_activates_default(GTK_ENTRY(entry5), TRUE);
+	gtk_widget_set_valign(entry5, GTK_ALIGN_START);
+	gtk_box_pack_start(GTK_BOX(import_page), entry5, TRUE, TRUE, 0);
+	//g_signal_connect(G_OBJECT(entry5), "changed", G_CALLBACK(on_wizard_entry_changed), assistant);
+	
+	gtk_widget_set_sensitive(pg1_label0, FALSE);
+	gtk_widget_set_sensitive(entry5, FALSE);
 
 	/* "Cancel" and "Import" buttons */
 	button_box = gtk_button_box_new(GTK_ORIENTATION_HORIZONTAL);

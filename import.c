@@ -21,7 +21,6 @@ static void open_response_cb(GtkNativeDialog *dialog, gint response_id, gpointer
 		strcpy(import_file_path, file_path);
 
 		/* Run the wizard; the file chooser window is destroyed before the wizard opens. */
-		//do_assistant();
 		import_wizard();
 	}
 

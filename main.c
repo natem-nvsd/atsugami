@@ -17,7 +17,6 @@
 
 #include "about.h"
 #include <errno.h>
-#include "error_dialogs.h"
 #include <glib/gstdio.h>
 #include <gtk/gtk.h>
 #include "import.h"
@@ -26,7 +25,6 @@
 #include "new.h"
 #include "notebook.h"
 #include <stdio.h>
-//#include "wizard.h"
 #include "import_wizard.h"
 
 PGresult *mainres;
@@ -161,7 +159,6 @@ int main(int argc, char *argv[]) {
 	GtkWidget *search_wiki;
 	GtkWidget *search_tag_wrapper;
 	GtkWidget *search_wiki_wrapper;
-	GtkWidget *import_debug;
 
 	GtkImage *import_image;
 	GtkImage *bulk_import_image;
@@ -170,7 +167,6 @@ int main(int argc, char *argv[]) {
 	GtkImage *view_image;
 	GtkImage *wiki_image;
 	GtkImage *home_image;
-	GtkImage *debug_image;
 
 	/* Create the menu bar */
 	menu_bar = gtk_menu_bar_new();
@@ -275,7 +271,6 @@ int main(int argc, char *argv[]) {
 	favourite_image = gtk_image_new_from_icon_name("emblem-favorite", GTK_ICON_SIZE_LARGE_TOOLBAR);
 	wiki_image = gtk_image_new_from_stock("gtk-file", GTK_ICON_SIZE_LARGE_TOOLBAR);
 	home_image = gtk_image_new_from_icon_name("go-home", GTK_ICON_SIZE_LARGE_TOOLBAR);
-	debug_image = gtk_image_new_from_icon_name("list_add", GTK_ICON_SIZE_LARGE_TOOLBAR);
 
 	/* Widgets */
 	import_button = gtk_tool_button_new(import_image, NULL);
@@ -400,12 +395,10 @@ int main(int argc, char *argv[]) {
 	home_page();
 
 	/* Nobody here but us chickens! */
-	/*
 	GtkWidget *chicken_label;
 	chicken_label = gtk_label_new("Nobody here but us chickens!");
 	gtk_widget_set_halign(chicken_label, GTK_ALIGN_START);
 	gtk_box_pack_start(GTK_BOX(vbox), chicken_label, FALSE, FALSE, 0);
-	*/
 
 	/* Show window and vbox */
 	gtk_window_set_title(window, "Atsugami");

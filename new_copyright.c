@@ -1,4 +1,4 @@
-﻿#include "error_dialogs.h"
+﻿//#include "error_dialogs.h"
 #include <glib/gstdio.h>
 #include <gtk/gtk.h>
 #include "import.h"
@@ -8,7 +8,7 @@
 #include <stdio.h>
 
 PGresult *copyres;
-GtkWidget *diddley_dee_dialog, *damn_entry;
+GtkWidget *damn_entry, *copy_vbox;
 
 static void on_copyright_apply(GtkWidget *widget, gpointer data) {
 	//char psql_error[2048];
@@ -33,56 +33,49 @@ static void on_copyright_apply(GtkWidget *widget, gpointer data) {
 	PQexec(conn, copyright_query);
 	strcpy(copyright_query, "");	// clear the query string
 
-	// the query is done, now the window must be destroyed
-	gtk_widget_destroy(diddley_dee_dialog);
+	gtk_notebook_detach_tab(notebook, copy_vbox);
 }
 
 static void on_copyright_cancel(GtkWidget *widget, gpointer data) {
-	gtk_widget_destroy(diddley_dee_dialog);
+	gtk_notebook_detach_tab(notebook, copy_vbox);
 }
 
-/* Quick and dirty solution */
 extern void new_copyright_activate(void) {
-	GtkWidget *label, *button0, *button1, *vbox, *bbox;
+	GtkWidget *label, *button0, *button1, *bbox;
+	gint page_count = gtk_notebook_get_n_pages(notebook);
 
-	//diddley_dee_dialog = gtk_window_new(GTK_WINDOW_POPUP);
-	diddley_dee_dialog = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-
-	vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 10);
-	gtk_container_set_border_width(GTK_CONTAINER(vbox), 10);
-	gtk_container_add(GTK_CONTAINER(diddley_dee_dialog), vbox);
-
+	copy_vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 10);
+	gtk_container_set_border_width(GTK_CONTAINER(copy_vbox), 10);
+	
 	/* label */
 	label = gtk_label_new("Enter the copyright's name here:");
 	gtk_widget_set_valign(label, GTK_ALIGN_START);
-	gtk_box_pack_start(GTK_BOX(vbox), label, FALSE, FALSE, 0);
-
+	gtk_box_pack_start(GTK_BOX(copy_vbox), label, FALSE, FALSE, 0);
+	
 	/* entry */
 	damn_entry = gtk_entry_new();
 	gtk_entry_set_activates_default(GTK_ENTRY(damn_entry), TRUE);
 	gtk_widget_set_valign(damn_entry, GTK_ALIGN_START);
-	gtk_box_pack_start(GTK_BOX(vbox), damn_entry, TRUE, TRUE, 0);
-
-	/* bbox */		// replace with gtk button box
+	gtk_box_pack_start(GTK_BOX(copy_vbox), damn_entry, TRUE, TRUE, 0);
+	
+	/* bbox */              // replace with gtk button box
 	bbox = gtk_button_box_new(GTK_ORIENTATION_HORIZONTAL);
-	gtk_container_add(GTK_CONTAINER(vbox), bbox);
-
+	gtk_button_box_set_layout(bbox, GTK_BUTTONBOX_START);
+	gtk_container_add(GTK_CONTAINER(copy_vbox), bbox);
+	
 	/* buttons */
 	button0 = gtk_button_new();
 	gtk_box_pack_start(GTK_BOX(bbox), button0, TRUE, TRUE, 0);
 	gtk_button_set_label(button0, "Cancel");
 	g_signal_connect(button0, "clicked", G_CALLBACK(on_copyright_cancel), NULL);
-
+	
 	button1 = gtk_button_new();
 	gtk_box_pack_start(GTK_BOX(bbox), button1, TRUE, TRUE, 0);
 	gtk_button_set_label(button1, "Add");
 	g_signal_connect(button1, "clicked", G_CALLBACK(on_copyright_apply), NULL);
 
-	/* SHow the window */
-	gtk_window_set_resizable(diddley_dee_dialog, FALSE);
-	gtk_window_set_position(diddley_dee_dialog, GTK_WIN_POS_CENTER_ALWAYS);
-	gtk_window_set_default_size(GTK_WINDOW(diddley_dee_dialog), 300, 100);
-	gtk_window_set_title(diddley_dee_dialog, "Add copyright");
-	gtk_widget_show_all(vbox);
-	gtk_widget_show_all(diddley_dee_dialog);
+	gtk_widget_show_all(copy_vbox);
+	gtk_container_add(GTK_CONTAINER(notebook), copy_vbox);
+	gtk_notebook_set_tab_label_text(notebook, copy_vbox, "New copyright");
+	gtk_notebook_set_current_page(notebook, page_count);
 }

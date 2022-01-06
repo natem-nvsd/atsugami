@@ -36,7 +36,7 @@ static void pixbuf_loader_and_store_filler(GtkListStore *list_store) {
 		//g_assert(thumb);
 		gtk_list_store_append(list_store, &tree_iter);
 		gtk_list_store_set(list_store, &tree_iter, COL_PATH, file_path, COL_PIXBUF, thumb, -1);
-		printf("Current path: %s\n", file_path);
+		//printf("Current path: %s\n", file_path);
 
 		file_path = "";
 	}
@@ -63,11 +63,9 @@ extern void home_page(void) {
 	iv_scrolled_window = gtk_scrolled_window_new(NULL, NULL);
 
 	gtk_scrolled_window_add_with_viewport(iv_scrolled_window, icon_view);
-	gtk_notebook_set_scrollable(notebook, TRUE);
 
 	gtk_icon_view_set_selection_mode(GTK_ICON_VIEW(icon_view), GTK_SELECTION_MULTIPLE);
 	gtk_icon_view_set_columns(icon_view, -1);
-	//gtk_icon_view_set_row_spacing(icon_view, -1);
 
 	g_object_unref(list_store);
 
@@ -76,19 +74,9 @@ extern void home_page(void) {
 
 	/* set the size of icon_view */
 	gtk_scrolled_window_set_propagate_natural_height(iv_scrolled_window, TRUE);
+	gtk_scrolled_window_set_kinetic_scrolling(iv_scrolled_window, TRUE);
 
-	printf("%d\n", iv_height);
-
-	//gtk_widget_set_size_request(iv_scrolled_window, -1, resize_total);
-	//gtk_widget_set_size_request(iv_scrolled_window, -1, 900);
-	gtk_widget_set_size_request(iv_scrolled_window, -1, iv_height);
-
-	//gtk_widget_show_all(icon_view);
 	gtk_widget_show_all(iv_scrolled_window);
-	/*
-	gtk_container_add(GTK_CONTAINER(notebook), icon_view);
-	gtk_notebook_set_tab_label_text(notebook, icon_view, "Home");
-	*/
 	gtk_container_add(GTK_CONTAINER(notebook), iv_scrolled_window);
 	gtk_notebook_set_tab_label_text(notebook, iv_scrolled_window, "Home");
 }
