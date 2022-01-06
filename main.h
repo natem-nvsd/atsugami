@@ -1,7 +1,8 @@
 /* main.h */
 //#define GLADEFILE "/usr/local/share/atsugami/atsugami.glade"
 #define GLADEFILE "atsugami.glade"
-#define VERSION 0.66
+#define VERSION 0.67
+#define STORDIR "$HOME/.config/atsugami"
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"
 #pragma clang diagnostic ignored "-Wincompatible-pointer-types"
 #pragma clang diagnostic ignored "-Wimplicit-function-declaration"
