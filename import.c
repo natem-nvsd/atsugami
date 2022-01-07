@@ -39,6 +39,7 @@ extern void import_activate(gpointer user_data) {
 
 	filter0 = gtk_file_filter_new();
 	gtk_file_filter_add_pattern(filter0, "*.gif");
+	gtk_file_filter_add_pattern(filter0, "*.jfif");
 	gtk_file_filter_add_pattern(filter0, "*.jpg");
 	gtk_file_filter_add_pattern(filter0, "*.jpeg");
 	gtk_file_filter_add_pattern(filter0, "*.png");

@@ -26,13 +26,7 @@ const gchar *text5;
 const gchar *text6;
 const gchar *text7;
 
-float workarea_width;
-float workarea_height;
-float width;
-float height;
 gint page_count = 0;
-char char_width[6]; /* only corrupt, damaged, or malicisious images can over flow these two buffers; fix them */
-char char_height[6];
 char query_string[20480];       /*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
 char child_uuids[2048];         /* THESE MUST BE FIXED TO PREVENT BUFFER OVERFLOWS */
 gboolean parent_bool = FALSE;
@@ -44,9 +38,14 @@ static void cancel_button_cb(void) {
 	gtk_notebook_detach_tab(notebook, scrolled_window);
 }
 
-static void import_button_cb(GtkWidget *widget, gpointer user_data) {
+//static void import_button_cb(void) {
+int import_button_cb(void) {
+	/* Begin transaction */
+	PQexec(conn, "BEGIN TRANSACTION;");
+	PQclear(wiz_res);
+
 	/* Create the query to submit to PostgreSQL */
-	strcpy(query_string, "INSERT INTO public.files (path, artist, copyrights, characters, tags, source, rating, width, height, is_parent, is_child, has_children, parent_uuid, child_uuids, imported_at) VALUES ('");
+	strcpy(query_string, "INSERT INTO public.files (path, artist, copyrights, characters, tags, source, rating, is_parent, is_child,  parent_uuid, child_uuids, imported_at) VALUES ('");
 
 	/* add the file path to the query */
 	strcat(query_string, import_file_path);
@@ -61,24 +60,14 @@ static void import_button_cb(GtkWidget *widget, gpointer user_data) {
 		strcat(query_string, text0);
 		strcat(query_string, "}', '{");
 	}
-
-	char artist_query_base[] = "INSERT INTO public.artists (name) VALUES ('";
-	gint artist_text_size;
-	gint artist_query_base_size;
-	int artist_query_size;
 	
-	artist_text_size = sizeof(text0);
-	artist_query_base_size = 44;
-	artist_query_size = (artist_query_base_size + text0);
-	
-	char artist_query[artist_query_size];
-	strcpy(artist_query, artist_query_base);
+	char artist_query[71 + sizeof(text0)];
+	strcpy(artist_query, "INSERT INTO public.artists (name) VALUES ('");
 	strcat(artist_query, text0);
 	strcat(artist_query, "') ON CONFLICT DO NOTHING;");
 	
-	printf("artist_query_size = %d\n", artist_query_size);
-	printf("%s\n", artist_query);
 	PQexec(conn, artist_query);
+	PQclear(wiz_res);
 	strcpy(artist_query, "");	/* Clean the string */
 
 	/* Entry fields from page1 */                                                                                                                      
@@ -91,19 +80,14 @@ static void import_button_cb(GtkWidget *widget, gpointer user_data) {
 		strcat(query_string, "}', '{");
 	}
 
-	char copyright_query_base[] = "INSERT INTO public.copyrights (name) VALUES ('";
-	gint copyright_text_size;
-	gint copyright_query_base_size;
-	int copyright_query_size;
-	
-	copyright_text_size = sizeof(text1);
-	copyright_query_base_size = 47;
-	copyright_query_size = (copyright_query_base_size + text1);
-	
-	char copyright_query[copyright_query_size];
-	strcpy(copyright_query, copyright_query_base);
+	char copyright_query[74 + sizeof(text1)];
+	strcpy(copyright_query, "INSERT INTO public.copyrights (name) VALUES ('");
 	strcat(copyright_query, text1);
 	strcat(copyright_query, "') ON CONFLICT DO NOTHING;");	/* i should use a macro for this */
+
+	PQexec(conn, copyright_query);
+	PQclear(wiz_res);
+	strcpy(copyright_query, "");
 
 	/* Entry fields from page2 */
 	text2 = gtk_entry_get_text(GTK_ENTRY(entry2));	/* Characters */
@@ -115,20 +99,15 @@ static void import_button_cb(GtkWidget *widget, gpointer user_data) {
 		strcat(query_string, "}', '{");
 	}
 
-	char characters_query_base[] = "INSERT INTO public.characters (name) VALUES ('";
-	gint characters_text_size;
-	gint characters_query_base_size;
-	int characters_query_size;
-	
-	characters_text_size = sizeof(text1);
-	characters_query_base_size = 47;
-	characters_query_size = (characters_query_base_size + text1);
-	
-	char characters_query[characters_query_size];
-	strcpy(characters_query, characters_query_base);
+	char characters_query[74 + sizeof(text2)];
+	strcpy(characters_query, "INSERT INTO public.characters (name) VALUES ('");
 	strcat(characters_query, text2);
 	strcat(characters_query, "') ON CONFLICT DO NOTHING;");
 		/* This won't work for multiple characters */
+	
+	PQexec(conn, characters_query);
+	PQclear(wiz_res);
+	strcpy(characters_query, "");
 
 	/* Tags */
 	text3 = gtk_entry_get_text(GTK_ENTRY(entry3));
@@ -152,16 +131,8 @@ static void import_button_cb(GtkWidget *widget, gpointer user_data) {
 
 	/* Rating */
 	text7 = gtk_entry_get_text(GTK_ENTRY(rating_entry));
-	printf("text7: %s\n", text7);
 	strcat(query_string, text7);
 	strcat(query_string, "', ");
-	
-	/* add the image resolution to the query */
-	strcat(query_string, char_width); /* Width */
-	strcat(query_string, ", ");
-	
-	strcat(query_string, char_height); /* Height */
-	strcat(query_string, ", ");
 	
 	/* add the values of is_parent */
 	if (parent_bool == TRUE)
@@ -171,17 +142,18 @@ static void import_button_cb(GtkWidget *widget, gpointer user_data) {
 	
 	/* add the values of  is_child */
 	if (child_bool == TRUE)
-		strcat(query_string, "TRUE, ");
+		strcat(query_string, "TRUE, '");
 	else
-		strcat(query_string, "FALSE, ");
+		strcat(query_string, "FALSE, '");
 	
 	/* Parent UUID */
 	text5 = gtk_entry_get_text(GTK_ENTRY(entry5));
 	if (gtk_entry_get_text_length(entry5) == 0)
+		strcat(query_string, "NULL', '{");
 	
 	if (gtk_entry_get_text_length(entry5) > 0) {
 		strcat(query_string, text5);
-		strcat(query_string, ", '{");
+		strcat(query_string, "', '{");
 	}
 
 	/* Child UUIDs */
@@ -195,17 +167,42 @@ static void import_button_cb(GtkWidget *widget, gpointer user_data) {
 	}
 
 	PQexec(conn, query_string);
-	PQclear(wiz_res);
+	printf("%s\n", query_string);
 
-	char get_uuid_from_path[2048];
-	char uuid[38];
+	/* Check if the query was successful, and rollback or commit it */
+	if (PQresultStatus(wiz_res) != PGRES_TUPLES_OK) {
+		char err[2048];
+
+		PQexec(conn, "ROLLBACK TRANSACTION;");
+		sprintf(err, "%s", PQerrorMessage(wiz_res));
+		fprintf(stderr, "%s", err);
+		PQclear(wiz_res);
+		gtk_notebook_detach_tab(notebook, scrolled_window);
+
+		return 1;
+	}
+	else {
+		PQexec(conn, "COMMIT TRANSACTION;");
+		PQclear(wiz_res);
+		printf("Transaction committed.\n");
+	}
+	//PQclear(wiz_res);
+
+	char get_uuid_from_path[47 + sizeof(import_file_path)];
+	gchar *uuid;
 
 	/* Get the uuid of the file just imported */
-	strcpy(uuid, PQgetvalue(wiz_res, 0, 0));
 	strcpy(get_uuid_from_path, "SELECT uuid FROM public.files WHERE path = '");
 	strcat(get_uuid_from_path, import_file_path);
 	strcat(get_uuid_from_path, "';");
+	printf("uuid_query = %s\n", get_uuid_from_path);
 	PQexec(conn, get_uuid_from_path);
+
+	uuid = PQgetvalue(wiz_res, 0, 0);
+	printf("uuid = %s\n", uuid);
+
+	PQclear(wiz_res);
+	strcpy(get_uuid_from_path, "");
 
 	/* Move the file to a the storage directory */
 	char mv_command[71 + sizeof(import_file_path)];
@@ -228,12 +225,24 @@ static void import_button_cb(GtkWidget *widget, gpointer user_data) {
 	strcat(new_path_query, "'WHERE uuid = '");
 	strcat(new_path_query, uuid);
 	strcat(new_path_query, "';");
+	printf("%s\n", new_path_query);
 	PQexec(conn, new_path_query);
 
-	strcpy(import_file_path, ""); /* Clear import_file_path. */
+	/* Reset strings */
+	strcpy(import_file_path, "");
+	strcpy(mv_command, "");
+	strcpy(new_path_query, "");
 	PQclear(wiz_res);
 
 	gtk_notebook_detach_tab(notebook, scrolled_window);
+	//notebook_reload();
+	return 0;
+}
+
+static void on_wizard_entry_changed(GtkWidget *widget, gpointer data) {
+	const gchar *text;
+	
+	text = gtk_entry_get_text(GTK_ENTRY(widget));
 }
 
 /* Check box callbacks */
@@ -271,7 +280,7 @@ extern void import_wizard(GtkWidget *import_page, gpointer user_data) {
 	header_box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 10);
 	page_count = gtk_notebook_get_n_pages(notebook);
 	scrolled_window = gtk_scrolled_window_new(NULL, NULL);
-
+	
 	gtk_container_set_border_width(GTK_CONTAINER(import_page), 10);
 	//gtk_box_pack_start(GTK_BOX(scrolled_window), import_page, FALSE, FALSE, 0);
 	gtk_scrolled_window_add_with_viewport(scrolled_window, import_page);
@@ -293,7 +302,7 @@ extern void import_wizard(GtkWidget *import_page, gpointer user_data) {
 	gtk_widget_set_valign(entry0, GTK_ALIGN_START);
 	gtk_entry_set_placeholder_text(entry0, "Values are separated by commas; spaces are optional.");
 	gtk_box_pack_start(GTK_BOX(import_page), entry0, TRUE, TRUE, 0);
-	//g_signal_connect(G_OBJECT(entry0), "changed", G_CALLBACK(on_wizard_entry_changed), assistant);
+	g_signal_connect(G_OBJECT(entry0), "changed", G_CALLBACK(on_wizard_entry_changed), scrolled_window);
 
 	//gtk_widget_set_halign(revealer_label, GTK_ALIGN_START);
 	//gtk_box_pack_start(GTK_BOX(import_page), revealer_label, FALSE, FALSE, 0);
@@ -437,7 +446,7 @@ extern void import_wizard(GtkWidget *import_page, gpointer user_data) {
 	gtk_box_pack_start(GTK_BOX(button_box), imp_button, FALSE, FALSE, 0);
 
 	g_signal_connect(can_button, "clicked", G_CALLBACK(cancel_button_cb), NULL);
-	g_signal_connect(can_button, "clicked", G_CALLBACK(import_button_cb), NULL);
+	g_signal_connect(imp_button, "clicked", G_CALLBACK(import_button_cb), NULL);
 
 	/* init stuff */
 	gtk_widget_show_all(import_page);

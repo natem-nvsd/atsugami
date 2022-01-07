@@ -6,5 +6,6 @@
 #pragma clang diagnostic ignored "-Wincompatible-pointer-types"
 
 extern void home_page(void);
+extern void notbook_reload(GtkListStore *list_store);
 
 #endif

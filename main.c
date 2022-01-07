@@ -319,11 +319,11 @@ int main(int argc, char *argv[]) {
 
 	/* Toolbar callbacks */
 	g_signal_connect(import_button, "clicked", G_CALLBACK(import_activate), NULL);
-	//g_signal_connect(bulk_import_button, "clicked", G_CALLBACK(import_activate), NULL);
-	g_signal_connect(edit_button, "clicked", G_CALLBACK(NULL), NULL);
-	g_signal_connect(favourite_button, "clicked", G_CALLBACK(NULL), NULL);
-	g_signal_connect(view_button, "clicked", G_CALLBACK(NULL), NULL);
-	g_signal_connect(wiki_button, "clicked", G_CALLBACK(NULL), NULL);
+//	g_signal_connect(bulk_import_button, "clicked", G_CALLBACK(import_activate), NULL);
+//	g_signal_connect(edit_button, "clicked", G_CALLBACK(NULL), NULL);
+//	g_signal_connect(favourite_button, "clicked", G_CALLBACK(NULL), NULL);
+//	g_signal_connect(view_button, "clicked", G_CALLBACK(NULL), NULL);
+//	g_signal_connect(wiki_button, "clicked", G_CALLBACK(NULL), NULL);
 	g_signal_connect(home_button, "clicked", G_CALLBACK(home_trigger), NULL);	/* segfault when quit_activate called */
 	
 	/* Warning info bar */

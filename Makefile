@@ -1,7 +1,7 @@
 include config.mk
 
 TARGET=atsugami
-SRC=main.c about.c import.c import_wizard.c new_artist.c new_copyright.c new_character.c new_tag.c notebook.c
+SRC=main.c about.c import.c new_artist.c new_copyright.c new_character.c new_tag.c notebook.c import_wizard.c 
 OBJ=${SRC:.c=.o}
 
 all: options atsugami
@@ -30,6 +30,15 @@ cleanobj:
 	rm -f ${OBJ}
 
 install: atsugami 
+	cp -f atsugami ${DESTDIR}${PREFIX}/bin
+	strip ${DESTDIR}${PREFIX}/bin/atsugami
+	chmod 755 ${DESTDIR}${PREFIX}/bin/atsugami
+	strip -d ${DESTDIR}${PREFIX}/bin/atsugami
+	mkdir -p ${DESTDIR}${PREFIX}/share/atsugami
+	cp -f atsugami.glade ${DESTDIR}${PREFIX}/share/atsugami/
+	chmod 644 ${DESTDIR}${PREFIX}/share/atsugami/atsugami.glade
+
+install-only:
 	cp -f atsugami ${DESTDIR}${PREFIX}/bin
 	strip ${DESTDIR}${PREFIX}/bin/atsugami
 	chmod 755 ${DESTDIR}${PREFIX}/bin/atsugami
