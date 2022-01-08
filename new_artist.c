@@ -15,10 +15,8 @@ GtkWidget *entry, *art_vbox;
 static void on_artist_apply(GtkWidget *widget, gpointer data) {
 	//char psql_error[2048];
 	const gchar *text;
-	int query_size = (sizeof(text) + 70);
-
-	char query_base[] = "INSERT INTO public.artists (name) VALUES ('";
-	char artist_query[query_size];
+	char query_base[] = "INSERT INTO public.artists (name, created_at) VALUES ('";
+	char artist_query[90 + sizeof(text)];
 
 	strcpy(artist_query, query_base);
 
@@ -31,7 +29,7 @@ static void on_artist_apply(GtkWidget *widget, gpointer data) {
 		strcat(artist_query, text);
 	//}
 
-	strcat(artist_query, "') ON CONFLICT DO NOTHING;");
+	strcat(artist_query, "', now()) ON CONFLICT DO NOTHING;");
 	PQexec(conn, artist_query);
 	strcpy(artist_query, "");	// clear the query string
 

@@ -3,11 +3,7 @@ Atsugami
 ![Images not included](https://github.com/natem-nvsd/atsugami/blob/master/readme_header_picture.png)
 Images not included.  
 
-### Development goals
-0.70:	Icon view, searching, tag preview, editing, working tabs, favourites, bulk import (maybe), the wiki, settings dialog, help dialog  
-0.80:	Fix broken things, clean up things, there will be 0 GTK warnings or errors or incompatible pointers  
-0.90:	...  
-1.0:	Everything will be working and implemented. Builds for Linux, Mac, and Windows will be in [Releases](https://github.com/natem-nvsd/atsugami/releases)  
+# IMPORTANT: Pre-1.0 builds are only recommended for development use, since there may be database structure changes
 
 ### Notes
 *	Limit of 999,999x999,999px  
@@ -27,6 +23,9 @@ sudo make install
 # Linux:
 bmake
 sudo bmake install
+
+# Windows:
+Good luck
 ```  
 
 ### Colours (will be implemented later)

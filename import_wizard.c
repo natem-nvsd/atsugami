@@ -9,12 +9,18 @@
 #include "main.h"
 #include "notebook.h"
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include "import_wizard.h"
 
 PGresult *wiz_res;
 GtkWidget *label0, *label1, *label2, *label3, *label4, *label5, *label6;
-GtkWidget *entry0, *entry1, *entry2, *entry3, *entry4, *entry5, *entry6, *rating_entry;
-GtkWidget *import_thumb, *cbox, *button_box, *can_button, *imp_button;
+//GtkWidget *entry0, *entry1, *entry2, *entry3, *entry4, *entry5, *entry6, *rating_entry;
+GtkEntry *entry0, *entry1, *entry2, *entry3, *entry4, *entry5, *entry6, *rating_entry;
+//GtkEntry *entry0, *entry1, *entry2, *entry3, *entry4, *entry5, *entry6, *rating_entry;
+//GtkWidget *import_thumb, *cbox, *button_box, *can_button, *imp_button;
+GtkWidget *import_thumb, *cbox, *can_button, *imp_button;
+GtkButtonBox *button_box;
 GdkPixbuf *import_thumb_pixbuf;
 
 const gchar *text0;
@@ -25,6 +31,7 @@ const gchar *text4;
 const gchar *text5;
 const gchar *text6;
 const gchar *text7;
+const gchar *uuid = NULL;
 
 gint page_count = 0;
 char query_string[20480];       /*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
@@ -40,10 +47,6 @@ static void cancel_button_cb(void) {
 
 //static void import_button_cb(void) {
 int import_button_cb(void) {
-	/* Begin transaction */
-	PQexec(conn, "BEGIN TRANSACTION;");
-	PQclear(wiz_res);
-
 	/* Create the query to submit to PostgreSQL */
 	strcpy(query_string, "INSERT INTO public.files (path, artist, copyrights, characters, tags, source, rating, is_parent, is_child,  parent_uuid, child_uuids, imported_at) VALUES ('");
 
@@ -66,12 +69,12 @@ int import_button_cb(void) {
 	strcat(artist_query, text0);
 	strcat(artist_query, "') ON CONFLICT DO NOTHING;");
 	
-	PQexec(conn, artist_query);
+	wiz_res = PQexec(conn, artist_query);
 	PQclear(wiz_res);
 	strcpy(artist_query, "");	/* Clean the string */
 
-	/* Entry fields from page1 */                                                                                                                      
-	text1 = gtk_entry_get_text(GTK_ENTRY(entry1));  /* Copyrights */
+	/* Copyrights */
+	text1 = gtk_entry_get_text(GTK_ENTRY(entry1));
 	if (gtk_entry_get_text_length(entry1) == 0)
 		strcat(query_string, "NULL}', '{");
 	
@@ -80,17 +83,17 @@ int import_button_cb(void) {
 		strcat(query_string, "}', '{");
 	}
 
-	char copyright_query[74 + sizeof(text1)];
-	strcpy(copyright_query, "INSERT INTO public.copyrights (name) VALUES ('");
+	char copyright_query[93 + sizeof(text1)];
+	strcpy(copyright_query, "INSERT INTO public.copyrights (name, created_at) VALUES ('");
 	strcat(copyright_query, text1);
-	strcat(copyright_query, "') ON CONFLICT DO NOTHING;");	/* i should use a macro for this */
+	strcat(copyright_query, "', now()) ON CONFLICT DO NOTHING;");	/* i should use a macro for this */
 
-	PQexec(conn, copyright_query);
+	wiz_res = PQexec(conn, copyright_query);
 	PQclear(wiz_res);
 	strcpy(copyright_query, "");
 
-	/* Entry fields from page2 */
-	text2 = gtk_entry_get_text(GTK_ENTRY(entry2));	/* Characters */
+	/* Characters */
+	text2 = gtk_entry_get_text(GTK_ENTRY(entry2));
 	if (gtk_entry_get_text_length(entry2) == 0)
 		strcat(query_string, "NULL}', '{");
 	
@@ -105,7 +108,7 @@ int import_button_cb(void) {
 	strcat(characters_query, "') ON CONFLICT DO NOTHING;");
 		/* This won't work for multiple characters */
 	
-	PQexec(conn, characters_query);
+	wiz_res = PQexec(conn, characters_query);
 	PQclear(wiz_res);
 	strcpy(characters_query, "");
 
@@ -149,7 +152,7 @@ int import_button_cb(void) {
 	/* Parent UUID */
 	text5 = gtk_entry_get_text(GTK_ENTRY(entry5));
 	if (gtk_entry_get_text_length(entry5) == 0)
-		strcat(query_string, "NULL', '{");
+		strcat(query_string, "00000000-0000-0000-0000-000000000000', '{");
 	
 	if (gtk_entry_get_text_length(entry5) > 0) {
 		strcat(query_string, text5);
@@ -166,74 +169,65 @@ int import_button_cb(void) {
 		strcat(query_string, "}', now()) ON CONFLICT DO NOTHING;");
 	}
 
-	PQexec(conn, query_string);
+	wiz_res = PQexec(conn, query_string);
 	printf("%s\n", query_string);
-
-	/* Check if the query was successful, and rollback or commit it */
-	if (PQresultStatus(wiz_res) != PGRES_TUPLES_OK) {
-		char err[2048];
-
-		PQexec(conn, "ROLLBACK TRANSACTION;");
-		sprintf(err, "%s", PQerrorMessage(wiz_res));
-		fprintf(stderr, "%s", err);
-		PQclear(wiz_res);
-		gtk_notebook_detach_tab(notebook, scrolled_window);
-
-		return 1;
-	}
-	else {
-		PQexec(conn, "COMMIT TRANSACTION;");
-		PQclear(wiz_res);
-		printf("Transaction committed.\n");
-	}
-	//PQclear(wiz_res);
-
-	char get_uuid_from_path[47 + sizeof(import_file_path)];
-	gchar *uuid;
+	strcpy(query_string, "");
+	PQclear(wiz_res);
 
 	/* Get the uuid of the file just imported */
-	strcpy(get_uuid_from_path, "SELECT uuid FROM public.files WHERE path = '");
-	strcat(get_uuid_from_path, import_file_path);
-	strcat(get_uuid_from_path, "';");
-	printf("uuid_query = %s\n", get_uuid_from_path);
-	PQexec(conn, get_uuid_from_path);
+	char uuid_query[47 + sizeof(import_file_path)];
+
+	strcpy(uuid_query, "SELECT uuid FROM public.files WHERE path = '");
+	strcat(uuid_query, import_file_path);
+	strcat(uuid_query, "';");
+	printf("uuid_query = %s\n", uuid_query);
+	wiz_res = PQexec(conn, uuid_query);
 
 	uuid = PQgetvalue(wiz_res, 0, 0);
 	printf("uuid = %s\n", uuid);
 
 	PQclear(wiz_res);
-	strcpy(get_uuid_from_path, "");
+	strcpy(uuid_query, "");
+	printf("uuid_query cleared.\n");
 
 	/* Move the file to a the storage directory */
-	char mv_command[71 + sizeof(import_file_path)];
+	char homedir[sizeof(getenv("HOME"))];
+	char new_path[64 + sizeof(homedir)];
+	char mv_command[4 + sizeof(import_file_path) + sizeof(new_path)];
+
+	strcpy(homedir, getenv("HOME"));
+	printf("%s\n", homedir);
+	strcpy(new_path, homedir);
+	strcat(new_path, "/.config/atsugami/files/");
+	strcat(new_path, uuid);
+	printf("%s\n", new_path);
 
 	strcpy(mv_command, "mv ");
 	strcat(mv_command, import_file_path);
 	strcat(mv_command, " ");
-	strcat(mv_command, STORDIR);
-	strcat(mv_command, "/files/");
-	strcat(mv_command, uuid);
+	strcat(mv_command, new_path);
+	printf("%s\n", mv_command);
 	system(mv_command);
+	printf("File moved.\n");
+	strcpy(mv_command, "");
 
 	/* Update the file's entry in Postgres */
-	char new_path_query[152];
+	char new_path_query[51 + sizeof(new_path)];
 
 	strcpy(new_path_query, "UPDATE public.files SET path = '");
-	strcat(new_path_query, getenv("HOME"));
-	strcat(new_path_query, "/.config/atsugami/files/");
+	strcat(new_path_query, new_path);
+	strcat(new_path_query, "' WHERE uuid = '");
 	strcat(new_path_query, uuid);
-	strcat(new_path_query, "'WHERE uuid = '");
-	strcat(new_path_query, uuid);
-	strcat(new_path_query, "';");
+	strcat(new_path_query, "'");
 	printf("%s\n", new_path_query);
-	PQexec(conn, new_path_query);
-
-	/* Reset strings */
-	strcpy(import_file_path, "");
-	strcpy(mv_command, "");
-	strcpy(new_path_query, "");
+	wiz_res = PQexec(conn, new_path_query);
 	PQclear(wiz_res);
+	strcpy(new_path_query, "");
+	strcpy(new_path, "");
+	strcpy(uuid, "");
 
+	/* Finish the function */
+	strcpy(import_file_path, "");
 	gtk_notebook_detach_tab(notebook, scrolled_window);
 	//notebook_reload();
 	return 0;
@@ -265,12 +259,12 @@ static void is_child_cb(GtkWidget *check_button, gpointer data) {
 	if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(check_button1))) {
 		child_bool = TRUE;
 		gtk_widget_set_sensitive(pg1_label0, TRUE);
-		gtk_widget_set_sensitive(entry5, TRUE);
+		gtk_widget_set_sensitive(GTK_ENTRY(entry5), TRUE);
 	}
 	else {
 		g_print("%s off\n", gtk_button_get_label(GTK_BUTTON(check_button1)));
 		gtk_widget_set_sensitive(pg1_label0, FALSE);
-		gtk_widget_set_sensitive(entry5, FALSE);
+		gtk_widget_set_sensitive(GTK_ENTRY(entry5), FALSE);
 	}
 }
 
@@ -424,7 +418,7 @@ extern void import_wizard(GtkWidget *import_page, gpointer user_data) {
 	gtk_widget_set_halign(pg1_label0, GTK_ALIGN_START);
 	gtk_box_pack_start(GTK_BOX(import_page), pg1_label0, FALSE, FALSE, 0);
 
-	/* text box */                                                                                                                                     
+	/* Text box */
 	entry5 = gtk_entry_new();
 	gtk_entry_set_activates_default(GTK_ENTRY(entry5), TRUE);
 	gtk_widget_set_valign(entry5, GTK_ALIGN_START);

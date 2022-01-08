@@ -13,10 +13,8 @@ GtkWidget *tag_dialog, *tag_entry, *tag_vbox;
 static void on_tag_apply(GtkWidget *widget, gpointer data) {
 	//char psql_error[2048];
 	const gchar *text;
-	int query_size = (sizeof(text) + 70);
-
-	char query_base[] = "INSERT INTO public.tags (name) VALUES ('";
-	char tag_query[query_size];
+	char query_base[] = "INSERT INTO public.tags (name, created_at) VALUES ('";
+	char tag_query[87 + sizeof(text)];
 
 	strcpy(tag_query, query_base);
 
@@ -29,7 +27,7 @@ static void on_tag_apply(GtkWidget *widget, gpointer data) {
 		strcat(tag_query, text);
 	//}
 
-	strcat(tag_query, "') ON CONFLICT DO NOTHING;");
+	strcat(tag_query, "', now()) ON CONFLICT DO NOTHING;");
 	PQexec(conn, tag_query);
 	strcpy(tag_query, "");	// clear the query string
 

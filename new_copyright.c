@@ -13,10 +13,8 @@ GtkWidget *damn_entry, *copy_vbox;
 static void on_copyright_apply(GtkWidget *widget, gpointer data) {
 	//char psql_error[2048];
 	const gchar *text;
-	int query_size = (sizeof(text) + 70);
-
-	char query_base[] = "INSERT INTO public.copyrights (name) VALUES ('";
-	char copyright_query[query_size];
+	char query_base[] = "INSERT INTO public.copyrights (name, created_at) VALUES ('";
+	char copyright_query[93 + sizeof(text)];
 
 	strcpy(copyright_query, query_base);
 
@@ -29,7 +27,7 @@ static void on_copyright_apply(GtkWidget *widget, gpointer data) {
 		strcat(copyright_query, text);
 	//}
 
-	strcat(copyright_query, "') ON CONFLICT DO NOTHING;");
+	strcat(copyright_query, "', now()) ON CONFLICT DO NOTHING;");
 	PQexec(conn, copyright_query);
 	strcpy(copyright_query, "");	// clear the query string
 

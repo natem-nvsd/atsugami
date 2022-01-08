@@ -13,10 +13,8 @@ GtkWidget *entry_2_electric_boogaloo, *char_vbox;
 static void on_character_apply(GtkWidget *widget, gpointer data) {
 	//char psql_error[2048];
 	const gchar *text;
-	int query_size = (sizeof(text) + 70);
-
-	char query_base[] = "INSERT INTO public.characters (name) VALUES ('";
-	char character_query[query_size];
+	char query_base[] = "INSERT INTO public.characters (name, created_at) VALUES ('";
+	char character_query[93 + (sizeof(text))];
 
 	strcpy(character_query, query_base);
 
@@ -29,7 +27,7 @@ static void on_character_apply(GtkWidget *widget, gpointer data) {
 		strcat(character_query, text);
 	//}
 
-	strcat(character_query, "') ON CONFLICT DO NOTHING;");
+	strcat(character_query, "', now()) ON CONFLICT DO NOTHING;");
 	PQexec(conn, character_query);
 	strcpy(character_query, "");	// clear the query string
 

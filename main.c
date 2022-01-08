@@ -32,7 +32,7 @@ PGconn *conn;
 char conninfo[] = "dbname=atsugami"; /* Sets the database for dbconnect() */
 char main_psql_error[2048];
 //gchar *parent;
-GtkWidget *notebook;
+GtkNotebook *notebook;
 
 /* Quit function */
 //static void quit_activate(GSimpleAction *action, GVariant *parameter, gpointer user_data) {
