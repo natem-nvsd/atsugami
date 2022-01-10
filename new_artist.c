@@ -15,25 +15,17 @@ GtkWidget *entry, *art_vbox;
 static void on_artist_apply(GtkWidget *widget, gpointer data) {
 	//char psql_error[2048];
 	const gchar *text;
-	char query_base[] = "INSERT INTO public.artists (name, created_at) VALUES ('";
-	char artist_query[90 + sizeof(text)];
-
-	strcpy(artist_query, query_base);
+	char artist_query[80 + sizeof(text)];
 
 	text = gtk_entry_get_text(GTK_ENTRY(entry));
-	/*
-	if (gtk_entry_get_text_length(GTK_ENTRY(entry) == 0)) {
-		fprintf(stderr, "This cannot be null\n");		// add an info bar here
-	} */
-	//if (gtk_entry_get_text_length(GTK_ENTRY(entry) > 0)) {
-		strcat(artist_query, text);
-	//}
 
-	strcat(artist_query, "', now()) ON CONFLICT DO NOTHING;");
+	strcpy(artist_query, "INSERT INTO public.tags (category, name) VALUES (1, '");
+	strcat(artist_query, text);
+	strcat(artist_query, "') ON CONFLICT DO NOTHING;");
 	PQexec(conn, artist_query);
 	strcpy(artist_query, "");	// clear the query string
 
-	// the query is done, now the window must be destroyed
+	// the query is done, now the tab must be destroyed
 	gtk_notebook_detach_tab(notebook, art_vbox);
 }
 

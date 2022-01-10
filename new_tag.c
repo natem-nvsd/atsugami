@@ -13,21 +13,13 @@ GtkWidget *tag_dialog, *tag_entry, *tag_vbox;
 static void on_tag_apply(GtkWidget *widget, gpointer data) {
 	//char psql_error[2048];
 	const gchar *text;
-	char query_base[] = "INSERT INTO public.tags (name, created_at) VALUES ('";
-	char tag_query[87 + sizeof(text)];
-
-	strcpy(tag_query, query_base);
+	char tag_query[80 + sizeof(text)];
 
 	text = gtk_entry_get_text(GTK_ENTRY(tag_entry));
-	/*
-	if (gtk_entry_get_text_length(GTK_ENTRY(tag_entry) == 0)) {
-		fprintf(stderr, "This cannot be null\n");		// add an info bar here
-	} */
-	//if (gtk_entry_get_text_length(GTK_ENTRY(tag_entry) > 0)) {
-		strcat(tag_query, text);
-	//}
 
-	strcat(tag_query, "', now()) ON CONFLICT DO NOTHING;");
+	strcpy(tag_query, "INSERT INTO public.tags (category, name) VALUES (0, '");
+	strcat(tag_query, text);
+	strcat(tag_query, "') ON CONFLICT DO NOTHING;");
 	PQexec(conn, tag_query);
 	strcpy(tag_query, "");	// clear the query string
 

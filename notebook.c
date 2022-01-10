@@ -70,6 +70,16 @@ extern void notebook_reload(GtkListStore *list_store) {
 	PQclear(note_res);
 }
 
+extern void notebook_reload_relay(void) {
+	GtkWidget *list_store;
+	notebook_reload(list_store);
+}
+
+static void item_selected_cb(GtkWidget *pop_over, GtkListStore *list_store) {
+	gtk_popover_set_pointing_to(pop_over, list_store);
+	gtk_popover_popup(pop_over);
+}
+
 static GtkListStore *create_list_store(void) {
 	GtkListStore *list_store;
 
@@ -79,7 +89,8 @@ static GtkListStore *create_list_store(void) {
 }
 
 extern void home_page(void) {
-	GtkWidget *icon_view, *iv_scrolled_window;
+	GtkWidget *icon_view, *pop_over;
+	GtkScrolledWindow *iv_scrolled_window;
 	GtkListStore *list_store;
 
 	list_store = create_list_store();
@@ -91,18 +102,22 @@ extern void home_page(void) {
 	gtk_scrolled_window_add_with_viewport(iv_scrolled_window, icon_view);
 
 	gtk_icon_view_set_selection_mode(GTK_ICON_VIEW(icon_view), GTK_SELECTION_MULTIPLE);
-	gtk_icon_view_set_columns(icon_view, -1);
+	gtk_icon_view_set_columns(GTK_ICON_VIEW(icon_view), -1);
 
 	g_object_unref(list_store);
 
+	/* Popover */
+	pop_over = gtk_popover_new(list_store);
+
 	//g_signal_connect(icon_view, "item-activated", G_CALLBACK(item_activated_cb), list_store);
+	g_signal_connect(icon_view, "select-cursor-item", G_CALLBACK(item_selected_cb), list_store);
 	gtk_icon_view_set_pixbuf_column(GTK_ICON_VIEW(icon_view), COL_PIXBUF);
 
 	/* set the size of icon_view */
 	gtk_scrolled_window_set_propagate_natural_height(iv_scrolled_window, TRUE);
-	gtk_scrolled_window_set_kinetic_scrolling(iv_scrolled_window, TRUE);
+	//gtk_scrolled_window_set_kinetic_scrolling(GTK_SCROLLED_WINDOW(iv_scrolled_window), TRUE);
 
-	gtk_widget_show_all(iv_scrolled_window);
-	gtk_container_add(GTK_CONTAINER(notebook), iv_scrolled_window);
-	gtk_notebook_set_tab_label_text(notebook, iv_scrolled_window, "Home");
+	gtk_widget_show_all(GTK_SCROLLED_WINDOW(iv_scrolled_window));
+	gtk_container_add(GTK_CONTAINER(notebook), GTK_SCROLLED_WINDOW(iv_scrolled_window));
+	gtk_notebook_set_tab_label_text(notebook, GTK_SCROLLED_WINDOW(iv_scrolled_window), "Home");
 }

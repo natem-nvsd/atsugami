@@ -64,13 +64,27 @@ int import_button_cb(void) {
 		strcat(query_string, "}', '{");
 	}
 	
+	/* Begin the transaction */
+	wiz_res = PQexec(conn, "BEGIN TRANSACTION;");
+
 	char artist_query[71 + sizeof(text0)];
 	strcpy(artist_query, "INSERT INTO public.artists (name) VALUES ('");
 	strcat(artist_query, text0);
-	strcat(artist_query, "') ON CONFLICT DO NOTHING;");
+	strcat(artist_query, "');");
 	
 	wiz_res = PQexec(conn, artist_query);
-	PQclear(wiz_res);
+	if (PQresultStatus(wiz_res) != PGRES_TUPLES_OK) {
+		PQclear(wiz_res);
+		
+		wiz_res = PQexec(conn, "ROLLBACK TRANSACTION;");
+		PQclear(wiz_res);
+	}
+	else {
+		PQclear(wiz_res);
+
+		wiz_res = PQexec(conn, "COMMIT TRANSACTION");
+		PQclear(wiz_res);
+	}
 	strcpy(artist_query, "");	/* Clean the string */
 
 	/* Copyrights */
@@ -83,13 +97,32 @@ int import_button_cb(void) {
 		strcat(query_string, "}', '{");
 	}
 
+	/* Begin transaction */
+	wiz_res = PQexec(conn, "BEGIN TRANSACTION;");
+	PQclear(wiz_res);
+
+	/* Begin transaction */
+	wiz_res = PQexec(conn, "BEGIN TRANSACTION;");
+	PQclear(wiz_res);
+
 	char copyright_query[93 + sizeof(text1)];
 	strcpy(copyright_query, "INSERT INTO public.copyrights (name, created_at) VALUES ('");
 	strcat(copyright_query, text1);
-	strcat(copyright_query, "', now()) ON CONFLICT DO NOTHING;");	/* i should use a macro for this */
+	strcat(copyright_query, "', now());");	/* i should use a macro for this */
 
 	wiz_res = PQexec(conn, copyright_query);
-	PQclear(wiz_res);
+	if (PQresultStatus(wiz_res) != PGRES_TUPLES_OK) {
+		PQclear(wiz_res);
+		
+		wiz_res = PQexec(conn, "ROLLBACK TRANSACTION;");
+		PQclear(wiz_res);
+	}
+	else {
+		PQclear(wiz_res);
+
+		wiz_res = PQexec(conn, "COMMIT TRANSACTION");
+		PQclear(wiz_res);
+	}
 	strcpy(copyright_query, "");
 
 	/* Characters */
@@ -102,6 +135,10 @@ int import_button_cb(void) {
 		strcat(query_string, "}', '{");
 	}
 
+	/* Begin transaction */
+	wiz_res = PQexec(conn, "BEGIN TRANSACTION;");
+	PQclear(wiz_res);
+
 	char characters_query[74 + sizeof(text2)];
 	strcpy(characters_query, "INSERT INTO public.characters (name) VALUES ('");
 	strcat(characters_query, text2);
@@ -109,7 +146,18 @@ int import_button_cb(void) {
 		/* This won't work for multiple characters */
 	
 	wiz_res = PQexec(conn, characters_query);
-	PQclear(wiz_res);
+	if (PQresultStatus(wiz_res) != PGRES_TUPLES_OK) {
+		PQclear(wiz_res);
+		
+		wiz_res = PQexec(conn, "ROLLBACK TRANSACTION;");
+		PQclear(wiz_res);
+	}
+	else {
+		PQclear(wiz_res);
+
+		wiz_res = PQexec(conn, "COMMIT TRANSACTION");
+		PQclear(wiz_res);
+	}
 	strcpy(characters_query, "");
 
 	/* Tags */

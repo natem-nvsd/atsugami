@@ -28,6 +28,10 @@ sudo bmake install
 Good luck
 ```  
 
+# FAQ
+	Q: I imported a file, but it's not there any more. Where is it?  
+	A: Atsugami automatically moves files which have been imported into a storage directory, to external prevent deletion.
+
 ### Colours (will be implemented later)
 ```
 ### Colours:

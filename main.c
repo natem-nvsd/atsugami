@@ -60,6 +60,10 @@ static void new_tag_trigger(void) {
 	new_tag_activate();
 }
 
+static void new_meta_tag_trigger(void) {
+	new_meta_tag_activate();
+}
+
 static void home_trigger(void) {
 	home_page();
 }
@@ -100,6 +104,7 @@ int main(int argc, char *argv[]) {
 	accel_group = gtk_accel_group_new();
 
 	/* Actions */
+	/*
 	GAction *import;
 	GAction *quit;
 	GAction *new_artist;
@@ -108,6 +113,7 @@ int main(int argc, char *argv[]) {
 	quit = gtk_action_new("quit", "Quit", "Quit the program", NULL);
 	new_artist = gtk_action_new("artist", "New artist", "Add a new artist to Atsugami", NULL);
 	new_copyright = gtk_action_new("copyright", "New copyright", "Add a new copyright to Atsugami", NULL);
+	*/
 
 	/* Menus (e.g. File) */
 	GtkWidget *file_menu;
@@ -135,6 +141,7 @@ int main(int argc, char *argv[]) {
 	GtkWidget *new_copyright_mi;
 	GtkWidget *new_character_mi;
 	GtkWidget *new_tag_mi;
+	GtkWidget *new_meta_tag_mi;
 
 	GtkWidget *wiki_menu_item;
 
@@ -197,6 +204,7 @@ int main(int argc, char *argv[]) {
 	new_copyright_mi = gtk_menu_item_new_with_label("New copyright");
 	new_character_mi = gtk_menu_item_new_with_label("New character");
 	new_tag_mi = gtk_menu_item_new_with_label("New tag");
+	new_meta_tag_mi = gtk_menu_item_new_with_label("New meta tag");
 
 	wiki_menu_item = gtk_menu_item_new_with_label("Wiki");
 
@@ -231,6 +239,7 @@ int main(int argc, char *argv[]) {
 	gtk_menu_shell_append(GTK_MENU_SHELL(tags_menu), new_copyright_mi);
 	gtk_menu_shell_append(GTK_MENU_SHELL(tags_menu), new_character_mi);
 	gtk_menu_shell_append(GTK_MENU_SHELL(tags_menu), new_tag_mi);
+	gtk_menu_shell_append(GTK_MENU_SHELL(tags_menu), new_meta_tag_mi);
 
 	/* Wiki menu */
 	gtk_menu_item_set_submenu(GTK_MENU_ITEM(wiki_menu_item), wiki_menu);
@@ -257,6 +266,7 @@ int main(int argc, char *argv[]) {
 	g_signal_connect(new_copyright_mi, "activate", G_CALLBACK(new_copyright_trigger), NULL);
 	g_signal_connect(new_character_mi, "activate", G_CALLBACK(new_character_trigger), NULL);
 	g_signal_connect(new_tag_mi, "activate", G_CALLBACK(new_tag_trigger), NULL);
+	g_signal_connect(new_meta_tag_mi, "activate", G_CALLBACK(new_meta_tag_trigger), NULL);
 
 	/* Toolbar */
 	toolbar = gtk_toolbar_new();
@@ -306,7 +316,7 @@ int main(int argc, char *argv[]) {
 	//gtk_search_entry_handle_event(search_wiki, );
 
 	/* Add widgets to the toolbar */
-	gtk_toolbar_insert(toolbar, import_button, 0);
+	gtk_toolbar_insert(GTK_TOOLBAR(toolbar), import_button, 0);
 	gtk_toolbar_insert(toolbar, bulk_import_button, 1);
 	gtk_toolbar_insert(toolbar, edit_button, 2);
 	gtk_toolbar_insert(toolbar, favourite_button, 3);
@@ -370,7 +380,7 @@ int main(int argc, char *argv[]) {
 
 	/* Add error_bar to vbox */
 	gtk_info_bar_set_message_type(error_bar, GTK_MESSAGE_ERROR);
-	gtk_box_pack_start(GTK_BOX(vbox), error_bar, FALSE, FALSE, 0);
+	gtk_box_pack_start(GTK_BOX(vbox), GTK_REVEALER(error_bar), FALSE, FALSE, 0);
 
 	/* Show error info bar if the connection fails */
 	if (PQstatus(conn) != CONNECTION_OK) {
@@ -388,20 +398,31 @@ int main(int argc, char *argv[]) {
 	/* Tab bar */
 	notebook =  gtk_notebook_new();
 
-	gtk_notebook_set_scrollable(notebook, TRUE);
-	gtk_container_add(GTK_CONTAINER(vbox), notebook);
-	gtk_notebook_set_scrollable(notebook, TRUE);
+	gtk_notebook_set_scrollable(GTK_NOTEBOOK(notebook), TRUE);
+	gtk_container_add(GTK_CONTAINER(vbox), GTK_NOTEBOOK(notebook));
 
 	home_page();
 
 	/* Nobody here but us chickens! */
+	int label_int;
 	GtkWidget *chicken_label;
-	chicken_label = gtk_label_new("Nobody here but us chickens!");
-	gtk_widget_set_halign(chicken_label, GTK_ALIGN_START);
-	gtk_box_pack_start(GTK_BOX(vbox), chicken_label, FALSE, FALSE, 0);
+
+	mainres = PQexec(conn, "SELECT id FROM public.files;");
+	label_int = PQntuples(mainres);
+	if (label_int == 0) {
+		chicken_label = gtk_label_new("Nobody here but us chickens!");
+		gtk_widget_set_halign(chicken_label, GTK_ALIGN_START);
+		gtk_box_pack_start(GTK_BOX(vbox), chicken_label, FALSE, FALSE, 0);
+	}
+	else {
+		chicken_label = gtk_label_new(label_int);
+		gtk_widget_set_halign(chicken_label, GTK_ALIGN_START);
+		gtk_box_pack_start(GTK_BOX(vbox), chicken_label, FALSE, FALSE, 0);
+	}
+	PQclear(mainres);
 
 	/* Show window and vbox */
-	gtk_window_set_title(window, "Atsugami");
+	gtk_window_set_title(GTK_WINDOW(window), "Atsugami");
 	gtk_widget_show_all(vbox);
 	gtk_widget_show_all(window);
 	gtk_main();

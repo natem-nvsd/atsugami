@@ -4,7 +4,6 @@
 
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"
 #pragma clang diagnostic ignored "-Wimplicit-function-declaration"
-#pragma clang diagnostic ignored "-Wincompatible-pointer-types"
 
 #include <glib.h>
 #include <gtk/gtk.h>

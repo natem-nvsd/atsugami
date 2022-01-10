@@ -4,9 +4,9 @@
 
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"
 #pragma clang diagnostic ignored "-Wimplicit-function-declaration"
-#pragma clang diagnostic ignored "-Wincompatible-pointer-types"
 
 extern void home_page(void);
 extern void notbook_reload(GtkListStore *list_store);
+extern void notebook_reload_relay(void);
 
 #endif

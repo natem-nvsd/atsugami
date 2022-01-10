@@ -3,9 +3,7 @@
 #define GLADEFILE "atsugami.glade"
 #define VERSION 0.68
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"
-#pragma clang diagnostic ignored "-Wimplicit-function-declaration"
 #pragma clang diagnostic ignored "-Wsometimes-uninitialized"
-#pragma clang diagnostic ignored "-Wincompatible-pointer-types"
 
 typedef _Bool bool;
 

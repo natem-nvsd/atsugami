@@ -13,21 +13,13 @@ GtkWidget *damn_entry, *copy_vbox;
 static void on_copyright_apply(GtkWidget *widget, gpointer data) {
 	//char psql_error[2048];
 	const gchar *text;
-	char query_base[] = "INSERT INTO public.copyrights (name, created_at) VALUES ('";
-	char copyright_query[93 + sizeof(text)];
-
-	strcpy(copyright_query, query_base);
+	char copyright_query[80 + sizeof(text)];
 
 	text = gtk_entry_get_text(GTK_ENTRY(damn_entry));
-	/*
-	if (gtk_entry_get_text_length(GTK_ENTRY(damn_entry) == 0)) {
-		fprintf(stderr, "This cannot be null\n");		// add an info bar here
-	} */
-	//if (gtk_entry_get_text_length(GTK_ENTRY(damn_entry) > 0)) {
-		strcat(copyright_query, text);
-	//}
 
-	strcat(copyright_query, "', now()) ON CONFLICT DO NOTHING;");
+	strcpy(copyright_query, "INSERT INTO public.tags (category, name) VALUES (3, '");
+	strcat(copyright_query, text);
+	strcat(copyright_query, "') ON CONFLICT DO NOTHING;");
 	PQexec(conn, copyright_query);
 	strcpy(copyright_query, "");	// clear the query string
 
