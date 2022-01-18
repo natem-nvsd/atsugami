@@ -37,8 +37,8 @@ extern void new_meta_tag_activate(void) {
 	gint page_count = gtk_notebook_get_n_pages(notebook);
 	
 	meta_vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 10);
-	gtk_container_set_border_width(GTK_CONTAINER(meta_vbox), 10);
-	gtk_box_set_baseline_position(meta_vbox, GTK_BASELINE_POSITION_TOP);
+	gtk_container_set_border_width(GTK_CONTAINER(GTK_BOX(meta_vbox)), 10);
+	gtk_box_set_baseline_position(GTK_BOX(meta_vbox), GTK_BASELINE_POSITION_TOP);
 	
 	/* Label */
 	label = gtk_label_new("Enter the artist's name here:");
@@ -53,23 +53,23 @@ extern void new_meta_tag_activate(void) {
 	
 	/* Button box */
 	bbox = gtk_button_box_new(GTK_ORIENTATION_HORIZONTAL);
-	gtk_button_box_set_layout(bbox, GTK_BUTTONBOX_START);
+	gtk_button_box_set_layout(GTK_BUTTON_BOX(bbox), GTK_BUTTONBOX_START);
 	gtk_container_add(GTK_CONTAINER(meta_vbox), bbox);
 	
 	/* Cancel button */
 	button0 = gtk_button_new();
 	gtk_box_pack_start(GTK_BOX(bbox), button0, TRUE, TRUE, 0);
-	gtk_button_set_label(button0, "Cancel");
-	g_signal_connect(button0, "clicked", G_CALLBACK(on_meta_cancel), NULL);
+	gtk_button_set_label(GTK_BUTTON(button0), "Cancel");
+	g_signal_connect(GTK_BUTTON(button0), "clicked", G_CALLBACK(on_meta_cancel), NULL);
 	
 	/* Ok button */
 	button1 = gtk_button_new();
 	gtk_box_pack_start(GTK_BOX(bbox), button1, TRUE, TRUE, 0);
-	gtk_button_set_label(button1, "Add");
+	gtk_button_set_label(GTK_BUTTON(button1), "Add");
 	g_signal_connect(button1, "clicked", G_CALLBACK(on_meta_apply), NULL);
 	
 	gtk_widget_show_all(meta_vbox);
 	gtk_container_add(GTK_CONTAINER(notebook), meta_vbox);
-	gtk_notebook_set_tab_label_text(notebook, meta_vbox, "New meta");
+	gtk_notebook_set_tab_label_text(notebook, meta_vbox, "New meta tag");
 	gtk_notebook_set_current_page(notebook, page_count);
 }

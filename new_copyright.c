@@ -50,18 +50,18 @@ extern void new_copyright_activate(void) {
 	
 	/* bbox */              // replace with gtk button box
 	bbox = gtk_button_box_new(GTK_ORIENTATION_HORIZONTAL);
-	gtk_button_box_set_layout(bbox, GTK_BUTTONBOX_START);
+	gtk_button_box_set_layout(GTK_BUTTON_BOX(bbox), GTK_BUTTONBOX_START);
 	gtk_container_add(GTK_CONTAINER(copy_vbox), bbox);
 	
 	/* buttons */
 	button0 = gtk_button_new();
 	gtk_box_pack_start(GTK_BOX(bbox), button0, TRUE, TRUE, 0);
-	gtk_button_set_label(button0, "Cancel");
+	gtk_button_set_label(GTK_BUTTON(button0), "Cancel");
 	g_signal_connect(button0, "clicked", G_CALLBACK(on_copyright_cancel), NULL);
 	
 	button1 = gtk_button_new();
 	gtk_box_pack_start(GTK_BOX(bbox), button1, TRUE, TRUE, 0);
-	gtk_button_set_label(button1, "Add");
+	gtk_button_set_label(GTK_BUTTON(button1), "Add");
 	g_signal_connect(button1, "clicked", G_CALLBACK(on_copyright_apply), NULL);
 
 	gtk_widget_show_all(copy_vbox);

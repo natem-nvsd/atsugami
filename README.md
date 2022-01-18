@@ -9,10 +9,10 @@ Images not included.
 *	Limit of 999,999x999,999px  
 
 ### Dependencies
-PostgreSQL (Tested on 14 and 14.1)  
-GTK3  
-Clang  
-[BSD make (bmake)](https://github.com/natem-nvsd/bmake)
+* PostgreSQL (Tested on 14 and 14.1)  
+* GTK3  
+* GCR 3
+* [BSD make (bmake)](https://github.com/natem-nvsd/bmake)
 
 ### Building and installation
 ```

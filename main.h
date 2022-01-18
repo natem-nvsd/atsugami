@@ -4,6 +4,8 @@
 #define VERSION 0.68
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"
 #pragma clang diagnostic ignored "-Wsometimes-uninitialized"
+#pragma clang diagnostic ignored "-Wincompatible-pointer-types"
+#pragma clang diagnostic ignored "-Wimplicit-function-declaration"
 
 typedef _Bool bool;
 

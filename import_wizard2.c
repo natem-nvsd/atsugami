@@ -10,10 +10,11 @@
 
 PGresult *wiz_res;
 GtkWidget *label0, *label1, *label2;
-GtkEntry *entry0, *entry1, *entry2;
-GtkTextView *tv;
+//GtkEntry *entry0, *entry1, *entry2;
+GtkWidget *entry0, *entry1, *entry2;
+//GtkTextView *tv;
+GtkWidget *tv;
 GtkWidget *import_thumb, *cbox, *can_button, *imp_button;
-GtkButtonBox *button_box;
 GdkPixbuf *import_thumb_pixbuf;
 
 const gchar *text0;
@@ -43,6 +44,9 @@ static void import_button_cb(void) {
 }
 
 extern void import_wizard(GtkWidget *import_page, gpointer user_data) {
+	//GtkButtonBox *button_box;
+	GtkWidget *button_box;
+
 	import_page = gtk_box_new(GTK_ORIENTATION_VERTICAL, 10);
 	header_box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 10);
 	page_count = gtk_notebook_get_n_pages(notebook);
@@ -66,17 +70,17 @@ extern void import_wizard(GtkWidget *import_page, gpointer user_data) {
 	entry0 = gtk_entry_new();
 	gtk_entry_set_activates_default(GTK_ENTRY(entry0), TRUE);
 	gtk_widget_set_valign(entry0, GTK_ALIGN_START);
-	gtk_entry_set_placeholder_text(entry0, "Enter the URL to upload here");
+	gtk_entry_set_placeholder_text(GTK_ENTRY(entry0), "Enter the URL to upload here");
 	gtk_box_pack_start(GTK_BOX(import_page), entry0, TRUE, TRUE, 0);
 
 	/* Tag box */
 	label0 = gtk_label_new("Tags");
 	gtk_widget_set_halign(label0, GTK_ALIGN_START);
-	gtk_text_view_set_editable(tv, TRUE);
+	gtk_text_view_set_editable(GTK_TEXT_VIEW(tv), TRUE);
 	gtk_box_pack_start(GTK_BOX(import_page), label0, FALSE, FALSE, 0);
 
 	tv = gtk_text_view_new();
-	gtk_widget_set_valign(GTK_TEXT_VIEW(tv), GTK_ALIGN_START);
+	gtk_widget_set_valign(tv, GTK_ALIGN_START);
 	gtk_box_pack_start(GTK_BOX(import_page), tv, TRUE, TRUE, 0);
 	
 	/* Rating */
@@ -96,14 +100,14 @@ extern void import_wizard(GtkWidget *import_page, gpointer user_data) {
 	g_object_bind_property(cbox, "active-id", entry2, "text", G_BINDING_DEFAULT);
 
 	button_box = gtk_button_box_new(GTK_ORIENTATION_HORIZONTAL);
-	gtk_box_pack_start(GTK_BOX(import_page), GTK_BUTTON_BOX(button_box), FALSE, FALSE, 0);
+	gtk_box_pack_start(GTK_BOX(import_page), button_box, FALSE, FALSE, 0);
 	
 	can_button = gtk_button_new_with_label("Cancel");
 	imp_button = gtk_button_new_with_label("Import");
 	
-	gtk_button_box_set_layout(button_box, GTK_BUTTONBOX_START);
-	gtk_box_pack_start(GTK_BUTTON_BOX(button_box), can_button, FALSE, FALSE, 0);
-	gtk_box_pack_start(GTK_BUTTON_BOX(button_box), imp_button, FALSE, FALSE, 0);
+	gtk_button_box_set_layout(GTK_BUTTON_BOX(button_box), GTK_BUTTONBOX_START);
+	gtk_box_pack_start(GTK_BOX(button_box), can_button, FALSE, FALSE, 0);
+	gtk_box_pack_start(GTK_BOX(button_box), imp_button, FALSE, FALSE, 0);
 	
 	g_signal_connect(can_button, "clicked", G_CALLBACK(cancel_button_cb), NULL);
 	g_signal_connect(imp_button, "clicked", G_CALLBACK(import_button_cb), NULL);

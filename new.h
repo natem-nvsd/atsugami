@@ -2,9 +2,6 @@
 #ifndef __IMPORT_H__
 #define __IMPORT_H__
 
-#pragma clang diagnostic ignored "-Wdeprecated-declarations"
-#pragma clang diagnostic ignored "-Wimplicit-function-declaration"
-
 #include <glib.h>
 #include <gtk/gtk.h>
 
