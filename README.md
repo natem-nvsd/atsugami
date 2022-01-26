@@ -12,6 +12,7 @@ Images not included.
 * PostgreSQL (Tested on 14 and 14.1)  
 * GTK3  
 * GCR 3
+* pkgconf
 * [BSD make (bmake)](https://github.com/natem-nvsd/bmake)
 
 ### Building and installation

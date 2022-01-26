@@ -1,12 +1,13 @@
 ﻿/* import.c */
 #include "import.h"
-#include <gtk/gtk.h>
+#include <gtk-3.0/gtk/gtk.h>
 #include "main.h"
 #include <string.h>
 #include "import_wizard.h"
-//#include "gtk_functions.h"
+#include <sha256.h>
 
 gchar import_file_path[10240];
+char file_sha256[65];
 
 /* The "Import" function */
 static void open_response_cb(GtkNativeDialog *dialog, gint response_id, gpointer user_data) {
@@ -16,9 +17,11 @@ static void open_response_cb(GtkNativeDialog *dialog, gint response_id, gpointer
 	if (response_id == GTK_RESPONSE_ACCEPT) {
 		/* Get the path of the file selected when the user presses "Import" */
 		file_path = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(native));
-
+		
 		/* Copy the path into `import_file_path`, since `file_path` is cleared when the dialog is destroyed. */
 		strcpy(import_file_path, file_path);
+		SHA256_File(import_file_path, file_sha256);
+		printf("%s\n", file_sha256);
 
 		/* Run the wizard; the file chooser window is destroyed before the wizard opens. */
 		import_wizard();

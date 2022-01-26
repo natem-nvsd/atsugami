@@ -7,65 +7,115 @@
 #include "new.h"
 #include <stdio.h>
 
-PGresult *copyres;
-GtkWidget *damn_entry, *copy_vbox;
+PGresult *copyrightres;
+GtkWidget *copyright_dialog, *copyright_entry, *copyright_vbox;
 
-static void on_copyright_apply(GtkWidget *widget, gpointer data) {
-	//char psql_error[2048];
-	const gchar *text;
+static int on_copyright_apply(GtkWidget *widget, gpointer data) {
+	const gchar *tmp_text = gtk_entry_get_text(GTK_ENTRY(copyright_entry));
+	const char text[sizeof(tmp_text)];
 	char copyright_query[80 + sizeof(text)];
+	const gchar *id = NULL;
 
-	text = gtk_entry_get_text(GTK_ENTRY(damn_entry));
+	strcpy(text, tmp_text);
+	copyrightres = PQexec(conn, "BEGIN TRANSACTION;");
+	PQclear(copyrightres);
 
-	strcpy(copyright_query, "INSERT INTO public.tags (category, name) VALUES (3, '");
+	strcpy(copyright_query, "INSERT INTO public.tags (name) VALUES ('");
 	strcat(copyright_query, text);
 	strcat(copyright_query, "') ON CONFLICT DO NOTHING;");
-	PQexec(conn, copyright_query);
+
+	copyrightres = PQexec(conn, copyright_query);
 	strcpy(copyright_query, "");	// clear the query string
 
-	gtk_notebook_detach_tab(notebook, copy_vbox);
+	//if (PQresultStatus(copyrightres) != PGRES_TUPLES_OK) {
+	if (PQresultStatus(copyrightres) != PGRES_COMMAND_OK) {
+		PQclear(copyrightres);
+
+		copyrightres = PQexec(conn, "ROLLBACK TRANSACTION;");
+		PQclear(copyrightres);
+		gtk_notebook_detach_tab(notebook, copyright_vbox);
+		return 1;
+	}
+
+	strcpy(copyright_query, "SELECT id FROM public.tags WHERE name LIKE '");
+	strcat(copyright_query, text);
+	strcat(copyright_query, "';");
+
+	copyrightres = PQexec(conn, copyright_query);
+	id = PQgetvalue(copyrightres, 0, 0);
+
+	PQclear(copyrightres);
+	strcpy(copyright_query, "");	// clear the query string
+
+	strcpy(copyright_query, "INSERT INTO public.tags_categories (tag_id, category_id) VALUES (");
+	strcat(copyright_query, id);
+	strcat(copyright_query, ", 1);");
+
+	copyrightres = PQexec(conn, copyright_query);
+
+	if (PQresultStatus(copyrightres) != PGRES_COMMAND_OK) {
+		PQclear(copyrightres);
+
+		copyrightres = PQexec(conn, "ROLLBACK TRANSACTION;");
+		PQclear(copyrightres);
+		gtk_notebook_detach_tab(notebook, copyright_vbox);
+		return 1;
+	}
+
+	if (PQresultStatus(copyrightres) == PGRES_COMMAND_OK) {
+		PQclear(copyrightres);
+
+		copyrightres = PQexec(conn, "COMMIT TRANSACTION;");
+		PQclear(copyrightres);
+		gtk_notebook_detach_tab(notebook, copyright_vbox);
+	}
+	return 0;
 }
 
 static void on_copyright_cancel(GtkWidget *widget, gpointer data) {
-	gtk_notebook_detach_tab(notebook, copy_vbox);
+	copyrightres = PQexec(conn, "ROLLBACK TRANSACTION;");
+	PQclear(copyrightres);
+	gtk_notebook_detach_tab(notebook, copyright_vbox);
 }
 
 extern void new_copyright_activate(void) {
 	GtkWidget *label, *button0, *button1, *bbox;
 	gint page_count = gtk_notebook_get_n_pages(notebook);
-
-	copy_vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 10);
-	gtk_container_set_border_width(GTK_CONTAINER(copy_vbox), 10);
 	
-	/* label */
+	copyright_vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 10);
+	gtk_container_set_border_width(GTK_CONTAINER(copyright_vbox), 10);
+	gtk_box_set_baseline_position(GTK_BOX(copyright_vbox), GTK_BASELINE_POSITION_TOP);
+	
+	/* Label */
 	label = gtk_label_new("Enter the copyright's name here:");
 	gtk_widget_set_valign(label, GTK_ALIGN_START);
-	gtk_box_pack_start(GTK_BOX(copy_vbox), label, FALSE, FALSE, 0);
+	gtk_box_pack_start(GTK_BOX(copyright_vbox), label, FALSE, FALSE, 0);
 	
-	/* entry */
-	damn_entry = gtk_entry_new();
-	gtk_entry_set_activates_default(GTK_ENTRY(damn_entry), TRUE);
-	gtk_widget_set_valign(damn_entry, GTK_ALIGN_START);
-	gtk_box_pack_start(GTK_BOX(copy_vbox), damn_entry, TRUE, TRUE, 0);
+	/* Entry */
+	copyright_entry = gtk_entry_new();
+	gtk_entry_set_activates_default(GTK_ENTRY(copyright_entry), TRUE);
+	gtk_widget_set_valign(copyright_entry, GTK_ALIGN_START);
+	gtk_box_pack_start(GTK_BOX(copyright_vbox), copyright_entry, TRUE, TRUE, 0);
 	
-	/* bbox */              // replace with gtk button box
+	/* Button box */
 	bbox = gtk_button_box_new(GTK_ORIENTATION_HORIZONTAL);
 	gtk_button_box_set_layout(GTK_BUTTON_BOX(bbox), GTK_BUTTONBOX_START);
-	gtk_container_add(GTK_CONTAINER(copy_vbox), bbox);
+	gtk_container_add(GTK_CONTAINER(copyright_vbox), bbox);
 	
-	/* buttons */
+	/* Cancel button */
 	button0 = gtk_button_new();
 	gtk_box_pack_start(GTK_BOX(bbox), button0, TRUE, TRUE, 0);
 	gtk_button_set_label(GTK_BUTTON(button0), "Cancel");
 	g_signal_connect(button0, "clicked", G_CALLBACK(on_copyright_cancel), NULL);
 	
+	/* Ok button */
 	button1 = gtk_button_new();
 	gtk_box_pack_start(GTK_BOX(bbox), button1, TRUE, TRUE, 0);
 	gtk_button_set_label(GTK_BUTTON(button1), "Add");
 	g_signal_connect(button1, "clicked", G_CALLBACK(on_copyright_apply), NULL);
-
-	gtk_widget_show_all(copy_vbox);
-	gtk_container_add(GTK_CONTAINER(notebook), copy_vbox);
-	gtk_notebook_set_tab_label_text(notebook, copy_vbox, "New copyright");
+	
+	gtk_widget_show_all(copyright_vbox);
+	gtk_container_add(GTK_CONTAINER(notebook), copyright_vbox);
+	gtk_notebook_set_tab_label_text(notebook, copyright_vbox, "New copyright");
 	gtk_notebook_set_current_page(notebook, page_count);
 }

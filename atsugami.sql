@@ -2,6 +2,7 @@ CREATE TABLE public.files (
 id SERIAL PRIMARY KEY,
 sha256 VARCHAR(65) UNIQUE NOT NULL,
 rating VARCHAR(1),
+source TEXT,
 created_at TIMESTAMP NOT NULL DEFAULT now(),
 updated_at TIMESTAMP NOT NULL DEFAULT now()
 );
@@ -12,8 +13,8 @@ parent_id INTEGER NOT NULL
 );
 
 CREATE TABLE public.tag_count (
-file_id INTEGER,
-tag_count INTEGER
+file_id INTEGER NOT NULL,
+tag_count INTEGER NOT NULL
 );
 
 CREATE TABLE public.favourites (

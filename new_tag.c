@@ -10,26 +10,71 @@
 PGresult *tagres;
 GtkWidget *tag_dialog, *tag_entry, *tag_vbox;
 
-static void on_tag_apply(GtkWidget *widget, gpointer data) {
-	//char psql_error[2048];
-	const gchar *text;
+static int on_tag_apply(GtkWidget *widget, gpointer data) {
+	const gchar *tmp_text = gtk_entry_get_text(GTK_ENTRY(tag_entry));
+	const char text[sizeof(tmp_text)];
 	char tag_query[80 + sizeof(text)];
+	const gchar *id = NULL;
 
-	text = gtk_entry_get_text(GTK_ENTRY(tag_entry));
+	strcpy(text, tmp_text);
+	tagres = PQexec(conn, "BEGIN TRANSACTION;");
+	PQclear(tagres);
 
-	strcpy(tag_query, "INSERT INTO public.tags (category, name) VALUES (0, '");
+	strcpy(tag_query, "INSERT INTO public.tags (name) VALUES ('");
 	strcat(tag_query, text);
 	strcat(tag_query, "') ON CONFLICT DO NOTHING;");
-	PQexec(conn, tag_query);
+
+	tagres = PQexec(conn, tag_query);
 	strcpy(tag_query, "");	// clear the query string
 
-	// the query is done, now the window must be destroyed
-	gtk_widget_destroy(tag_dialog);
-	gtk_notebook_detach_tab(notebook, tag_vbox);
+	if (PQresultStatus(tagres) != PGRES_COMMAND_OK) {
+		PQclear(tagres);
+
+		tagres = PQexec(conn, "ROLLBACK TRANSACTION;");
+		PQclear(tagres);
+		gtk_notebook_detach_tab(notebook, tag_vbox);
+		return 1;
+	}
+
+	strcpy(tag_query, "SELECT id FROM public.tags WHERE name LIKE '");
+	strcat(tag_query, text);
+	strcat(tag_query, "';");
+
+	tagres = PQexec(conn, tag_query);
+	id = PQgetvalue(tagres, 0, 0);
+
+	PQclear(tagres);
+	strcpy(tag_query, "");	// clear the query string
+
+	strcpy(tag_query, "INSERT INTO public.tags_categories (tag_id, category_id) VALUES (");
+	strcat(tag_query, id);
+	strcat(tag_query, ", 0);");
+
+	tagres = PQexec(conn, tag_query);
+
+	if (PQresultStatus(tagres) != PGRES_COMMAND_OK) {
+		PQclear(tagres);
+
+		tagres = PQexec(conn, "ROLLBACK TRANSACTION;");
+		PQclear(tagres);
+		gtk_notebook_detach_tab(notebook, tag_vbox);
+		return 1;
+	}
+
+	if (PQresultStatus(tagres) == PGRES_COMMAND_OK) {
+		PQclear(tagres);
+
+		tagres = PQexec(conn, "COMMIT TRANSACTION;");
+		PQclear(tagres);
+		gtk_notebook_detach_tab(notebook, tag_vbox);
+	}
+
+	return 0;
 }
 
 static void on_tag_cancel(GtkWidget *widget, gpointer data) {
-	gtk_widget_destroy(tag_dialog);
+	tagres = PQexec(conn, "ROLLBACK TRANSACTION;");
+	PQclear(tagres);
 	gtk_notebook_detach_tab(notebook, tag_vbox);
 }
 

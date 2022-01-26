@@ -16,9 +16,10 @@
 \***************************************************************/
 
 #include "about.h"
+#include <ctype.h>
 #include <errno.h>
 #include <glib/gstdio.h>
-#include <gtk/gtk.h>
+#include <gtk-3.0/gtk/gtk.h>
 #include "import.h"
 #include <libpq-fe.h>
 #include "main.h"
@@ -380,16 +381,12 @@ int main(int argc, char *argv[]) {
 
 	/* Add error_bar to vbox */
 	gtk_info_bar_set_message_type(error_bar, GTK_MESSAGE_ERROR);
-	gtk_box_pack_start(GTK_BOX(vbox), GTK_REVEALER(error_bar), FALSE, FALSE, 0);
 
 	/* Show error info bar if the connection fails */
 	if (PQstatus(conn) != CONNECTION_OK) {
-		//gtk_widget_show(error_bar);
-		//gtk_widget_set_no_show_all(error_widget, FALSE);
-		gtk_info_bar_set_revealed(error_bar, TRUE);
-
-		//int n = sizeof(PQerrorMessage(conn));
 		char errMsg[1024];
+
+		gtk_info_bar_set_revealed(error_bar, TRUE);
 		sprintf(errMsg, "\n%s", PQerrorMessage(conn));
 		fprintf(stderr, "Atsugami: %s", PQerrorMessage(conn));
 		gtk_label_set_text(GTK_LABEL(error_label), errMsg);
@@ -403,22 +400,24 @@ int main(int argc, char *argv[]) {
 
 	home_page();
 
-	/* Nobody here but us chickens! */
+	/* File count */
 	int label_int;
+	char label_str[4];
 	GtkWidget *chicken_label;
 
-	mainres = PQexec(conn, "SELECT id FROM public.files;");
-	label_int = PQntuples(mainres);
-	if (label_int == 0) {
-		chicken_label = gtk_label_new("Nobody here but us chickens!");
-		gtk_widget_set_halign(chicken_label, GTK_ALIGN_START);
-		gtk_box_pack_start(GTK_BOX(vbox), chicken_label, FALSE, FALSE, 0);
-	}
-	else {
-		chicken_label = gtk_label_new(label_int);
-		gtk_widget_set_halign(chicken_label, GTK_ALIGN_START);
-		gtk_box_pack_start(GTK_BOX(vbox), chicken_label, FALSE, FALSE, 0);
-	}
+	mainres = PQexec(conn, "SELECT count(*) FROM public.files;");
+	label_int = PQntuples(mainres) - 1;
+
+	sprintf(label_str, "%d", label_int);
+
+	if (label_int == 0)
+		chicken_label = gtk_label_new("No files found.");
+	else
+		chicken_label = gtk_label_new(label_str);
+	gtk_widget_set_halign(chicken_label, GTK_ALIGN_START);
+	gtk_widget_set_valign(chicken_label, GTK_ALIGN_END);
+	gtk_box_pack_start(GTK_BOX(vbox), chicken_label, FALSE, FALSE, 0);
+
 	PQclear(mainres);
 
 	/* Show window and vbox */

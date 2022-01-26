@@ -1,501 +1,234 @@
-/***************************************************************\
-* wizard.c rewritten and redesigned to work in a notebook tab.	*
-*	(c) 2022, Nate Morrison					*
-\***************************************************************/
-
-#include <gtk/gtk.h>
+#include <gtk-3.0/gtk/gtk.h>
 #include "import.h"
 #include <libpq-fe.h>
 #include "main.h"
 #include "notebook.h"
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
+#include <sys/types.h>
 #include "import_wizard.h"
 
 PGresult *wiz_res;
 GtkWidget *label0, *label1, *label2, *label3, *label4, *label5, *label6;
-//GtkWidget *entry0, *entry1, *entry2, *entry3, *entry4, *entry5, *entry6, *rating_entry;
-GtkEntry *entry0, *entry1, *entry2, *entry3, *entry4, *entry5, *entry6, *rating_entry;
-//GtkEntry *entry0, *entry1, *entry2, *entry3, *entry4, *entry5, *entry6, *rating_entry;
-//GtkWidget *import_thumb, *cbox, *button_box, *can_button, *imp_button;
+GtkWidget *entry0, *entry1, *entry2, *entry3, *entry4, *entry5, *entry6;
+GtkTextView *tv;
 GtkWidget *import_thumb, *cbox, *can_button, *imp_button;
-GtkButtonBox *button_box;
 GdkPixbuf *import_thumb_pixbuf;
 
-const gchar *text0;
-const gchar *text1;
-const gchar *text2;
-const gchar *text3;
-const gchar *text4;
-const gchar *text5;
-const gchar *text6;
-const gchar *text7;
-const gchar *uuid = NULL;
-
 gint page_count = 0;
-char query_string[20480];       /*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
-char child_uuids[2048];         /* THESE MUST BE FIXED TO PREVENT BUFFER OVERFLOWS */
 gboolean parent_bool = FALSE;
 gboolean child_bool = FALSE;
 gboolean has_children = FALSE;
 GtkWidget *header_box, *scrolled_window;
 
 static void cancel_button_cb(void) {
+	wiz_res = PQexec(conn, "ROLLBACK TRANSACTION");
+
+	PQclear(wiz_res);
 	gtk_notebook_detach_tab(notebook, scrolled_window);
 }
 
-//static void import_button_cb(void) {
-int import_button_cb(void) {
-	/* Create the query to submit to PostgreSQL */
-	strcpy(query_string, "INSERT INTO public.files (path, artist, copyrights, characters, tags, source, rating, is_parent, is_child,  parent_uuid, child_uuids, imported_at) VALUES ('");
+static int import_button_cb(void) {
+	int a, b, c;
+	int wc;
+	const gchar *text0 = gtk_entry_get_text(GTK_ENTRY(entry0));	/* Source */
+	const gchar *text1 = gtk_entry_get_text(GTK_ENTRY(entry1));	/* Artists */
+	const gchar *text2 = gtk_entry_get_text(GTK_ENTRY(entry2));	/* Copyrights */
+	const gchar *text3 = gtk_entry_get_text(GTK_ENTRY(entry3));	/* Characters */
+	const gchar *text4 = gtk_entry_get_text(GTK_ENTRY(entry4));	/* General */
+	const gchar *text5 = gtk_entry_get_text(GTK_ENTRY(entry5));	/* Meta */
+	const gchar *text6 = gtk_entry_get_text(GTK_ENTRY(entry6));	/* Invisible */
+	int src_size = sizeof(text0);
+	int art_size = sizeof(text1);
+	int cop_size = sizeof(text2);
+	int cha_size = sizeof(text3);
+	int gen_size = sizeof(text4);
+	int met_size = sizeof(text5);
+	char query_string[159 + src_size];
+	char art_arr[67 + art_size];
+	char cop_arr[67 + cop_size];
+	char cha_arr[67 + cha_size];
+	char gen_arr[67 + gen_size];
+	char met_arr[67 + met_size];
+	char art_tag[art_size];
+	char cop_tag[cop_size];
+	char cha_tag[cha_size];
+	char gen_tag[gen_size];
+	char met_tag[met_size];
 
-	/* add the file path to the query */
-	strcat(query_string, import_file_path);
-	strcat(query_string, "', '{");
-
-	/* Entry fields from page0 */
-	text0 = gtk_entry_get_text(GTK_ENTRY(entry0));  /* Artist */
-	if (gtk_entry_get_text_length(entry0) == 0)
-		strcat(query_string, "NULL}', '{");
-
-	if (gtk_entry_get_text_length(entry0) > 0) {
-		strcat(query_string, text0);
-		strcat(query_string, "}', '{");
-	}
-	
-	/* Begin the transaction */
-	wiz_res = PQexec(conn, "BEGIN TRANSACTION;");
-
-	char artist_query[71 + sizeof(text0)];
-	strcpy(artist_query, "INSERT INTO public.artists (name) VALUES ('");
-	strcat(artist_query, text0);
-	strcat(artist_query, "');");
-	
-	wiz_res = PQexec(conn, artist_query);
-	if (PQresultStatus(wiz_res) != PGRES_TUPLES_OK) {
-		PQclear(wiz_res);
-		
-		wiz_res = PQexec(conn, "ROLLBACK TRANSACTION;");
-		PQclear(wiz_res);
-	}
-	else {
-		PQclear(wiz_res);
-
-		wiz_res = PQexec(conn, "COMMIT TRANSACTION");
-		PQclear(wiz_res);
-	}
-	strcpy(artist_query, "");	/* Clean the string */
-
-	/* Copyrights */
-	text1 = gtk_entry_get_text(GTK_ENTRY(entry1));
-	if (gtk_entry_get_text_length(entry1) == 0)
-		strcat(query_string, "NULL}', '{");
-	
-	if (gtk_entry_get_text_length(entry1) > 0) {
-		strcat(query_string, text1);
-		strcat(query_string, "}', '{");
-	}
-
-	/* Begin transaction */
-	wiz_res = PQexec(conn, "BEGIN TRANSACTION;");
+	wiz_res = PQexec(conn, "BEGIN TRANSACTION");
 	PQclear(wiz_res);
 
-	/* Begin transaction */
-	wiz_res = PQexec(conn, "BEGIN TRANSACTION;");
-	PQclear(wiz_res);
-
-	char copyright_query[93 + sizeof(text1)];
-	strcpy(copyright_query, "INSERT INTO public.copyrights (name, created_at) VALUES ('");
-	strcat(copyright_query, text1);
-	strcat(copyright_query, "', now());");	/* i should use a macro for this */
-
-	wiz_res = PQexec(conn, copyright_query);
-	if (PQresultStatus(wiz_res) != PGRES_TUPLES_OK) {
-		PQclear(wiz_res);
-		
-		wiz_res = PQexec(conn, "ROLLBACK TRANSACTION;");
-		PQclear(wiz_res);
-	}
-	else {
-		PQclear(wiz_res);
-
-		wiz_res = PQexec(conn, "COMMIT TRANSACTION");
-		PQclear(wiz_res);
-	}
-	strcpy(copyright_query, "");
-
-	/* Characters */
-	text2 = gtk_entry_get_text(GTK_ENTRY(entry2));
-	if (gtk_entry_get_text_length(entry2) == 0)
-		strcat(query_string, "NULL}', '{");
-	
-	if (gtk_entry_get_text_length(entry2) > 0) {
-		strcat(query_string, text2);
-		strcat(query_string, "}', '{");
-	}
-
-	/* Begin transaction */
-	wiz_res = PQexec(conn, "BEGIN TRANSACTION;");
-	PQclear(wiz_res);
-
-	char characters_query[74 + sizeof(text2)];
-	strcpy(characters_query, "INSERT INTO public.characters (name) VALUES ('");
-	strcat(characters_query, text2);
-	strcat(characters_query, "') ON CONFLICT DO NOTHING;");
-		/* This won't work for multiple characters */
-	
-	wiz_res = PQexec(conn, characters_query);
-	if (PQresultStatus(wiz_res) != PGRES_TUPLES_OK) {
-		PQclear(wiz_res);
-		
-		wiz_res = PQexec(conn, "ROLLBACK TRANSACTION;");
-		PQclear(wiz_res);
-	}
-	else {
-		PQclear(wiz_res);
-
-		wiz_res = PQexec(conn, "COMMIT TRANSACTION");
-		PQclear(wiz_res);
-	}
-	strcpy(characters_query, "");
-
-	/* Tags */
-	text3 = gtk_entry_get_text(GTK_ENTRY(entry3));
-	if (gtk_entry_get_text_length(entry3) == 0)
-		strcat(query_string, "NULL}', '");
-	
-	if (gtk_entry_get_text_length(entry3) > 0) {
-		strcat(query_string, text3);
-		strcat(query_string, "}', '");
-	}
-
-	/* Source */
-	text4 = gtk_entry_get_text(GTK_ENTRY(entry4));
-	if (gtk_entry_get_text_length(entry4) == 0)
-		strcat(query_string, "NULL}', '");
-	
-	if (gtk_entry_get_text_length(entry4) > 0) {
-		strcat(query_string, text4);
-		strcat(query_string, "', '");
-	}
-
-	/* Rating */
-	text7 = gtk_entry_get_text(GTK_ENTRY(rating_entry));
-	strcat(query_string, text7);
-	strcat(query_string, "', ");
-	
-	/* add the values of is_parent */
-	if (parent_bool == TRUE)
-		strcat(query_string, "TRUE, ");
-	else
-		strcat(query_string, "FALSE, ");
-	
-	/* add the values of  is_child */
-	if (child_bool == TRUE)
-		strcat(query_string, "TRUE, '");
-	else
-		strcat(query_string, "FALSE, '");
-	
-	/* Parent UUID */
-	text5 = gtk_entry_get_text(GTK_ENTRY(entry5));
-	if (gtk_entry_get_text_length(entry5) == 0)
-		strcat(query_string, "00000000-0000-0000-0000-000000000000', '{");
-	
-	if (gtk_entry_get_text_length(entry5) > 0) {
-		strcat(query_string, text5);
-		strcat(query_string, "', '{");
-	}
-
-	/* Child UUIDs */
-	text6 = gtk_entry_get_text(GTK_ENTRY(entry6));
-	if (gtk_entry_get_text_length(entry6) == 0)
-		strcat(query_string, "NULL}', now());");
-	
-	if (gtk_entry_get_text_length(entry6) > 0) {
-		strcat(query_string, text6);
-		strcat(query_string, "}', now()) ON CONFLICT DO NOTHING;");
-	}
+	/* Create the base of the query */
+	strcpy(query_string, "INSERT INTO public.files (sha256, rating, source) VALUES ('");
+	strcat(query_string, file_sha256);
+	strcat(query_string, "', '");
+	strcat(query_string, text6);
+	strcat(query_string, "', '");
+	strcat(query_string, text0);
+	strcat(query_string, "') ON CONFLICT DO NOTHING;");
 
 	wiz_res = PQexec(conn, query_string);
-	printf("%s\n", query_string);
-	strcpy(query_string, "");
-	PQclear(wiz_res);
 
-	/* Get the uuid of the file just imported */
-	char uuid_query[47 + sizeof(import_file_path)];
+	if (PQresultStatus(wiz_res) == PGRES_COMMAND_OK) {
+		PQclear(wiz_res);
 
-	strcpy(uuid_query, "SELECT uuid FROM public.files WHERE path = '");
-	strcat(uuid_query, import_file_path);
-	strcat(uuid_query, "';");
-	printf("uuid_query = %s\n", uuid_query);
-	wiz_res = PQexec(conn, uuid_query);
+		wiz_res = PQexec(conn, "COMMIT TRANSACTION;");
+		PQclear(wiz_res);
+		printf("Command successful.\n");
+	}
+	else {
+		PQclear(wiz_res);
 
-	uuid = PQgetvalue(wiz_res, 0, 0);
-	printf("uuid = %s\n", uuid);
+		wiz_res = PQexec(conn, "ROLLBACK TRANSACTION;");
+		PQclear(wiz_res);
+		gtk_notebook_detach_tab(notebook, scrolled_window);
+		fprintf(stderr, "Command failed.\n");
+		// Spawn an error dialog here
+		return 1;
+	}
 
-	PQclear(wiz_res);
-	strcpy(uuid_query, "");
-	printf("uuid_query cleared.\n");
+	/* Create artist tags */
+	b = 0;
 
-	/* Move the file to a the storage directory */
-	char homedir[sizeof(getenv("HOME"))];
-	char new_path[64 + sizeof(homedir)];
-	char mv_command[4 + sizeof(import_file_path) + sizeof(new_path)];
+	strcpy(art_arr, text1);
+	printf("%s\n", art_arr);
 
-	strcpy(homedir, getenv("HOME"));
-	printf("%s\n", homedir);
-	strcpy(new_path, homedir);
-	strcat(new_path, "/.config/atsugami/files/");
-	strcat(new_path, uuid);
-	printf("%s\n", new_path);
+	for (a = 0; a < art_size; a++) {
+		if (isspace(art_arr[a]) == 0) {
+			art_tag[b] = text1[a];
+			printf("%s %d %d\n", art_tag, a, b);
+			++b;
+		}
+		else {
+			printf("%s %d %d\n", art_tag, a, b);
 
-	strcpy(mv_command, "mv ");
-	strcat(mv_command, import_file_path);
-	strcat(mv_command, " ");
-	strcat(mv_command, new_path);
-	printf("%s\n", mv_command);
-	system(mv_command);
-	printf("File moved.\n");
-	strcpy(mv_command, "");
+			for (c = 0; c < a; c++) {
+				art_tag[c] = '\0';
+			}
 
-	/* Update the file's entry in Postgres */
-	char new_path_query[51 + sizeof(new_path)];
+			b = 0;
+			strcpy(query_string, "INSERT INTO public.tags (name) VALUES ('");
+		}
+	}
 
-	strcpy(new_path_query, "UPDATE public.files SET path = '");
-	strcat(new_path_query, new_path);
-	strcat(new_path_query, "' WHERE uuid = '");
-	strcat(new_path_query, uuid);
-	strcat(new_path_query, "'");
-	printf("%s\n", new_path_query);
-	wiz_res = PQexec(conn, new_path_query);
-	PQclear(wiz_res);
-	strcpy(new_path_query, "");
-	strcpy(new_path, "");
-	strcpy(uuid, "");
-
-	/* Finish the function */
-	strcpy(import_file_path, "");
 	gtk_notebook_detach_tab(notebook, scrolled_window);
-	//notebook_reload();
 	return 0;
 }
 
-static void on_wizard_entry_changed(GtkWidget *widget, gpointer data) {
-	const gchar *text;
-	
-	text = gtk_entry_get_text(GTK_ENTRY(widget));
-}
-
-/* Check box callbacks */
-GtkWidget *pg1_label0, *pg1_label1, *check_button0, *check_button1, *check_button2;
-
-static void is_parent_cb(GtkWidget *check_button, gpointer data) {
-	if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(check_button0))) {
-		parent_bool = TRUE;
-		gtk_widget_set_sensitive(pg1_label1, TRUE);
-		gtk_widget_set_sensitive(entry6, TRUE);
-	}
-	else {
-		g_print("%s off\n", gtk_button_get_label(GTK_BUTTON(check_button0)));
-		gtk_widget_set_sensitive(pg1_label1, FALSE);
-		gtk_widget_set_sensitive(entry6, FALSE);
-	}
-}
-
-static void is_child_cb(GtkWidget *check_button, gpointer data) {
-	if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(check_button1))) {
-		child_bool = TRUE;
-		gtk_widget_set_sensitive(pg1_label0, TRUE);
-		gtk_widget_set_sensitive(GTK_ENTRY(entry5), TRUE);
-	}
-	else {
-		g_print("%s off\n", gtk_button_get_label(GTK_BUTTON(check_button1)));
-		gtk_widget_set_sensitive(pg1_label0, FALSE);
-		gtk_widget_set_sensitive(GTK_ENTRY(entry5), FALSE);
-	}
-}
-
-
 extern void import_wizard(GtkWidget *import_page, gpointer user_data) {
+	GtkWidget *button_box;
+
 	import_page = gtk_box_new(GTK_ORIENTATION_VERTICAL, 10);
 	header_box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 10);
 	page_count = gtk_notebook_get_n_pages(notebook);
 	scrolled_window = gtk_scrolled_window_new(NULL, NULL);
-	
+
 	gtk_container_set_border_width(GTK_CONTAINER(import_page), 10);
-	//gtk_box_pack_start(GTK_BOX(scrolled_window), import_page, FALSE, FALSE, 0);
-	gtk_scrolled_window_add_with_viewport(scrolled_window, import_page);
-	gtk_scrolled_window_set_kinetic_scrolling(scrolled_window, TRUE);
+	gtk_scrolled_window_add_with_viewport(GTK_SCROLLED_WINDOW(scrolled_window), import_page);
+	gtk_scrolled_window_set_kinetic_scrolling(GTK_SCROLLED_WINDOW(scrolled_window), TRUE);
 
 	/* thumbnail */
 	import_thumb_pixbuf = gdk_pixbuf_new_from_file_at_scale(import_file_path, 720, 720, TRUE, NULL);
 	import_thumb = gtk_image_new_from_pixbuf(import_thumb_pixbuf);
-
+	
 	gtk_box_pack_start(GTK_BOX(import_page), import_thumb, FALSE, FALSE, 0);
 
-	/* First label and text field */
-	label0 = gtk_label_new("Enter the artist\'s name here:");
+	/* Source */
+	label0 = gtk_label_new("Enter source URL here:");
 	gtk_widget_set_halign(label0, GTK_ALIGN_START);
 	gtk_box_pack_start(GTK_BOX(import_page), label0, FALSE, FALSE, 0);
-
+	
 	entry0 = gtk_entry_new();
 	gtk_entry_set_activates_default(GTK_ENTRY(entry0), TRUE);
 	gtk_widget_set_valign(entry0, GTK_ALIGN_START);
-	gtk_entry_set_placeholder_text(entry0, "Values are separated by commas; spaces are optional.");
+	gtk_entry_set_placeholder_text(GTK_ENTRY(entry0), "Enter the URL to import here");
 	gtk_box_pack_start(GTK_BOX(import_page), entry0, TRUE, TRUE, 0);
-	g_signal_connect(G_OBJECT(entry0), "changed", G_CALLBACK(on_wizard_entry_changed), scrolled_window);
 
-	//gtk_widget_set_halign(revealer_label, GTK_ALIGN_START);
-	//gtk_box_pack_start(GTK_BOX(import_page), revealer_label, FALSE, FALSE, 0);
-
-	/* Second label text field */
-	label1 = gtk_label_new("Enter copyrights here:");
+	/* Artist tag box */
+	label1 = gtk_label_new("Artist(s)");
 	gtk_widget_set_halign(label1, GTK_ALIGN_START);
 	gtk_box_pack_start(GTK_BOX(import_page), label1, FALSE, FALSE, 0);
 
 	entry1 = gtk_entry_new();
 	gtk_entry_set_activates_default(GTK_ENTRY(entry1), TRUE);
 	gtk_widget_set_valign(entry1, GTK_ALIGN_START);
-	gtk_entry_set_placeholder_text(entry1, "Values are separated by commas; spaces are optional.");
 	gtk_box_pack_start(GTK_BOX(import_page), entry1, TRUE, TRUE, 0);
-	//g_signal_connect(G_OBJECT(entry1), "changed", G_CALLBACK(on_wizard_entry_changed), assistant);
 
-	//revealer1 = gtk_revealer_new();
-	//gtk_widget_set_halign(revealer_label, GTK_ALIGN_START);
-	//gtk_box_pack_start(GTK_BOX(import_page), revealer_label, FALSE, FALSE, 0);
-
-	/* Third label and text field */
-	label2 = gtk_label_new("Enter character names here:");
+	/* Copyright tag box */
+	label2 = gtk_label_new("Copyrights");
 	gtk_widget_set_halign(label2, GTK_ALIGN_START);
 	gtk_box_pack_start(GTK_BOX(import_page), label2, FALSE, FALSE, 0);
 
 	entry2 = gtk_entry_new();
 	gtk_entry_set_activates_default(GTK_ENTRY(entry2), TRUE);
 	gtk_widget_set_valign(entry2, GTK_ALIGN_START);
-	gtk_entry_set_placeholder_text(entry2, "Values are separated by commas; spaces are optional.");
 	gtk_box_pack_start(GTK_BOX(import_page), entry2, TRUE, TRUE, 0);
-	//g_signal_connect(G_OBJECT(entry2), "changed", G_CALLBACK(on_wizard_entry_changed), assistant);
 
-	//revealer2 = gtk_revealer_new();
-	//gtk_widget_set_halign(revealer_label, GTK_ALIGN_START);
-	//gtk_box_pack_start(GTK_BOX(import_page), revealer_label, FALSE, FALSE, 0);
-
-	/* Fourth label and text field */
-	label3 = gtk_label_new("Enter tags here:");
+	/* Character tag box */
+	label3 = gtk_label_new("Characters");
 	gtk_widget_set_halign(label3, GTK_ALIGN_START);
 	gtk_box_pack_start(GTK_BOX(import_page), label3, FALSE, FALSE, 0);
-	
+
 	entry3 = gtk_entry_new();
 	gtk_entry_set_activates_default(GTK_ENTRY(entry3), TRUE);
 	gtk_widget_set_valign(entry3, GTK_ALIGN_START);
-	gtk_entry_set_placeholder_text(entry3, "Values are separated by commas; spaces are optional.");
 	gtk_box_pack_start(GTK_BOX(import_page), entry3, TRUE, TRUE, 0);
-	//g_signal_connect(G_OBJECT(entry3), "changed", G_CALLBACK(on_wizard_entry_changed), assistant);
-	
-	//revealer3 = gtk_revealer_new();
-	//gtk_widget_set_halign(revealer_label, GTK_ALIGN_START);
-	//gtk_box_pack_start(GTK_BOX(import_page), revealer_label, FALSE, FALSE, 0);
 
-	/* Fifth label and text field */
-	label4 = gtk_label_new("Enter source URL here:");
+	/* General tag box */
+	label4 = gtk_label_new("General");
 	gtk_widget_set_halign(label4, GTK_ALIGN_START);
 	gtk_box_pack_start(GTK_BOX(import_page), label4, FALSE, FALSE, 0);
-	
-	entry4 = gtk_entry_new();
-	gtk_entry_set_activates_default(GTK_ENTRY(entry4), TRUE);
-	gtk_widget_set_valign(entry4, GTK_ALIGN_START);
-	gtk_entry_set_placeholder_text(entry4, "Values are separated by commas; spaces are optional.");
-	gtk_box_pack_start(GTK_BOX(import_page), entry4, TRUE, TRUE, 0);
-	//g_signal_connect(G_OBJECT(entry4), "changed", G_CALLBACK(on_wizard_entry_changed), assistant);
-	
-	//revealer4 = gtk_revealer_new();
-	//gtk_widget_set_halign(revealer_label, GTK_ALIGN_START);
-	//gtk_box_pack_start(GTK_BOX(import_page), revealer_label, FALSE, FALSE, 0);
 
-	/*Sixth label and text field */
-	label5 = gtk_label_new("Rating:");
+	tv = gtk_text_view_new();
+	gtk_text_view_set_editable(tv, TRUE);
+	gtk_widget_set_valign(tv, GTK_ALIGN_START);
+	gtk_box_pack_start(GTK_BOX(import_page), tv, TRUE, TRUE, 0);
+	
+	/* Meta tag box */
+	label5 = gtk_label_new("Meta");
 	gtk_widget_set_halign(label5, GTK_ALIGN_START);
 	gtk_box_pack_start(GTK_BOX(import_page), label5, FALSE, FALSE, 0);
-	
-	cbox = gtk_combo_box_text_new();
-	gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(cbox), "safe", "Safe");
-	gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(cbox), "questionable", "Questionable");
-	gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(cbox), "explicit", "Explicit");
-	gtk_box_pack_start(GTK_BOX(import_page), cbox, FALSE, FALSE, 0);
-	
-	//revealer5 = gtk_revealer_new();
-	//gtk_widget_set_halign(revealer_label, GTK_ALIGN_START);
-	//gtk_box_pack_start(GTK_BOX(import_page), revealer_label, FALSE, FALSE, 0);
 
-	/* Invisible entry field */
-	rating_entry = gtk_entry_new();
-	gtk_entry_set_activates_default(GTK_ENTRY(rating_entry), TRUE);
-	g_object_bind_property(cbox, "active-id", rating_entry, "text", G_BINDING_DEFAULT);
-	//g_signal_connect(G_OBJECT(rating_entry), "changed", G_CALLBACK(on_wizard_entry_changed), assistant);
-
-	/* First check box */
-	check_button0 = gtk_check_button_new_with_label("This file is a parent");
-	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(check_button0), FALSE);
-	g_signal_connect(check_button0, "toggled", G_CALLBACK(is_parent_cb), NULL);
-	gtk_widget_set_valign(check_button0, GTK_ALIGN_START);
-	gtk_box_pack_start(GTK_BOX(import_page), check_button0, FALSE, FALSE, 0);
-
-	/* Child UUID entry */
-	pg1_label1 = gtk_label_new("Enter the UUID(s) of the child(ren) here:");
-	gtk_widget_set_halign(pg1_label1, GTK_ALIGN_START);
-	gtk_box_pack_start(GTK_BOX(import_page), pg1_label1, FALSE, FALSE, 0);
-	
-	entry6 = gtk_entry_new();
-	gtk_entry_set_activates_default(GTK_ENTRY(entry6), TRUE);
-	gtk_widget_set_valign(entry6, GTK_ALIGN_START);
-	gtk_box_pack_start(GTK_BOX(import_page), entry6, TRUE, TRUE, 0);
-	//g_signal_connect(G_OBJECT(entry6), "changed", G_CALLBACK(on_wizard_entry_changed), assistant);
-	
-	gtk_widget_set_sensitive(pg1_label1, FALSE);
-	gtk_widget_set_sensitive(entry6, FALSE);
-	
-	/* Second check box */
-	check_button1 = gtk_check_button_new_with_label("This file is a child");
-	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(check_button1), FALSE);
-	g_signal_connect(check_button1, "toggled", G_CALLBACK(is_child_cb), NULL);
-	gtk_widget_set_valign(check_button1, GTK_ALIGN_START);
-	gtk_box_pack_start(GTK_BOX(import_page), check_button1, FALSE, FALSE, 0);
-	/* label */
-	pg1_label0 = gtk_label_new("Enter Parent UUID here:");
-	gtk_widget_set_halign(pg1_label0, GTK_ALIGN_START);
-	gtk_box_pack_start(GTK_BOX(import_page), pg1_label0, FALSE, FALSE, 0);
-
-	/* Text box */
 	entry5 = gtk_entry_new();
 	gtk_entry_set_activates_default(GTK_ENTRY(entry5), TRUE);
 	gtk_widget_set_valign(entry5, GTK_ALIGN_START);
 	gtk_box_pack_start(GTK_BOX(import_page), entry5, TRUE, TRUE, 0);
-	//g_signal_connect(G_OBJECT(entry5), "changed", G_CALLBACK(on_wizard_entry_changed), assistant);
-	
-	gtk_widget_set_sensitive(pg1_label0, FALSE);
-	gtk_widget_set_sensitive(entry5, FALSE);
 
-	/* "Cancel" and "Import" buttons */
+	/* Rating */
+	label6 = gtk_label_new("Rating:");
+	gtk_widget_set_halign(label6, GTK_ALIGN_START);
+	gtk_box_pack_start(GTK_BOX(import_page), label6, FALSE, FALSE, 0);
+	
+	cbox = gtk_combo_box_text_new();
+	gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(cbox), "s", "Safe");
+	gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(cbox), "q", "Questionable");
+	gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(cbox), "e", "Explicit");
+	gtk_box_pack_start(GTK_BOX(import_page), cbox, FALSE, FALSE, 0);
+
+	/* Invisible entry field */
+	entry6 = gtk_entry_new();
+	gtk_entry_set_activates_default(GTK_ENTRY(entry6), TRUE);
+	g_object_bind_property(cbox, "active-id", entry6, "text", G_BINDING_DEFAULT);
+
 	button_box = gtk_button_box_new(GTK_ORIENTATION_HORIZONTAL);
 	gtk_box_pack_start(GTK_BOX(import_page), button_box, FALSE, FALSE, 0);
-
+	
 	can_button = gtk_button_new_with_label("Cancel");
 	imp_button = gtk_button_new_with_label("Import");
-
-	gtk_button_box_set_layout(button_box, GTK_BUTTONBOX_START);
+	
+	gtk_button_box_set_layout(GTK_BUTTON_BOX(button_box), GTK_BUTTONBOX_START);
 	gtk_box_pack_start(GTK_BOX(button_box), can_button, FALSE, FALSE, 0);
 	gtk_box_pack_start(GTK_BOX(button_box), imp_button, FALSE, FALSE, 0);
-
+	
 	g_signal_connect(can_button, "clicked", G_CALLBACK(cancel_button_cb), NULL);
 	g_signal_connect(imp_button, "clicked", G_CALLBACK(import_button_cb), NULL);
-
+	
 	/* init stuff */
 	gtk_widget_show_all(import_page);
 	gtk_widget_show_all(scrolled_window);
-	//gtk_container_add(GTK_CONTAINER(notebook), import_page);
 	gtk_container_add(GTK_CONTAINER(notebook), scrolled_window);
-	//gtk_notebook_set_tab_label_text(notebook, import_page, "Import");
+	gtk_scrolled_window_set_propagate_natural_height(GTK_SCROLLED_WINDOW(scrolled_window), TRUE);
 	gtk_notebook_set_tab_label_text(notebook, scrolled_window, "Import");
 	gtk_notebook_set_current_page(notebook, page_count);
 }

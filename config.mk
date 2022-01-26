@@ -29,8 +29,7 @@ CPPFLAGS = -D_DEFAULT_SOURCE -D_BSD_SOURCE -D_POSIX_C_SOURCE=2 -DVERSION=\"${VER
 								    # Gentoo users: "Muh optimizations"
 #CFLAGS   = -g -std=c11 -pedantic -Wall -Wno-deprecated-declarations -O3 -D_FORTIFY_SOURCE=2 ${INCS} # Flags removed: -v
 CFLAGS   = -g -std=c11 -pedantic -Wall -Wno-deprecated-declarations -D_FORTIFY_SOURCE=2 ${INCS} # Flags removed: -v
-LDFLAGS  += ${LIBS} -lpq
-#PQFLAGS = -lpq
+LDFLAGS  += ${LIBS} -lpq -lmd
 
 # compiler and linker
-CC = clang
+CC = cc

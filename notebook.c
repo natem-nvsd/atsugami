@@ -16,29 +16,42 @@ enum {
 GdkPixbuf *thumb;
 GtkTreeIter *iter;
 GtkWidget *icon_view;
-const gchar *file_path = NULL;
+const gchar *file_path;
 
 static void pixbuf_loader_and_store_filler(GtkWidget *list_store) {
-	int x = 0;		// Number of rows returned by the query
+	int x = 0;	// Number of rows returned by the query
 	int i;		// Current row
+	char *sha256, *tmp_path;
+	char *path;	// DO NOT INITIALIZE
 	GtkTreeIter tree_iter;
 
-	note_res = PQexec(conn, "SELECT path FROM public.files ORDER BY imported_at DESC;");
-		// ASC and DESC are reversed, since they are inserted one by one into list_store
+	note_res = PQexec(conn, "SELECT store_dir FROM public.settings;");
+	tmp_path = PQgetvalue(note_res, 0, 0);
 
-	gtk_list_store_clear(GTK_LIST_STORE(list_store));	// clear the list store
+	strcpy(path, tmp_path);
+	strcat(path, "/");
+	PQclear(note_res);
+	//gtk_list_store_clear(GTK_LIST_STORE(list_store));	// clear the list store
+
+	note_res = PQexec(conn, "SELECT sha256 FROM public.files ORDER BY created_at ASC;");
+	x = PQntuples(note_res);
 
 	for (i = 0; i < x; i++) {		// multithreading would make this much faster
-		x = PQntuples(note_res);	// get the number of rows returned by the query
-		file_path = PQgetvalue(note_res, i, 0);	// get the path from the query
-		thumb = gdk_pixbuf_new_from_file_at_scale(file_path, 180, 180, TRUE, NULL);
+		sha256 = PQgetvalue(note_res, i, 0);	// get the sha256
 
+		strcpy(&file_path, &path);
+		printf("path0: %s\n", path);
+		printf("path1: %s\n", file_path);
+		strcat(&file_path, &sha256);
+		//printf("path: %s\n", file_path);
+		printf("sha256: %s\n", sha256);
 		//g_assert(thumb);
 		gtk_list_store_append(GTK_LIST_STORE(list_store), &tree_iter);
 		gtk_list_store_set(GTK_LIST_STORE(list_store), &tree_iter, COL_PATH, file_path, COL_PIXBUF, thumb, -1);
-		//printf("Current path: %s\n", file_path);
 
+		thumb = gdk_pixbuf_new_from_file_at_scale(file_path, 180, 180, TRUE, NULL);
 		file_path = "";
+		sha256 = "";
 	}
 
 	PQclear(note_res);
@@ -118,9 +131,10 @@ extern void home_page(void) {
 
 	/* set the size of icon_view */
 	gtk_scrolled_window_set_propagate_natural_height(GTK_SCROLLED_WINDOW(iv_scrolled_window), TRUE);
-	//gtk_scrolled_window_set_kinetic_scrolling(GTK_SCROLLED_WINDOW(iv_scrolled_window), TRUE);
+	gtk_scrolled_window_set_kinetic_scrolling(GTK_SCROLLED_WINDOW(iv_scrolled_window), TRUE);
 
 	gtk_widget_show_all(iv_scrolled_window);
+	gtk_widget_set_vexpand(iv_scrolled_window, TRUE);
 	gtk_container_add(GTK_CONTAINER(notebook), iv_scrolled_window);
 	gtk_notebook_set_tab_label_text(notebook, iv_scrolled_window, "Home");
 }
