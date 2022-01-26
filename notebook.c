@@ -16,13 +16,13 @@ enum {
 GdkPixbuf *thumb;
 GtkTreeIter *iter;
 GtkWidget *icon_view;
-const gchar *file_path;
 
 static void pixbuf_loader_and_store_filler(GtkWidget *list_store) {
 	int x = 0;	// Number of rows returned by the query
 	int i;		// Current row
 	char *sha256, *tmp_path;
 	char *path;	// DO NOT INITIALIZE
+	char *file_path;
 	GtkTreeIter tree_iter;
 
 	note_res = PQexec(conn, "SELECT store_dir FROM public.settings;");
@@ -31,20 +31,26 @@ static void pixbuf_loader_and_store_filler(GtkWidget *list_store) {
 	strcpy(path, tmp_path);
 	strcat(path, "/");
 	PQclear(note_res);
-	//gtk_list_store_clear(GTK_LIST_STORE(list_store));	// clear the list store
+	strcpy(tmp_path, "");
+	printf("tmp_path: %s\n", tmp_path);
 
-	note_res = PQexec(conn, "SELECT sha256 FROM public.files ORDER BY created_at ASC;");
+	note_res = PQexec(conn, "SELECT sha256 FROM public.files ORDER BY created_at DESC;");
 	x = PQntuples(note_res);
 
 	for (i = 0; i < x; i++) {		// multithreading would make this much faster
 		sha256 = PQgetvalue(note_res, i, 0);	// get the sha256
+		tmp_path = path;
+		file_path = path;
 
-		strcpy(&file_path, &path);
+		printf("tmp_path: %s\n", tmp_path);
+		strcpy(file_path, tmp_path);
 		printf("path0: %s\n", path);
 		printf("path1: %s\n", file_path);
-		strcat(&file_path, &sha256);
-		//printf("path: %s\n", file_path);
+
+		strcat(file_path, sha256);
+		printf("path2: %s\n", file_path);
 		printf("sha256: %s\n", sha256);
+
 		//g_assert(thumb);
 		gtk_list_store_append(GTK_LIST_STORE(list_store), &tree_iter);
 		gtk_list_store_set(GTK_LIST_STORE(list_store), &tree_iter, COL_PATH, file_path, COL_PIXBUF, thumb, -1);
@@ -58,29 +64,6 @@ static void pixbuf_loader_and_store_filler(GtkWidget *list_store) {
 }
 
 extern void notebook_reload(GtkWidget *list_store) {
-	int x = 0;		// Number of rows returned by the query
-	int i;		// Current row
-	GtkTreeIter tree_iter;
-
-	note_res = PQexec(conn, "SELECT path FROM public.files ORDER BY imported_at DESC;");
-		// ASC and DESC are reversed, since they are inserted one by one into list_store
-
-	gtk_list_store_clear(GTK_LIST_STORE(list_store));	// clear the list store
-
-	for (i = 0; i < x; i++) {		// multithreading would make this much faster
-		x = PQntuples(note_res);	// get the number of rows returned by the query
-		file_path = PQgetvalue(note_res, i, 0);	// get the path from the query
-		thumb = gdk_pixbuf_new_from_file_at_scale(file_path, 180, 180, TRUE, NULL);
-
-		//g_assert(thumb);
-		gtk_list_store_append(GTK_LIST_STORE(list_store), &tree_iter);
-		gtk_list_store_set(GTK_LIST_STORE(list_store), &tree_iter, COL_PATH, file_path, COL_PIXBUF, thumb, -1);
-		//printf("Current path: %s\n", file_path);
-
-		file_path = "";
-	}
-
-	PQclear(note_res);
 }
 
 extern void notebook_reload_relay(void) {

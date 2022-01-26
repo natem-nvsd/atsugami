@@ -1,4 +1,5 @@
 #include <gtk-3.0/gtk/gtk.h>
+#include <gtk/gtk.h>
 #include "import.h"
 #include <libpq-fe.h>
 #include "main.h"
@@ -10,7 +11,7 @@
 
 PGresult *wiz_res;
 GtkWidget *label0, *label1, *label2, *label3, *label4, *label5, *label6;
-GtkWidget *entry0, *entry1, *entry2, *entry3, *entry4, *entry5, *entry6;
+GtkEntry *entry0, *entry1, *entry2, *entry3, *entry4, *entry5, *entry6;
 GtkTextView *tv;
 GtkWidget *import_thumb, *cbox, *can_button, *imp_button;
 GdkPixbuf *import_thumb_pixbuf;
@@ -30,31 +31,59 @@ static void cancel_button_cb(void) {
 
 static int import_button_cb(void) {
 	int a, b, c;
-	int wc;
-	const gchar *text0 = gtk_entry_get_text(GTK_ENTRY(entry0));	/* Source */
-	const gchar *text1 = gtk_entry_get_text(GTK_ENTRY(entry1));	/* Artists */
-	const gchar *text2 = gtk_entry_get_text(GTK_ENTRY(entry2));	/* Copyrights */
-	const gchar *text3 = gtk_entry_get_text(GTK_ENTRY(entry3));	/* Characters */
-	const gchar *text4 = gtk_entry_get_text(GTK_ENTRY(entry4));	/* General */
-	const gchar *text5 = gtk_entry_get_text(GTK_ENTRY(entry5));	/* Meta */
-	const gchar *text6 = gtk_entry_get_text(GTK_ENTRY(entry6));	/* Invisible */
-	int src_size = sizeof(text0);
-	int art_size = sizeof(text1);
-	int cop_size = sizeof(text2);
-	int cha_size = sizeof(text3);
-	int gen_size = sizeof(text4);
-	int met_size = sizeof(text5);
-	char query_string[159 + src_size];
-	char art_arr[67 + art_size];
-	char cop_arr[67 + cop_size];
-	char cha_arr[67 + cha_size];
-	char gen_arr[67 + gen_size];
-	char met_arr[67 + met_size];
+	int wc = 0;
+	const char *text0 = gtk_entry_get_text(entry0);	/* Source */
+	const char *text1 = gtk_entry_get_text(entry1);	/* Artists */
+	const char *text2 = gtk_entry_get_text(entry2);	/* Copyrights */
+	const char *text3 = gtk_entry_get_text(entry3);	/* Characters */
+	const char *text4 = gtk_entry_get_text(entry4);	/* General */
+	const char *text5 = gtk_entry_get_text(entry5);	/* Meta */
+	const char *text6 = gtk_entry_get_text(entry6);	/* Invisible */
+	//const char query_string[159 + strlen(text0)];
+	/*
+	const char *text0 = NULL;
+	const char *text1 = NULL;
+	const char *text2 = NULL;
+	const char *text3 = NULL;
+	const char *text4 = NULL;
+	const char *text5 = NULL;
+	const char *text6 = NULL;
+	*/
+	const char *value0;
+	const char *value1;
+	const char *value2;
+	const char *value3;
+	const char *value4;
+	const char *value5;
+	const char *value6;
+
+	strcpy(&value0, &text0);
+	strcpy(&value1, &text1);
+	strcpy(&value2, &text2);
+	strcpy(&value3, &text3);
+	strcpy(&value4, &text4);
+	strcpy(&value5, &text5);
+	strcpy(&value6, &text6);
+
+	const int src_size = strlen(&value0);
+	const int art_size = strlen(&value1);
+	const int cop_size = strlen(&value2);
+	const int cha_size = strlen(&value3);
+	const int gen_size = strlen(&value4);
+	const int met_size = strlen(&value5);
+	const char query_string[159 + src_size];
+	char art_arr[art_size + 1];
+	char cop_arr[cop_size + 1];
+	char cha_arr[cha_size + 1];
+	char gen_arr[gen_size + 1];
+	char met_arr[met_size + 1];
 	char art_tag[art_size];
 	char cop_tag[cop_size];
 	char cha_tag[cha_size];
 	char gen_tag[gen_size];
 	char met_tag[met_size];
+
+	printf("art_size is %lu\n", strlen(text1));
 
 	wiz_res = PQexec(conn, "BEGIN TRANSACTION");
 	PQclear(wiz_res);
@@ -68,6 +97,7 @@ static int import_button_cb(void) {
 	strcat(query_string, text0);
 	strcat(query_string, "') ON CONFLICT DO NOTHING;");
 
+	/*
 	wiz_res = PQexec(conn, query_string);
 
 	if (PQresultStatus(wiz_res) == PGRES_COMMAND_OK) {
@@ -75,7 +105,7 @@ static int import_button_cb(void) {
 
 		wiz_res = PQexec(conn, "COMMIT TRANSACTION;");
 		PQclear(wiz_res);
-		printf("Command successful.\n");
+		printf("Query successful.\n");
 	}
 	else {
 		PQclear(wiz_res);
@@ -87,28 +117,31 @@ static int import_button_cb(void) {
 		// Spawn an error dialog here
 		return 1;
 	}
+	*/
 
 	/* Create artist tags */
+	strcpy(art_arr, text1);
+	printf("\'%s\'\n", art_arr);
+
+	//art_arr[art_size] = ' ';
+	art_arr[strlen(art_arr) + 1] = ' ';
+	printf("\'%s\'\n", art_arr);
+
 	b = 0;
 
-	strcpy(art_arr, text1);
-	printf("%s\n", art_arr);
-
-	for (a = 0; a < art_size; a++) {
+	for (a = 0; a < strlen(art_arr); a++) {
 		if (isspace(art_arr[a]) == 0) {
-			art_tag[b] = text1[a];
-			printf("%s %d %d\n", art_tag, a, b);
+			art_tag[b] = art_arr[a];
 			++b;
 		}
 		else {
 			printf("%s %d %d\n", art_tag, a, b);
-
-			for (c = 0; c < a; c++) {
+			for (c = 1; c < b; c++) {
 				art_tag[c] = '\0';
 			}
 
+			++wc;
 			b = 0;
-			strcpy(query_string, "INSERT INTO public.tags (name) VALUES ('");
 		}
 	}
 
@@ -140,10 +173,10 @@ extern void import_wizard(GtkWidget *import_page, gpointer user_data) {
 	gtk_box_pack_start(GTK_BOX(import_page), label0, FALSE, FALSE, 0);
 	
 	entry0 = gtk_entry_new();
-	gtk_entry_set_activates_default(GTK_ENTRY(entry0), TRUE);
-	gtk_widget_set_valign(entry0, GTK_ALIGN_START);
-	gtk_entry_set_placeholder_text(GTK_ENTRY(entry0), "Enter the URL to import here");
-	gtk_box_pack_start(GTK_BOX(import_page), entry0, TRUE, TRUE, 0);
+	gtk_entry_set_activates_default(entry0, TRUE);
+	gtk_widget_set_valign(GTK_WIDGET(entry0), GTK_ALIGN_START);
+	gtk_entry_set_placeholder_text(entry0, "Enter the URL to import here");
+	gtk_box_pack_start(GTK_BOX(import_page), GTK_WIDGET(entry0), TRUE, TRUE, 0);
 
 	/* Artist tag box */
 	label1 = gtk_label_new("Artist(s)");
@@ -151,9 +184,9 @@ extern void import_wizard(GtkWidget *import_page, gpointer user_data) {
 	gtk_box_pack_start(GTK_BOX(import_page), label1, FALSE, FALSE, 0);
 
 	entry1 = gtk_entry_new();
-	gtk_entry_set_activates_default(GTK_ENTRY(entry1), TRUE);
-	gtk_widget_set_valign(entry1, GTK_ALIGN_START);
-	gtk_box_pack_start(GTK_BOX(import_page), entry1, TRUE, TRUE, 0);
+	gtk_entry_set_activates_default(entry1, TRUE);
+	gtk_widget_set_valign(GTK_WIDGET(entry1), GTK_ALIGN_START);
+	gtk_box_pack_start(GTK_BOX(import_page), GTK_WIDGET(entry1), TRUE, TRUE, 0);
 
 	/* Copyright tag box */
 	label2 = gtk_label_new("Copyrights");
@@ -161,9 +194,9 @@ extern void import_wizard(GtkWidget *import_page, gpointer user_data) {
 	gtk_box_pack_start(GTK_BOX(import_page), label2, FALSE, FALSE, 0);
 
 	entry2 = gtk_entry_new();
-	gtk_entry_set_activates_default(GTK_ENTRY(entry2), TRUE);
-	gtk_widget_set_valign(entry2, GTK_ALIGN_START);
-	gtk_box_pack_start(GTK_BOX(import_page), entry2, TRUE, TRUE, 0);
+	gtk_entry_set_activates_default(entry2, TRUE);
+	gtk_widget_set_valign(GTK_WIDGET(entry2), GTK_ALIGN_START);
+	gtk_box_pack_start(GTK_BOX(import_page), GTK_WIDGET(entry2), TRUE, TRUE, 0);
 
 	/* Character tag box */
 	label3 = gtk_label_new("Characters");
@@ -171,9 +204,9 @@ extern void import_wizard(GtkWidget *import_page, gpointer user_data) {
 	gtk_box_pack_start(GTK_BOX(import_page), label3, FALSE, FALSE, 0);
 
 	entry3 = gtk_entry_new();
-	gtk_entry_set_activates_default(GTK_ENTRY(entry3), TRUE);
-	gtk_widget_set_valign(entry3, GTK_ALIGN_START);
-	gtk_box_pack_start(GTK_BOX(import_page), entry3, TRUE, TRUE, 0);
+	gtk_entry_set_activates_default(entry3, TRUE);
+	gtk_widget_set_valign(GTK_WIDGET(entry3), GTK_ALIGN_START);
+	gtk_box_pack_start(GTK_BOX(import_page), GTK_WIDGET(entry3), TRUE, TRUE, 0);
 
 	/* General tag box */
 	label4 = gtk_label_new("General");
@@ -191,9 +224,9 @@ extern void import_wizard(GtkWidget *import_page, gpointer user_data) {
 	gtk_box_pack_start(GTK_BOX(import_page), label5, FALSE, FALSE, 0);
 
 	entry5 = gtk_entry_new();
-	gtk_entry_set_activates_default(GTK_ENTRY(entry5), TRUE);
-	gtk_widget_set_valign(entry5, GTK_ALIGN_START);
-	gtk_box_pack_start(GTK_BOX(import_page), entry5, TRUE, TRUE, 0);
+	gtk_entry_set_activates_default(entry5, TRUE);
+	gtk_widget_set_valign(GTK_WIDGET(entry5), GTK_ALIGN_START);
+	gtk_box_pack_start(GTK_BOX(import_page), GTK_WIDGET(entry5), TRUE, TRUE, 0);
 
 	/* Rating */
 	label6 = gtk_label_new("Rating:");
@@ -208,8 +241,8 @@ extern void import_wizard(GtkWidget *import_page, gpointer user_data) {
 
 	/* Invisible entry field */
 	entry6 = gtk_entry_new();
-	gtk_entry_set_activates_default(GTK_ENTRY(entry6), TRUE);
-	g_object_bind_property(cbox, "active-id", entry6, "text", G_BINDING_DEFAULT);
+	gtk_entry_set_activates_default(entry6, TRUE);
+	g_object_bind_property(cbox, "active-id", GTK_WIDGET(entry6), "text", G_BINDING_DEFAULT);
 
 	button_box = gtk_button_box_new(GTK_ORIENTATION_HORIZONTAL);
 	gtk_box_pack_start(GTK_BOX(import_page), button_box, FALSE, FALSE, 0);

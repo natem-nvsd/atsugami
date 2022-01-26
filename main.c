@@ -338,15 +338,13 @@ int main(int argc, char *argv[]) {
 	g_signal_connect(home_button, "clicked", G_CALLBACK(home_trigger), NULL);	/* segfault when quit_activate called */
 	
 	/* Warning info bar */
-	GtkWidget *warn_widget, *warn_label, *warn_area, *warn_grid;
+	GtkWidget *warn_widget, *warn_label, *warn_area;
 	GtkInfoBar *warn_bar;
 	GtkImage *warn_image;
 
-	warn_image = gtk_image_new_from_stock("gtk-dialog-warning", GTK_ICON_SIZE_DIALOG);
-
+	warn_image = gtk_image_new_from_stock("gtk-dialog-warning", GTK_ICON_SIZE_DND);
 	warn_widget = gtk_info_bar_new();
 	warn_bar = GTK_INFO_BAR(warn_widget);
-	warn_grid = gtk_grid_new();
 
 	gtk_widget_set_no_show_all(warn_widget, FALSE);
 	warn_label = gtk_label_new("");
@@ -361,7 +359,7 @@ int main(int argc, char *argv[]) {
 	gtk_box_pack_start(GTK_BOX(vbox), warn_bar, FALSE, FALSE, 0);
 
 	/* Error info bar */
-	GtkWidget *error_widget, *error_label, *error_area, *error_grid;
+	GtkWidget *error_widget, *error_label, *error_area;
 	GtkInfoBar *error_bar;
 	GtkImage *error_image;
 
@@ -370,7 +368,6 @@ int main(int argc, char *argv[]) {
 	/* Create the infobar */
 	error_widget = gtk_info_bar_new();
 	error_bar = GTK_INFO_BAR(error_widget);
-	error_grid = gtk_grid_new();
 
 	gtk_widget_set_no_show_all(error_widget, FALSE);
 	error_label = gtk_label_new("");
