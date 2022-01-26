@@ -1,9 +1,9 @@
-#include <gtk-3.0/gtk/gtk.h>
 #include <gtk/gtk.h>
 #include "import.h"
 #include <libpq-fe.h>
 #include "main.h"
 #include "notebook.h"
+#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>
@@ -23,10 +23,60 @@ gboolean has_children = FALSE;
 GtkWidget *header_box, *scrolled_window;
 
 static void cancel_button_cb(void) {
-	wiz_res = PQexec(conn, "ROLLBACK TRANSACTION");
-
-	PQclear(wiz_res);
 	gtk_notebook_detach_tab(notebook, scrolled_window);
+}
+
+static void tag_import(int *a, int *b, size_t *d, int category, char *tag_arr, char *tag) {
+	int c;
+	char *tag_id;
+	char *file_id;
+	const char query[67 + *d];
+
+	/* Insert the tag into the database */
+	strcpy(query, "INSERT INTO public.tags (name) VALUES ('");
+	for (c = 0; c < 1; c++) {
+		strcat(query, &tag[c]);
+	}
+	strcat(query, "') ON CONFLICT DO NOTHING;");
+	printf("%s\n", query);
+	wiz_res = PQexec(conn, query);
+
+	if (PQresultStatus(wiz_res) == PGRES_COMMAND_OK) {
+		PQclear(wiz_res);
+
+		strcpy(query, "SELECT id FROM public.tags WHERE name = '");
+		for (c = 0; c < 1; c++) {
+			strcat(query, &tag[c]);
+		}
+		strcat(query, "';");
+		printf("%s\n", query);
+
+		wiz_res = PQexec(conn, &query);
+		tag_id = PQgetvalue(wiz_res, 0, 0);
+		strcpy(&query, "");
+		PQclear(wiz_res);
+
+		strcpy(&query, "INSERT INTO public.tags_categories (tag_id, category_id) VALUES (");
+		strcat(&query, tag_id);
+		strcat(&query, ", ");
+		strcat(&query, &category);
+		strcat(&query, " ON CONFLICT DO NOTHING;");
+			if (PQresultStatus(wiz_res) == PGRES_COMMAND_OK) {
+				
+			}
+
+		printf("Queries successful.\n");
+	}
+	else {
+		PQclear(wiz_res);
+
+		wiz_res = PQexec(conn, "ROLLBACK TRANSACTION;");
+		PQclear(wiz_res);
+		gtk_notebook_detach_tab(notebook, scrolled_window);
+		fprintf(stderr, "Command failed.\n");
+		// Spawn an error dialog here
+//		return 1;	// Needed to end the function.
+	}
 }
 
 static int import_button_cb(void) {
@@ -39,16 +89,6 @@ static int import_button_cb(void) {
 	const char *text4 = gtk_entry_get_text(entry4);	/* General */
 	const char *text5 = gtk_entry_get_text(entry5);	/* Meta */
 	const char *text6 = gtk_entry_get_text(entry6);	/* Invisible */
-	//const char query_string[159 + strlen(text0)];
-	/*
-	const char *text0 = NULL;
-	const char *text1 = NULL;
-	const char *text2 = NULL;
-	const char *text3 = NULL;
-	const char *text4 = NULL;
-	const char *text5 = NULL;
-	const char *text6 = NULL;
-	*/
 	const char *value0;
 	const char *value1;
 	const char *value2;
@@ -83,8 +123,6 @@ static int import_button_cb(void) {
 	char gen_tag[gen_size];
 	char met_tag[met_size];
 
-	printf("art_size is %lu\n", strlen(text1));
-
 	wiz_res = PQexec(conn, "BEGIN TRANSACTION");
 	PQclear(wiz_res);
 
@@ -97,15 +135,10 @@ static int import_button_cb(void) {
 	strcat(query_string, text0);
 	strcat(query_string, "') ON CONFLICT DO NOTHING;");
 
-	/*
 	wiz_res = PQexec(conn, query_string);
 
 	if (PQresultStatus(wiz_res) == PGRES_COMMAND_OK) {
 		PQclear(wiz_res);
-
-		wiz_res = PQexec(conn, "COMMIT TRANSACTION;");
-		PQclear(wiz_res);
-		printf("Query successful.\n");
 	}
 	else {
 		PQclear(wiz_res);
@@ -117,7 +150,6 @@ static int import_button_cb(void) {
 		// Spawn an error dialog here
 		return 1;
 	}
-	*/
 
 	/* Create artist tags */
 	strcpy(art_arr, text1);
@@ -127,6 +159,7 @@ static int import_button_cb(void) {
 	art_arr[strlen(art_arr)] = '\0';
 	printf("\'%s\'\n", art_arr);
 
+	size_t d = 0;
 	b = 0;
 
 	for (a = 0; a < strlen(art_arr); a++) {
@@ -135,15 +168,21 @@ static int import_button_cb(void) {
 			++b;
 		}
 		else {
-			printf("%s %d %d\n", art_tag, a, b);
-			for (c = 1; c < b; c++) {
-				art_tag[c] = '\0';
+			d = strlen(art_tag);
+			//art_tag[a] = '\0';
+			art_tag[b] = '\0';
+			tag_import(&a, &b, &d, 1, art_arr, art_tag);
+			//for (c = 0; c <= (d - 1); c++) {
+//			for (c = 0; c <= (d + 1); c++) {
+			for (c = 0; c < d; c++) {
+				art_tag[c] = ' ';
 			}
 
 			++wc;
 			b = 0;
 		}
 	}
+	printf("tag count: %d\n", wc);
 
 	gtk_notebook_detach_tab(notebook, scrolled_window);
 	return 0;
