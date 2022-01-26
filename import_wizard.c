@@ -72,11 +72,11 @@ static int import_button_cb(void) {
 	const int gen_size = strlen(&value4);
 	const int met_size = strlen(&value5);
 	const char query_string[159 + src_size];
-	char art_arr[art_size + 1];
-	char cop_arr[cop_size + 1];
-	char cha_arr[cha_size + 1];
-	char gen_arr[gen_size + 1];
-	char met_arr[met_size + 1];
+	char art_arr[art_size + 2];
+	char cop_arr[cop_size + 2];
+	char cha_arr[cha_size + 2];
+	char gen_arr[gen_size + 2];
+	char met_arr[met_size + 2];
 	char art_tag[art_size];
 	char cop_tag[cop_size];
 	char cha_tag[cha_size];
@@ -123,8 +123,8 @@ static int import_button_cb(void) {
 	strcpy(art_arr, text1);
 	printf("\'%s\'\n", art_arr);
 
-	//art_arr[art_size] = ' ';
-	art_arr[strlen(art_arr) + 1] = ' ';
+	art_arr[strlen(art_arr) - 1] = ' ';
+	art_arr[strlen(art_arr)] = '\0';
 	printf("\'%s\'\n", art_arr);
 
 	b = 0;
