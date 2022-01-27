@@ -3,8 +3,6 @@ Atsugami
 ![Images not included](https://github.com/natem-nvsd/atsugami/blob/master/readme_header_picture.png)
 Images not included.  
 
-# IMPORTANT: Pre-1.0 builds are only recommended for development use, since there may be database structure changes
-
 ### Notes
 *	Limit of 999,999x999,999px  
 
