@@ -394,21 +394,20 @@ int main(int argc, char *argv[]) {
 
 	gtk_notebook_set_scrollable(GTK_NOTEBOOK(notebook), TRUE);
 	gtk_container_add(GTK_CONTAINER(vbox), GTK_NOTEBOOK(notebook));
-
 	home_page();
 
 	/* File count */
-	int label_int;
-	char label_str[4];
+	size_t label_int;
+	char label_str[10];
 	GtkWidget *chicken_label;
 
 	mainres = PQexec(conn, "SELECT count(*) FROM public.files;");
-	label_int = PQntuples(mainres) - 1;
+	strcpy(label_str, PQgetvalue(mainres, 0, 0));
+	label_int = strlen(label_str);
+	strcat(label_str, " files");
 
-	sprintf(label_str, "%d", label_int);
-
-	if (label_int == 0)
-		chicken_label = gtk_label_new("No files found.");
+	if (label_int == 1)
+		chicken_label = gtk_label_new("1 file");
 	else
 		chicken_label = gtk_label_new(label_str);
 	gtk_widget_set_halign(chicken_label, GTK_ALIGN_START);

@@ -104,6 +104,7 @@ static int import_button_cb(void) {
 
 	/* Create artist tags */
 	// It may be possible to use only one of this for loop
+	// NOTE: numbers in text fields seem to have the last digit omitted when being imported.
 	strcpy(art_arr, text1);
 	printf("\'%s\'\n", art_arr);
 
