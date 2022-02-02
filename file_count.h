@@ -1,8 +1,4 @@
-/* main.h */
-//#define GLADEFILE "/usr/local/share/atsugami/atsugami.glade"
-#define GLADEFILE "atsugami.glade"
-#define VERSION 0.79
-#define EOL -1
+/* file_count.h */
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"
 #pragma clang diagnostic ignored "-Wsometimes-uninitialized"
 #pragma clang diagnostic ignored "-Wincompatible-pointer-types"
@@ -13,13 +9,8 @@ typedef _Bool bool;
 #ifndef FUNCTIONS_H_INCLUDED
 #define FUNCTIONS_H_INCLUDED
 #include <gtk/gtk.h>
-#include <libpq-fe.h>
-#include <stdio.h>
 
-extern PGconn *conn;
-extern char conninfo[];
-extern void destroy_window(gpointer user_data);
-extern GtkNotebook *notebook;
-extern GtkWidget *file_label, *vbox;
+extern file_count(GtkWidget *label, GtkWidget *box);
+extern file_count_update(GtkWidget *label, GtkWidget *box);
 
 #endif

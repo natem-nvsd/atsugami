@@ -18,8 +18,9 @@
 #include "about.h"
 #include <ctype.h>
 #include <errno.h>
+#include "file_count.h"
 #include <glib/gstdio.h>
-#include <gtk-3.0/gtk/gtk.h>
+#include <gtk/gtk.h>
 #include "import.h"
 #include <libpq-fe.h>
 #include "main.h"
@@ -34,6 +35,8 @@ char conninfo[] = "dbname=atsugami"; /* Sets the database for dbconnect() */
 char main_psql_error[2048];
 //gchar *parent;
 GtkNotebook *notebook;
+GtkWidget *vbox;
+GtkWidget *file_label;
 
 /* Quit function */
 //static void quit_activate(GSimpleAction *action, GVariant *parameter, gpointer user_data) {
@@ -65,7 +68,11 @@ static void new_meta_tag_trigger(void) {
 	new_meta_tag_activate();
 }
 
-static void home_trigger(void) {
+static void home_trigger(GtkWidget *box) {
+	notebook = gtk_notebook_new();
+
+	gtk_notebook_set_scrollable(GTK_NOTEBOOK(notebook), TRUE);
+	gtk_container_add(GTK_CONTAINER(vbox), GTK_NOTEBOOK(notebook));
 	home_page();
 }
 
@@ -79,7 +86,6 @@ int main(int argc, char *argv[]) {
 
 	/* THis is in order of appearance */
 	GtkWidget *window;
-	GtkWidget *vbox;
 	GtkWidget *menu_bar;
 	GtkWidget *toolbar;
 
@@ -335,7 +341,7 @@ int main(int argc, char *argv[]) {
 //	g_signal_connect(favourite_button, "clicked", G_CALLBACK(NULL), NULL);
 //	g_signal_connect(view_button, "clicked", G_CALLBACK(NULL), NULL);
 //	g_signal_connect(wiki_button, "clicked", G_CALLBACK(NULL), NULL);
-	g_signal_connect(home_button, "clicked", G_CALLBACK(home_trigger), NULL);	/* segfault when quit_activate called */
+//	g_signal_connect(home_button, "clicked", home_trigger(vbox), NULL);	/* segfault when quit_activate called */
 	
 	/* Warning info bar */
 	GtkWidget *warn_widget, *warn_label, *warn_area;
@@ -390,31 +396,15 @@ int main(int argc, char *argv[]) {
 	}
 
 	/* Tab bar */
-	notebook =  gtk_notebook_new();
+	notebook = gtk_notebook_new();
 
 	gtk_notebook_set_scrollable(GTK_NOTEBOOK(notebook), TRUE);
 	gtk_container_add(GTK_CONTAINER(vbox), GTK_NOTEBOOK(notebook));
 	home_page();
 
 	/* File count */
-	size_t label_int;
-	char label_str[10];
-	GtkWidget *chicken_label;
-
-	mainres = PQexec(conn, "SELECT count(*) FROM public.files;");
-	strcpy(label_str, PQgetvalue(mainres, 0, 0));
-	label_int = strlen(label_str);
-	strcat(label_str, " files");
-
-	if (label_int == 1)
-		chicken_label = gtk_label_new("1 file");
-	else
-		chicken_label = gtk_label_new(label_str);
-	gtk_widget_set_halign(chicken_label, GTK_ALIGN_START);
-	gtk_widget_set_valign(chicken_label, GTK_ALIGN_END);
-	gtk_box_pack_start(GTK_BOX(vbox), chicken_label, FALSE, FALSE, 0);
-
-	PQclear(mainres);
+	file_label = gtk_label_new(NULL);
+	file_count(file_label, vbox);
 
 	/* Show window and vbox */
 	gtk_window_set_title(GTK_WINDOW(window), "Atsugami");

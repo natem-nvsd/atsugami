@@ -19,6 +19,7 @@ GtkWidget *icon_view;
 
 static void pixbuf_loader_and_store_filler(GtkListStore *list_store) {
 	note_res = PQexec(conn, "SELECT store_dir FROM public.settings;");
+	printf("store_dir\n");
 
 	int x;		// Number of rows returned by the query
 	int i;		// Current row

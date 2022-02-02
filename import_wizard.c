@@ -14,7 +14,7 @@ GtkWidget *label0, *label1, *label2, *label3, *label4, *label5, *label6;
 GtkEntry *entry0, *entry1, *entry2, *entry3, *entry5, *entry6;
 GtkTextView *tv;
 GtkTextBuffer *tb;
-GtkTextTagTable *tagt;
+GtkTextIter *istart, *iend;
 GtkWidget *import_thumb, *cbox, *can_button, *imp_button;
 GdkPixbuf *import_thumb_pixbuf;
 gint page_count = 0;
@@ -22,21 +22,47 @@ gboolean parent_bool = FALSE;
 gboolean child_bool = FALSE;
 gboolean has_children = FALSE;
 GtkWidget *header_box, *scrolled_window;
+const char file_id[10];
+const int eol = (1 - 2);
 
 static void cancel_button_cb(void) {
 	gtk_notebook_detach_tab(notebook, scrolled_window);
 }
 
 static int import_button_cb(void) {
+	if (gtk_text_buffer_get_modified(tb) == TRUE) {
+		printf("Text buffer modified.\n");
+
+		//gtk_text_buffer_get_iter_at_offset(tb, &istart, 0);
+		//printf("Set istart.\n");
+	
+		//gtk_text_buffer_get_iter_at_offset(tb, &iend, EOL);
+	//	gtk_text_buffer_get_iter_at_offset(tb, &iend, eol);
+	//	printf("Set iend.\n");
+	
+		//gtk_text_buffer_get_bounds(tb, &istart, &iend);
+		//printf("Set bounds.\n");
+		printf("general: ");
+		printf("%s\n", gtk_text_buffer_get_text(tb, &istart, &iend, TRUE));
+
+		printf("Done\n");
+		return 1;
+	}
+	else {
+		printf("Text buffer not modified.\n");
+		gtk_notebook_detach_tab(notebook, scrolled_window);
+		return 1;
+	}
+
 	int a, b, c;
 	int wc = 0;
-	const char *text0 = gtk_entry_get_text(entry0);	/* Source 		[✅] */
-	const char *text1 = gtk_entry_get_text(entry1);	/* Artists 		[✅] */
-	const char *text2 = gtk_entry_get_text(entry2);	/* Copyrights 		[❌] */
-	const char *text3 = gtk_entry_get_text(entry3);	/* Characters 		[❌] */
-	const char *text4 = gtk_text_buffer_get_text(tb, 0, NULL, FALSE); /* 	[❌] General */
-	const char *text5 = gtk_entry_get_text(entry5);	/* Meta 		[❌] */
-	const char *text6 = gtk_entry_get_text(entry6);	/* Invisible 		[✅] */
+	const char *text0 = gtk_entry_get_text(entry0);	/* Source */
+	const char *text1 = gtk_entry_get_text(entry1);	/* Artists */
+	const char *text2 = gtk_entry_get_text(entry2);	/* Copyrights */
+	const char *text3 = gtk_entry_get_text(entry3);	/* Characters */
+	const char *text4 = gtk_text_buffer_get_text(tb, &istart, &iend, FALSE); /* General */
+	const char *text5 = gtk_entry_get_text(entry5);	/* Meta */
+	const char *text6 = gtk_entry_get_text(entry6);	/* Invisible */
 	const char *value0;
 	const char *value1;
 	const char *value2;
@@ -71,8 +97,11 @@ static int import_button_cb(void) {
 	char gen_tag[gen_size];
 	char met_tag[met_size];
 
+	/* Get the value of text4 (Temporary) */
 	printf("text4:");
 	printf("%s\n", text4);
+	gtk_notebook_detach_tab(notebook, scrolled_window);
+	return 1;
 
 	wiz_res = PQexec(conn, "BEGIN TRANSACTION");
 	PQclear(wiz_res);
@@ -89,6 +118,8 @@ static int import_button_cb(void) {
 	wiz_res = PQexec(conn, query_string);
 
 	if (PQresultStatus(wiz_res) == PGRES_COMMAND_OK) {
+		strcpy(file_id, PQgetvalue(wiz_res, 0, 0));
+		printf("%s\n", file_id);
 		PQclear(wiz_res);
 	}
 	else {
@@ -107,7 +138,6 @@ static int import_button_cb(void) {
 	// NOTE: numbers in text fields seem to have the last digit omitted when being imported.
 	strcpy(art_arr, text1);
 	printf("\'%s\'\n", art_arr);
-
 	art_arr[strlen(art_arr) - 1] = ' ';
 	art_arr[strlen(art_arr)] = '\0';
 	printf("\'%s\'\n", art_arr);
@@ -161,6 +191,24 @@ static int import_button_cb(void) {
 				strcat(&query, ", 1);");
 				printf("%s\n", query);
 				wiz_res = PQexec(conn, &query);
+
+				if (PQresultStatus(wiz_res) != PGRES_COMMAND_OK) {
+					fprintf(stderr, "%s\n", PQerrorMessage(conn));
+					PQclear(wiz_res);
+
+					wiz_res = PQexec(conn, "ROLLBACK TRANSACTION;");
+					PQclear(wiz_res);
+					gtk_notebook_detach_tab(notebook, scrolled_window);
+					// Spawn an error dialog here
+					return 1;
+				}
+
+				/* Add the tag to the file-tag bridge */
+				strcpy(&query, "INSERT INTO public.files_tags (file_id, category_id) VALUES (");
+				strcat(&query, file_id);
+				strcat(&query, ", ");
+				strcat(&query, tag_id);
+				strcat(&query, ");");
 
 				if (PQresultStatus(wiz_res) != PGRES_COMMAND_OK) {
 					fprintf(stderr, "%s\n", PQerrorMessage(conn));
@@ -263,6 +311,24 @@ static int import_button_cb(void) {
 					return 1;
 				}
 
+				/* Add the tag to the file-tag bridge */
+				strcpy(&query, "INSERT INTO public.files_tags (file_id, category_id) VALUES (");
+				strcat(&query, file_id);
+				strcat(&query, ", ");
+				strcat(&query, tag_id);
+				strcat(&query, ");");
+
+				if (PQresultStatus(wiz_res) != PGRES_COMMAND_OK) {
+					fprintf(stderr, "%s\n", PQerrorMessage(conn));
+					PQclear(wiz_res);
+
+					wiz_res = PQexec(conn, "ROLLBACK TRANSACTION;");
+					PQclear(wiz_res);
+					gtk_notebook_detach_tab(notebook, scrolled_window);
+					// Spawn an error dialog here
+					return 1;
+				}
+
 				printf("Queries successful.\n");
 			}
 			else {
@@ -341,6 +407,24 @@ static int import_button_cb(void) {
 				strcat(&query, ", 4);");
 				printf("%s\n", query);
 				wiz_res = PQexec(conn, &query);
+
+				if (PQresultStatus(wiz_res) != PGRES_COMMAND_OK) {
+					fprintf(stderr, "%s\n", PQerrorMessage(conn));
+					PQclear(wiz_res);
+
+					wiz_res = PQexec(conn, "ROLLBACK TRANSACTION;");
+					PQclear(wiz_res);
+					gtk_notebook_detach_tab(notebook, scrolled_window);
+					// Spawn an error dialog here
+					return 1;
+				}
+
+				/* Add the tag to the file-tag bridge */
+				strcpy(&query, "INSERT INTO public.files_tags (file_id, category_id) VALUES (");
+				strcat(&query, file_id);
+				strcat(&query, ", ");
+				strcat(&query, tag_id);
+				strcat(&query, ");");
 
 				if (PQresultStatus(wiz_res) != PGRES_COMMAND_OK) {
 					fprintf(stderr, "%s\n", PQerrorMessage(conn));
@@ -443,6 +527,24 @@ static int import_button_cb(void) {
 					return 1;
 				}
 
+				/* Add the tag to the file-tag bridge */
+				strcpy(&query, "INSERT INTO public.files_tags (file_id, category_id) VALUES (");
+				strcat(&query, file_id);
+				strcat(&query, ", ");
+				strcat(&query, tag_id);
+				strcat(&query, ");");
+
+				if (PQresultStatus(wiz_res) != PGRES_COMMAND_OK) {
+					fprintf(stderr, "%s\n", PQerrorMessage(conn));
+					PQclear(wiz_res);
+
+					wiz_res = PQexec(conn, "ROLLBACK TRANSACTION;");
+					PQclear(wiz_res);
+					gtk_notebook_detach_tab(notebook, scrolled_window);
+					// Spawn an error dialog here
+					return 1;
+				}
+
 				printf("Queries successful.\n");
 			}
 			else {
@@ -515,7 +617,7 @@ static int import_button_cb(void) {
 				printf("id:  %s\n", tag_id);
 				PQclear(wiz_res);
 
-				/* Add the tag to the bridge */
+				/* Add the tag to the tag-category bridge */
 				strcpy(&query, "INSERT INTO public.tags_categories (tag_id, category_id) VALUES (");
 				strcat(&query, tag_id);
 				strcat(&query, ", 5);");
@@ -533,8 +635,27 @@ static int import_button_cb(void) {
 					return 1;
 				}
 
+				/* Add the tag to the file-tag bridge */
+				strcpy(&query, "INSERT INTO public.files_tags (file_id, category_id) VALUES (");
+				strcat(&query, file_id);
+				strcat(&query, ", ");
+				strcat(&query, tag_id);
+				strcat(&query, ");");
+
+				if (PQresultStatus(wiz_res) != PGRES_COMMAND_OK) {
+					fprintf(stderr, "%s\n", PQerrorMessage(conn));
+					PQclear(wiz_res);
+
+					wiz_res = PQexec(conn, "ROLLBACK TRANSACTION;");
+					PQclear(wiz_res);
+					gtk_notebook_detach_tab(notebook, scrolled_window);
+					// Spawn an error dialog here
+					return 1;
+				}
+
 				printf("Queries successful.\n");
 			}
+
 			else {
 				fprintf(stderr, "%s\n", PQerrorMessage(conn));
 				PQclear(wiz_res);
@@ -545,6 +666,7 @@ static int import_button_cb(void) {
 				// Spawn an error dialog here
 				return 1;
 			}
+
 			for (c = 0; c < d; c++) {
 				met_tag[c] = ' ';
 			}
@@ -552,8 +674,31 @@ static int import_button_cb(void) {
 			b = 0;
 		}
 	}
-	printf("tag count: %d\n", wc);
 
+	strcpy(query_string, "INSERT INTO public.file_count (file_id, tag_count) VALUES (");
+	strcat(query_string, file_id);
+	strcat(query_string, wc);
+	
+	wiz_res = PQexec(conn, query_string);
+	if (PQresultStatus(wiz_res) == PGRES_COMMAND_OK)
+		PQclear(wiz_res);
+	else {
+		fprintf(stderr, "%s\n", PQerrorMessage(conn));
+		PQclear(wiz_res);
+
+		wiz_res = PQexec(conn, "ROLLBACK TRANSACTION;");
+		PQclear(wiz_res);
+		gtk_notebook_detach_tab(notebook, scrolled_window);
+		// Spawn an error dialog here
+		return 1;
+	}
+
+	printf("tag count: %d\n", wc);
+	file_count_update(file_label, vbox);
+
+	wiz_res = PQexec(conn, "COMMIT TRANSACTION;");
+
+	PQclear(wiz_res);
 	gtk_notebook_detach_tab(notebook, scrolled_window);
 	return 0;
 }
@@ -622,14 +767,22 @@ extern void import_wizard(GtkWidget *import_page, gpointer user_data) {
 	gtk_widget_set_halign(label4, GTK_ALIGN_START);
 	gtk_box_pack_start(GTK_BOX(import_page), label4, FALSE, FALSE, 0);
 
-	tb = gtk_text_buffer_new(NULL);
-	tagt = gtk_text_tag_table_new();
+	tv = gtk_text_view_new();
+	tb = gtk_text_view_get_buffer(GTK_TEXT_VIEW(tv));
 
-	tv = gtk_text_view_new_with_buffer(tb);
 	gtk_text_view_set_editable(tv, TRUE);
 	gtk_text_view_set_accepts_tab(tv, FALSE);
-	gtk_widget_set_valign(tv, GTK_ALIGN_START);
 	gtk_box_pack_start(GTK_BOX(import_page), tv, TRUE, TRUE, 0);
+	gtk_text_view_set_wrap_mode(tv, GTK_WRAP_WORD_CHAR);
+
+	gtk_text_buffer_get_iter_at_offset(tb, &istart, 0);
+	printf("Set istart.\n");
+
+	gtk_text_buffer_get_iter_at_offset(tb, &iend, eol);
+	printf("Set iend.\n");
+	
+	//gtk_text_buffer_get_bounds(tb, &istart, &iend);
+	//printf("Set bounds.\n");
 
 	/* Meta tag box */
 	label5 = gtk_label_new("Meta");
@@ -669,6 +822,8 @@ extern void import_wizard(GtkWidget *import_page, gpointer user_data) {
 	
 	g_signal_connect(can_button, "clicked", G_CALLBACK(cancel_button_cb), NULL);
 	g_signal_connect(imp_button, "clicked", G_CALLBACK(import_button_cb), NULL);
+
+	/* Disable import button until the value of most fields */
 	
 	/* init stuff */
 	gtk_widget_show_all(import_page);

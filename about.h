@@ -1,5 +1,5 @@
 /* about.h */
-#include <gtk/gtk.h>
+#include <gtk-3.0/gtk/gtk.h>
 
 #ifndef FUNCTIONS_H_INCLUDED
 #define FUNCTIONS_H_INCLUDED

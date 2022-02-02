@@ -57,7 +57,8 @@ updated_at TIMESTAMP NOT NULL DEFAULT now()
 );
 
 CREATE TABLE public.settings (
-store_dir TEXT UNIQUE NOT NULL
+store_dir TEXT UNIQUE NOT NULL,
+thumb_dir TEXT UNIQUE NOT NULL
 );
 
 ALTER TABLE public.children ADD FOREIGN KEY (child_id) REFERENCES public.files (id);
