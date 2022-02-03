@@ -4,31 +4,28 @@ Atsugami
 Images not included.  
 
 ### TODO:
-*	Wiki pages  
-*	Page titles with Pango  
-*	Reload iconview function  
-*	Cached thumbnails  
-*	Settings page  
-*	Edit file tags page  
-*	Delete tags function  
-*	Delete image function  
-*	Bulk import  
-*	Bulk edit  
-*	Import tags from Danbooru function  
-*	Re-orderable tabs  
-*	Hotkeys  
-*	Favourite image function  
-*	Search  
-*	Open image in external viewer function  
-*	Advanced tooltip  
-*	Open image in new tab  
-*	Safe mode  
-*	Export function  
-*	Tag list  
+*	Wiki pages
+*	Page titles with Pango
+*	Reload iconview function
+*	Cached thumbnails
+*	Settings page
+*	Edit file tags page
+*	Delete tags function
+*	Delete image function
+*	Bulk import
+*	Bulk edit
+*	Import tags from Danbooru function
+*	Re-orderable tabs
+*	Hotkeys
+*	Favourite image function
+*	Search
+*	Open image in external viewer function
+*	Advanced tooltip
+*	Open image in new tab
+*	Safe mode
+*	Export function
+*	Tag list
 *	Tag blacklisting
-
-### Notes
-*	Limit of 999,999x999,999px  
 
 ### Dependencies
 * PostgreSQL (Tested on 14 and 14.1)  
@@ -37,7 +34,9 @@ Images not included.
 * pkgconf (build-time ony)
 * [BSD make (bmake)](https://github.com/natem-nvsd/bmake) (build-time only)
 
-### Building and installation
+Building and installation
+-------------------------
+
 ```
 # FreeBSD:
 make
@@ -51,7 +50,7 @@ sudo bmake install
 Good luck
 ```  
 
-# FAQ
+### FAQ
 	Q: I imported a file, but it's not there any more. Where is it?  
 	A: Atsugami automatically moves files which have been imported into a storage directory, to external prevent deletion.
 
