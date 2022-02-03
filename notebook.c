@@ -19,7 +19,6 @@ GtkWidget *icon_view;
 
 static void pixbuf_loader_and_store_filler(GtkListStore *list_store) {
 	note_res = PQexec(conn, "SELECT store_dir FROM public.settings;");
-	printf("store_dir\n");
 
 	int x;		// Number of rows returned by the query
 	int i;		// Current row
@@ -29,6 +28,7 @@ static void pixbuf_loader_and_store_filler(GtkListStore *list_store) {
 	const char file_path[65 + size];
 	GtkTreeIter tree_iter;
 
+	/* The user MUST set this, or the program will crash. */
 	tmp_path = PQgetvalue(note_res, 0, 0);
 
 	strcpy(path, tmp_path);
@@ -38,20 +38,23 @@ static void pixbuf_loader_and_store_filler(GtkListStore *list_store) {
 		// ASC and DESC are reversed, since they are inserted one by one into list_store
 
 	gtk_list_store_clear(list_store);	// clear the list store
+
 	note_res = PQexec(conn, "SELECT sha256 FROM public.files ORDER BY created_at DESC;");
 	x = PQntuples(note_res);	// get the number of rows returned by the query
 
-	for (i = 0; i < x; i++) {		// multithreading would make this much faster
-		sha256 = PQgetvalue(note_res, i, 0);
-		strcpy(file_path, path);
-		strcat(file_path, sha256);
+	if (x != 0) {
+		for (i = 0; i < x; i++) {		// multithreading would make this much faster
+			sha256 = PQgetvalue(note_res, i, 0);
+			strcpy(file_path, path);
+			strcat(file_path, sha256);
 
-		thumb = gdk_pixbuf_new_from_file_at_scale(file_path, 180, 180, TRUE, NULL);
+			thumb = gdk_pixbuf_new_from_file_at_scale(file_path, 180, 180, TRUE, NULL);
 
-		gtk_list_store_append(list_store, &tree_iter);
-		gtk_list_store_set(list_store, &tree_iter, COL_PATH, file_path, COL_PIXBUF, thumb, -1);
+			gtk_list_store_append(list_store, &tree_iter);
+			gtk_list_store_set(list_store, &tree_iter, COL_PATH, file_path, COL_PIXBUF, thumb, -1);
 
-		sha256 = "";
+			sha256 = "";
+		}
 	}
 
 	PQclear(note_res);

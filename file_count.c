@@ -7,7 +7,7 @@ PGresult *count_res;
 
 extern void file_count(GtkWidget *label, GtkWidget *box) {
 	size_t label_int;                                                                                                                                
-	char label_str[10];
+	char label_str[26];
 	
 	count_res = PQexec(conn, "SELECT count(*) FROM public.files;");
 	strcpy(label_str, PQgetvalue(count_res, 0, 0));

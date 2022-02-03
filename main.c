@@ -31,15 +31,15 @@
 
 PGresult *mainres;
 PGconn *conn;
-char conninfo[] = "dbname=atsugami"; /* Sets the database for dbconnect() */
+char conninfo[] = "dbname=atsugami";	/* Sets the database for dbconnect()
+					 * conn MUST be global
+					 */
 char main_psql_error[2048];
-//gchar *parent;
 GtkNotebook *notebook;
 GtkWidget *vbox;
 GtkWidget *file_label;
 
 /* Quit function */
-//static void quit_activate(GSimpleAction *action, GVariant *parameter, gpointer user_data) {
 static void quit_activate(gpointer user_data) {
 	/* This causes a seg fault when used as a callback */
 	GtkWidget *window = user_data;
@@ -82,7 +82,11 @@ extern void destroy_window(gpointer user_data) {	/* this doesn't close the progr
 }
 
 int main(int argc, char *argv[]) {
-	conn = PQconnectdb(conninfo);	/* Connect to PostgreSQL */
+	conn = PQconnectdb(conninfo);	/* Connect to PostgreSQL
+					 *
+					 * If the user running Atsugami does not have a PostgreSQL role,
+					 * or an Atsugami database, there will be a segmentation fault.
+					 */
 
 	/* THis is in order of appearance */
 	GtkWidget *window;
@@ -387,7 +391,7 @@ int main(int argc, char *argv[]) {
 
 	/* Show error info bar if the connection fails */
 	if (PQstatus(conn) != CONNECTION_OK) {
-		char errMsg[1024];
+		char *errMsg = NULL;
 
 		gtk_info_bar_set_revealed(error_bar, TRUE);
 		sprintf(errMsg, "\n%s", PQerrorMessage(conn));

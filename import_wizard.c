@@ -14,7 +14,7 @@ GtkWidget *label0, *label1, *label2, *label3, *label4, *label5, *label6;
 GtkEntry *entry0, *entry1, *entry2, *entry3, *entry5, *entry6;
 GtkTextView *tv;
 GtkTextBuffer *tb;
-GtkTextIter *istart, *iend;
+GtkTextIter istart, iend;
 GtkWidget *import_thumb, *cbox, *can_button, *imp_button;
 GdkPixbuf *import_thumb_pixbuf;
 gint page_count = 0;
@@ -22,8 +22,6 @@ gboolean parent_bool = FALSE;
 gboolean child_bool = FALSE;
 gboolean has_children = FALSE;
 GtkWidget *header_box, *scrolled_window;
-const char file_id[10];
-const int eol = (1 - 2);
 
 static void cancel_button_cb(void) {
 	gtk_notebook_detach_tab(notebook, scrolled_window);
@@ -33,29 +31,20 @@ static int import_button_cb(void) {
 	if (gtk_text_buffer_get_modified(tb) == TRUE) {
 		printf("Text buffer modified.\n");
 
-		//gtk_text_buffer_get_iter_at_offset(tb, &istart, 0);
-		//printf("Set istart.\n");
-	
-		//gtk_text_buffer_get_iter_at_offset(tb, &iend, EOL);
-	//	gtk_text_buffer_get_iter_at_offset(tb, &iend, eol);
-	//	printf("Set iend.\n");
-	
-		//gtk_text_buffer_get_bounds(tb, &istart, &iend);
-		//printf("Set bounds.\n");
-		printf("general: ");
-		printf("%s\n", gtk_text_buffer_get_text(tb, &istart, &iend, TRUE));
-
-		printf("Done\n");
-		return 1;
+		gtk_text_buffer_get_iter_at_offset(tb, &istart, 0);
+		gtk_text_buffer_get_iter_at_offset(tb, &iend, -1);
+		//printf("%s\n", gtk_text_buffer_get_text(tb, &istart, &iend, TRUE));
 	}
 	else {
-		printf("Text buffer not modified.\n");
+		fprintf(stderr, "Text buffer not modified.\n");
 		gtk_notebook_detach_tab(notebook, scrolled_window);
+		// Put an error dialog here.
 		return 1;
 	}
 
 	int a, b, c;
 	int wc = 0;
+	size_t d = 0;
 	const char *text0 = gtk_entry_get_text(entry0);	/* Source */
 	const char *text1 = gtk_entry_get_text(entry1);	/* Artists */
 	const char *text2 = gtk_entry_get_text(entry2);	/* Copyrights */
@@ -70,6 +59,7 @@ static int import_button_cb(void) {
 	const char *value4;
 	const char *value5;
 	const char *value6;
+//	const char *file_id = NULL;
 
 	strcpy(&value0, &text0);
 	strcpy(&value1, &text1);
@@ -91,17 +81,12 @@ static int import_button_cb(void) {
 	char cha_arr[cha_size + 2];
 	char gen_arr[gen_size + 2];
 	char met_arr[met_size + 2];
+	char file_id[19];
 	char art_tag[art_size];
 	char cop_tag[cop_size];
 	char cha_tag[cha_size];
 	char gen_tag[gen_size];
 	char met_tag[met_size];
-
-	/* Get the value of text4 (Temporary) */
-	printf("text4:");
-	printf("%s\n", text4);
-	gtk_notebook_detach_tab(notebook, scrolled_window);
-	return 1;
 
 	wiz_res = PQexec(conn, "BEGIN TRANSACTION");
 	PQclear(wiz_res);
@@ -114,12 +99,24 @@ static int import_button_cb(void) {
 	strcat(query_string, "', '");
 	strcat(query_string, text0);
 	strcat(query_string, "') ON CONFLICT DO NOTHING;");
+	printf("%s\n", query_string);
 
 	wiz_res = PQexec(conn, query_string);
+	strcpy(query_string, "");
 
 	if (PQresultStatus(wiz_res) == PGRES_COMMAND_OK) {
-		strcpy(file_id, PQgetvalue(wiz_res, 0, 0));
-		printf("%s\n", file_id);
+		printf("command ok.\n");
+		PQclear(wiz_res);
+
+		strcpy(query_string, "SELECT id FROM public.files WHERE sha256 = '");
+		strcat(query_string, file_sha256);
+		strcat(query_string, "';");
+		printf("%s\n", query_string);
+
+		/* If the file _was_ inserted into the database, then file_id is guaranteed to be non-null */
+		wiz_res = PQexec(conn, query_string);
+		strcpy(query_string, "");
+		strcpy(file_id, PQgetvalue(wiz_res, 0, 0));	/* This appears to cause a segmentation fault. */
 		PQclear(wiz_res);
 	}
 	else {
@@ -142,11 +139,12 @@ static int import_button_cb(void) {
 	art_arr[strlen(art_arr)] = '\0';
 	printf("\'%s\'\n", art_arr);
 
-	size_t d = 0;
 	b = 0;
 
+	printf("\n Artist for loop\n");
 	for (a = 0; a < strlen(art_arr); a++) {
-		if (isspace(art_arr[a]) == 0) {
+		if (isspace(art_arr[a]) == 0 || art_arr[a] == '%' || art_arr[a] == '\'' ||	// Preventing SQL injection
+		art_arr[a] == '"' || art_arr[a] == ';' || (art_arr[a] == '-' && art_arr[a + 1] == '-') || art_arr[a] == '*') {
 			art_tag[b] = art_arr[a];
 			++b;
 		}
@@ -162,6 +160,7 @@ static int import_button_cb(void) {
 			for (c = 0; c < 1; c++) {
 				strcat(query, &art_tag[c]);
 			}
+
 			strcat(query, "') ON CONFLICT DO NOTHING;");
 			printf("%s\n", query);
 			wiz_res = PQexec(conn, query);
@@ -169,6 +168,7 @@ static int import_button_cb(void) {
 
 			if (PQresultStatus(wiz_res) == PGRES_COMMAND_OK) {
 				PQclear(wiz_res);
+				printf("command ok.\n");
 
 				strcpy(query, "SELECT id FROM public.tags WHERE name = '");
 				for (c = 0; c < 1; c++) {
@@ -253,6 +253,7 @@ static int import_button_cb(void) {
 	d = 0;
 	b = 0;
 
+	printf("\nCopyright for loop\n");
 	for (a = 0; a < strlen(cop_arr); a++) {
 		if (isspace(cop_arr[a]) == 0) {
 			cop_tag[b] = cop_arr[a];
@@ -361,6 +362,7 @@ static int import_button_cb(void) {
 	d = 0;
 	b = 0;
 
+	printf("\nCharacter for loop\n");
 	for (a = 0; a < strlen(cha_arr); a++) {
 		if (isspace(cha_arr[a]) == 0) {
 			cha_tag[b] = cha_arr[a];
@@ -469,6 +471,7 @@ static int import_button_cb(void) {
 	d = 0;
 	b = 0;
 
+	printf("\nGeneral for loop\n");
 	for (a = 0; a < strlen(gen_arr); a++) {
 		if (isspace(gen_arr[a]) == 0) {
 			gen_tag[b] = gen_arr[a];
@@ -577,6 +580,7 @@ static int import_button_cb(void) {
 	d = 0;
 	b = 0;
 
+	printf("\nMeta for loop\n");
 	for (a = 0; a < strlen(met_arr); a++) {
 		if (isspace(met_arr[a]) == 0) {
 			met_tag[b] = met_arr[a];
@@ -677,7 +681,9 @@ static int import_button_cb(void) {
 
 	strcpy(query_string, "INSERT INTO public.file_count (file_id, tag_count) VALUES (");
 	strcat(query_string, file_id);
+	strcat(query_string, ", ");
 	strcat(query_string, wc);
+	strcat(query_string, ");");
 	
 	wiz_res = PQexec(conn, query_string);
 	if (PQresultStatus(wiz_res) == PGRES_COMMAND_OK)
@@ -774,15 +780,7 @@ extern void import_wizard(GtkWidget *import_page, gpointer user_data) {
 	gtk_text_view_set_accepts_tab(tv, FALSE);
 	gtk_box_pack_start(GTK_BOX(import_page), tv, TRUE, TRUE, 0);
 	gtk_text_view_set_wrap_mode(tv, GTK_WRAP_WORD_CHAR);
-
-	gtk_text_buffer_get_iter_at_offset(tb, &istart, 0);
-	printf("Set istart.\n");
-
-	gtk_text_buffer_get_iter_at_offset(tb, &iend, eol);
-	printf("Set iend.\n");
-	
-	//gtk_text_buffer_get_bounds(tb, &istart, &iend);
-	//printf("Set bounds.\n");
+	gtk_text_buffer_get_bounds(tb, &istart, &iend);
 
 	/* Meta tag box */
 	label5 = gtk_label_new("Meta");
@@ -832,4 +830,9 @@ extern void import_wizard(GtkWidget *import_page, gpointer user_data) {
 	gtk_scrolled_window_set_propagate_natural_height(GTK_SCROLLED_WINDOW(scrolled_window), TRUE);
 	gtk_notebook_set_tab_label_text(notebook, scrolled_window, "Import");
 	gtk_notebook_set_current_page(notebook, page_count);
+
+	//while (gtk_text_buffer_get_modified(tb) == FALSE) {
+	//	gtk_widget_set_sensitive(imp_button, FALSE);
+	//}
+	//gtk_widget_set_sensitive(imp_button, TRUE);
 }

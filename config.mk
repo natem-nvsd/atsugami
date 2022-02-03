@@ -25,8 +25,7 @@ INCS = $(X11INC) $(GTKINC) $(CAIROINC) $(GDKPIXBUFINC) $(GDKINC) $(LPQINC)
 LIBS = $(X11LIB) $(GTKLIB) $(CAIROLIB) $(GDKPIXBUFLIB) $(LPQLIB) -lgthread-2.0
 
 # flags
-CPPFLAGS = -D_DEFAULT_SOURCE -D_BSD_SOURCE -D_POSIX_C_SOURCE=2 -DVERSION=\"${VERSION}\"
-#CFLAGS   = -g -std=c11 -pedantic -Wall -Wno-deprecated-declarations -O3 -D_FORTIFY_SOURCE=2 ${INCS} # Flags removed: -v
+#CPPFLAGS = -g -D_DEFAULT_SOURCE -D_BSD_SOURCE -D_POSIX_C_SOURCE=2 -DVERSION=\"${VERSION}\"
 CFLAGS   = -g -std=c11 -pedantic -Wall -Wno-deprecated-declarations -D_FORTIFY_SOURCE=2 ${INCS} # Flags removed: -v
 LDFLAGS  += ${LIBS} -lpq -lmd
 
