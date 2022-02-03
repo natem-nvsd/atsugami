@@ -118,4 +118,5 @@ extern void new_copyright_activate(void) {
 	gtk_container_add(GTK_CONTAINER(notebook), copyright_vbox);
 	gtk_notebook_set_tab_label_text(notebook, copyright_vbox, "New copyright");
 	gtk_notebook_set_current_page(notebook, page_count);
+	gtk_notebook_set_tab_reorderable(notebook, copyright_vbox, TRUE);
 }

@@ -345,7 +345,7 @@ int main(int argc, char *argv[]) {
 //	g_signal_connect(favourite_button, "clicked", G_CALLBACK(NULL), NULL);
 //	g_signal_connect(view_button, "clicked", G_CALLBACK(NULL), NULL);
 //	g_signal_connect(wiki_button, "clicked", G_CALLBACK(NULL), NULL);
-//	g_signal_connect(home_button, "clicked", home_trigger(vbox), NULL);	/* segfault when quit_activate called */
+//	g_signal_connect(home_button, "clicked", home_trigger(vbox), NULL);
 	
 	/* Warning info bar */
 	GtkWidget *warn_widget, *warn_label, *warn_area;

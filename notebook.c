@@ -92,4 +92,5 @@ extern void home_page(void) {
 	gtk_widget_set_vexpand(iv_scrolled_window, TRUE);
 	gtk_container_add(GTK_CONTAINER(notebook), iv_scrolled_window);
 	gtk_notebook_set_tab_label_text(notebook, iv_scrolled_window, "Home");
+	gtk_notebook_set_tab_reorderable(notebook, iv_scrolled_window, TRUE);
 }

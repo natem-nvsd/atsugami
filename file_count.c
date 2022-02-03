@@ -13,7 +13,7 @@ extern void file_count(GtkWidget *label, GtkWidget *box) {
 	strcpy(label_str, PQgetvalue(count_res, 0, 0));
 	label_int = strlen(label_str);
 	strcat(label_str, " files");
-	 if (label_int == 1)
+	 if (label_int == '1')
 		label = gtk_label_new("1 file");
 	else
 		label = gtk_label_new(label_str);

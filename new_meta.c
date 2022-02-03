@@ -118,4 +118,5 @@ extern void new_meta_tag_activate(void) {
 	gtk_container_add(GTK_CONTAINER(notebook), meta_vbox);
 	gtk_notebook_set_tab_label_text(notebook, meta_vbox, "New meta");
 	gtk_notebook_set_current_page(notebook, page_count);
+	gtk_notebook_set_tab_reorderable(notebook, meta_vbox, TRUE);
 }

@@ -118,4 +118,5 @@ extern void new_tag_activate(void) {
 	gtk_container_add(GTK_CONTAINER(notebook), tag_vbox);
 	gtk_notebook_set_tab_label_text(notebook, tag_vbox, "New tag");
 	gtk_notebook_set_current_page(notebook, page_count);
+	gtk_notebook_set_tab_reorderable(notebook, tag_vbox, TRUE);
 }

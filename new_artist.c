@@ -118,4 +118,5 @@ extern void new_artist_activate(void) {
 	gtk_container_add(GTK_CONTAINER(notebook), artist_vbox);
 	gtk_notebook_set_tab_label_text(notebook, artist_vbox, "New artist");
 	gtk_notebook_set_current_page(notebook, page_count);
+	gtk_notebook_set_tab_reorderable(notebook, artist_vbox, TRUE);
 }

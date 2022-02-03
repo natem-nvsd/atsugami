@@ -29,11 +29,8 @@ static void cancel_button_cb(void) {
 
 static int import_button_cb(void) {
 	if (gtk_text_buffer_get_modified(tb) == TRUE) {
-		printf("Text buffer modified.\n");
-
 		gtk_text_buffer_get_iter_at_offset(tb, &istart, 0);
 		gtk_text_buffer_get_iter_at_offset(tb, &iend, -1);
-		//printf("%s\n", gtk_text_buffer_get_text(tb, &istart, &iend, TRUE));
 	}
 	else {
 		fprintf(stderr, "Text buffer not modified.\n");
@@ -59,7 +56,6 @@ static int import_button_cb(void) {
 	const char *value4;
 	const char *value5;
 	const char *value6;
-//	const char *file_id = NULL;
 
 	strcpy(&value0, &text0);
 	strcpy(&value1, &text1);
@@ -77,7 +73,7 @@ static int import_button_cb(void) {
 	const int met_size = strlen(&value5);
 	const char query_string[159 + src_size];
 	char art_arr[art_size + 2];
-	char cop_arr[cop_size + 2];
+	char cop_arr[cop_size + 3];
 	char cha_arr[cha_size + 2];
 	char gen_arr[gen_size + 2];
 	char met_arr[met_size + 2];
@@ -87,6 +83,7 @@ static int import_button_cb(void) {
 	char cha_tag[cha_size];
 	char gen_tag[gen_size];
 	char met_tag[met_size];
+	char word_count[19];
 
 	wiz_res = PQexec(conn, "BEGIN TRANSACTION");
 	PQclear(wiz_res);
@@ -99,19 +96,16 @@ static int import_button_cb(void) {
 	strcat(query_string, "', '");
 	strcat(query_string, text0);
 	strcat(query_string, "') ON CONFLICT DO NOTHING;");
-	printf("%s\n", query_string);
 
 	wiz_res = PQexec(conn, query_string);
 	strcpy(query_string, "");
 
 	if (PQresultStatus(wiz_res) == PGRES_COMMAND_OK) {
-		printf("command ok.\n");
 		PQclear(wiz_res);
 
 		strcpy(query_string, "SELECT id FROM public.files WHERE sha256 = '");
 		strcat(query_string, file_sha256);
 		strcat(query_string, "';");
-		printf("%s\n", query_string);
 
 		/* If the file _was_ inserted into the database, then file_id is guaranteed to be non-null */
 		wiz_res = PQexec(conn, query_string);
@@ -132,16 +126,11 @@ static int import_button_cb(void) {
 
 	/* Create artist tags */
 	// It may be possible to use only one of this for loop
-	// NOTE: numbers in text fields seem to have the last digit omitted when being imported.
 	strcpy(art_arr, text1);
-	printf("\'%s\'\n", art_arr);
-	art_arr[strlen(art_arr) - 1] = ' ';
-	art_arr[strlen(art_arr)] = '\0';
-	printf("\'%s\'\n", art_arr);
+	strcat(art_arr, " ");
 
 	b = 0;
 
-	printf("\n Artist for loop\n");
 	for (a = 0; a < strlen(art_arr); a++) {
 		if (isspace(art_arr[a]) == 0 || art_arr[a] == '%' || art_arr[a] == '\'' ||	// Preventing SQL injection
 		art_arr[a] == '"' || art_arr[a] == ';' || (art_arr[a] == '-' && art_arr[a + 1] == '-') || art_arr[a] == '*') {
@@ -162,13 +151,11 @@ static int import_button_cb(void) {
 			}
 
 			strcat(query, "') ON CONFLICT DO NOTHING;");
-			printf("%s\n", query);
 			wiz_res = PQexec(conn, query);
 			strcpy(query, "");
 
 			if (PQresultStatus(wiz_res) == PGRES_COMMAND_OK) {
 				PQclear(wiz_res);
-				printf("command ok.\n");
 
 				strcpy(query, "SELECT id FROM public.tags WHERE name = '");
 				for (c = 0; c < 1; c++) {
@@ -176,20 +163,17 @@ static int import_button_cb(void) {
 				}
 
 				strcat(query, "';");
-				printf("%s\n", query);
 
 				wiz_res = PQexec(conn, &query);
 				tag_id = PQgetvalue(wiz_res, 0, 0);
 
 				strcpy(&query, "");
-				printf("id:  %s\n", tag_id);
 				PQclear(wiz_res);
 
 				/* Add the tag to the bridge */
 				strcpy(&query, "INSERT INTO public.tags_categories (tag_id, category_id) VALUES (");
 				strcat(&query, tag_id);
 				strcat(&query, ", 1);");
-				printf("%s\n", query);
 				wiz_res = PQexec(conn, &query);
 
 				if (PQresultStatus(wiz_res) != PGRES_COMMAND_OK) {
@@ -220,8 +204,6 @@ static int import_button_cb(void) {
 					// Spawn an error dialog here
 					return 1;
 				}
-
-				printf("Queries successful.\n");
 			}
 			else {
 				fprintf(stderr, "%s\n", PQerrorMessage(conn));
@@ -240,22 +222,17 @@ static int import_button_cb(void) {
 			b = 0;
 		}
 	}
-	printf("tag count: %d\n", wc);
 
 	/* Create copyright tags */
 	strcpy(cop_arr, text2);
-	printf("\'%s\'\n", cop_arr);
-
-	cop_arr[strlen(cop_arr) - 1] = ' ';
-	cop_arr[strlen(cop_arr)] = '\0';
-	printf("\'%s\'\n", cop_arr);
+	strcat(cop_arr, " ");
 
 	d = 0;
 	b = 0;
 
-	printf("\nCopyright for loop\n");
 	for (a = 0; a < strlen(cop_arr); a++) {
-		if (isspace(cop_arr[a]) == 0) {
+		if (isspace(cop_arr[a]) == 0 || cop_arr[a] == '%' || cop_arr[a] == '\'' ||	// Preventing SQL injection
+		cop_arr[a] == '"' || cop_arr[a] == ';' || (cop_arr[a] == '-' && cop_arr[a + 1] == '-') || cop_arr[a] == '*') {
 			cop_tag[b] = cop_arr[a];
 			++b;
 		}
@@ -272,7 +249,6 @@ static int import_button_cb(void) {
 				strcat(query, &cop_tag[c]);
 			}
 			strcat(query, "') ON CONFLICT DO NOTHING;");
-			printf("%s\n", query);
 			wiz_res = PQexec(conn, query);
 			strcpy(query, "");
 
@@ -285,20 +261,17 @@ static int import_button_cb(void) {
 				}
 
 				strcat(query, "';");
-				printf("%s\n", query);
 
 				wiz_res = PQexec(conn, &query);
 				tag_id = PQgetvalue(wiz_res, 0, 0);
 
 				strcpy(&query, "");
-				printf("id:  %s\n", tag_id);
 				PQclear(wiz_res);
 
 				/* Add the tag to the bridge */
 				strcpy(&query, "INSERT INTO public.tags_categories (tag_id, category_id) VALUES (");
 				strcat(&query, tag_id);
 				strcat(&query, ", 3);");
-				printf("%s\n", query);
 				wiz_res = PQexec(conn, &query);
 
 				if (PQresultStatus(wiz_res) != PGRES_COMMAND_OK) {
@@ -329,8 +302,6 @@ static int import_button_cb(void) {
 					// Spawn an error dialog here
 					return 1;
 				}
-
-				printf("Queries successful.\n");
 			}
 			else {
 				fprintf(stderr, "%s\n", PQerrorMessage(conn));
@@ -349,22 +320,17 @@ static int import_button_cb(void) {
 			b = 0;
 		}
 	}
-	printf("tag count: %d\n", wc);
 
 	/* Create character tags */
 	strcpy(cha_arr, text3);
-	printf("\'%s\'\n", cha_arr);
-
-	cha_arr[strlen(cha_arr) - 1] = ' ';
-	cha_arr[strlen(cha_arr)] = '\0';
-	printf("\'%s\'\n", cha_arr);
+	strcat(cha_arr, " ");
 
 	d = 0;
 	b = 0;
 
-	printf("\nCharacter for loop\n");
 	for (a = 0; a < strlen(cha_arr); a++) {
-		if (isspace(cha_arr[a]) == 0) {
+		if (isspace(cha_arr[a]) == 0 || cha_arr[a] == '%' || cha_arr[a] == '\'' ||	// Preventing SQL injection
+		cha_arr[a] == '"' || cha_arr[a] == ';' || (cha_arr[a] == '-' && cha_arr[a + 1] == '-') || cha_arr[a] == '*') {
 			cha_tag[b] = cha_arr[a];
 			++b;
 		}
@@ -381,7 +347,6 @@ static int import_button_cb(void) {
 				strcat(query, &cha_tag[c]);
 			}
 			strcat(query, "') ON CONFLICT DO NOTHING;");
-			printf("%s\n", query);
 			wiz_res = PQexec(conn, query);
 			strcpy(query, "");
 
@@ -394,20 +359,17 @@ static int import_button_cb(void) {
 				}
 
 				strcat(query, "';");
-				printf("%s\n", query);
 
 				wiz_res = PQexec(conn, &query);
 				tag_id = PQgetvalue(wiz_res, 0, 0);
 
 				strcpy(&query, "");
-				printf("id:  %s\n", tag_id);
 				PQclear(wiz_res);
 
 				/* Add the tag to the bridge */
 				strcpy(&query, "INSERT INTO public.tags_categories (tag_id, category_id) VALUES (");
 				strcat(&query, tag_id);
 				strcat(&query, ", 4);");
-				printf("%s\n", query);
 				wiz_res = PQexec(conn, &query);
 
 				if (PQresultStatus(wiz_res) != PGRES_COMMAND_OK) {
@@ -438,8 +400,6 @@ static int import_button_cb(void) {
 					// Spawn an error dialog here
 					return 1;
 				}
-
-				printf("Queries successful.\n");
 			}
 			else {
 				fprintf(stderr, "%s\n", PQerrorMessage(conn));
@@ -458,22 +418,17 @@ static int import_button_cb(void) {
 			b = 0;
 		}
 	}
-	printf("tag count: %d\n", wc);
 
 	/* Create general tags */
 	strcpy(gen_arr, text5);
-	printf("\'%s\'\n", gen_arr);
-
-	gen_arr[strlen(gen_arr) - 1] = ' ';
-	gen_arr[strlen(gen_arr)] = '\0';
-	printf("\'%s\'\n", gen_arr);
+	strcat(gen_arr, " ");
 
 	d = 0;
 	b = 0;
 
-	printf("\nGeneral for loop\n");
 	for (a = 0; a < strlen(gen_arr); a++) {
-		if (isspace(gen_arr[a]) == 0) {
+		if (isspace(gen_arr[a]) == 0 || gen_arr[a] == '%' || gen_arr[a] == '\'' ||	// Preventing SQL injection
+		gen_arr[a] == '"' || gen_arr[a] == ';' || (gen_arr[a] == '-' && gen_arr[a + 1] == '-') || gen_arr[a] == '*') {
 			gen_tag[b] = gen_arr[a];
 			++b;
 		}
@@ -490,7 +445,6 @@ static int import_button_cb(void) {
 				strcat(query, &gen_tag[c]);
 			}
 			strcat(query, "') ON CONFLICT DO NOTHING;");
-			printf("%s\n", query);
 			wiz_res = PQexec(conn, query);
 			strcpy(query, "");
 
@@ -503,20 +457,17 @@ static int import_button_cb(void) {
 				}
 
 				strcat(query, "';");
-				printf("%s\n", query);
 
 				wiz_res = PQexec(conn, &query);
 				tag_id = PQgetvalue(wiz_res, 0, 0);
 
 				strcpy(&query, "");
-				printf("id:  %s\n", tag_id);
 				PQclear(wiz_res);
 
 				/* Add the tag to the bridge */
 				strcpy(&query, "INSERT INTO public.tags_categories (tag_id, category_id) VALUES (");
 				strcat(&query, tag_id);
 				strcat(&query, ", 0);");
-				printf("%s\n", query);
 				wiz_res = PQexec(conn, &query);
 
 				if (PQresultStatus(wiz_res) != PGRES_COMMAND_OK) {
@@ -547,8 +498,6 @@ static int import_button_cb(void) {
 					// Spawn an error dialog here
 					return 1;
 				}
-
-				printf("Queries successful.\n");
 			}
 			else {
 				fprintf(stderr, "%s\n", PQerrorMessage(conn));
@@ -567,22 +516,17 @@ static int import_button_cb(void) {
 			b = 0;
 		}
 	}
-	printf("tag count: %d\n", wc);
 
 	/* Create meta tags */
 	strcpy(met_arr, text5);
-	printf("\'%s\'\n", met_arr);
-
-	met_arr[strlen(met_arr) - 1] = ' ';
-	met_arr[strlen(met_arr)] = '\0';
-	printf("\'%s\'\n", met_arr);
+	strcat(met_arr, " ");
 
 	d = 0;
 	b = 0;
 
-	printf("\nMeta for loop\n");
 	for (a = 0; a < strlen(met_arr); a++) {
-		if (isspace(met_arr[a]) == 0) {
+		if (isspace(met_arr[a]) == 0 || met_arr[a] == '%' || met_arr[a] == '\'' ||	// Preventing SQL injection
+		met_arr[a] == '"' || met_arr[a] == ';' || (met_arr[a] == '-' && met_arr[a + 1] == '-') || met_arr[a] == '*') {
 			met_tag[b] = met_arr[a];
 			++b;
 		}
@@ -599,7 +543,6 @@ static int import_button_cb(void) {
 				strcat(query, &met_tag[c]);
 			}
 			strcat(query, "') ON CONFLICT DO NOTHING;");
-			printf("%s\n", query);
 			wiz_res = PQexec(conn, query);
 			strcpy(query, "");
 
@@ -612,20 +555,17 @@ static int import_button_cb(void) {
 				}
 
 				strcat(query, "';");
-				printf("%s\n", query);
 
 				wiz_res = PQexec(conn, &query);
 				tag_id = PQgetvalue(wiz_res, 0, 0);
 
 				strcpy(&query, "");
-				printf("id:  %s\n", tag_id);
 				PQclear(wiz_res);
 
 				/* Add the tag to the tag-category bridge */
 				strcpy(&query, "INSERT INTO public.tags_categories (tag_id, category_id) VALUES (");
 				strcat(&query, tag_id);
 				strcat(&query, ", 5);");
-				printf("%s\n", query);
 				wiz_res = PQexec(conn, &query);
 
 				if (PQresultStatus(wiz_res) != PGRES_COMMAND_OK) {
@@ -656,8 +596,6 @@ static int import_button_cb(void) {
 					// Spawn an error dialog here
 					return 1;
 				}
-
-				printf("Queries successful.\n");
 			}
 
 			else {
@@ -678,11 +616,12 @@ static int import_button_cb(void) {
 			b = 0;
 		}
 	}
-
-	strcpy(query_string, "INSERT INTO public.file_count (file_id, tag_count) VALUES (");
+	sprintf(word_count, "%d", wc);
+	strcpy(query_string, "INSERT INTO public.tag_count (file_id, tag_count) VALUES (");
 	strcat(query_string, file_id);
 	strcat(query_string, ", ");
-	strcat(query_string, wc);
+	//sprintf(query_string, "%d", wc);
+	strcat(query_string, word_count);
 	strcat(query_string, ");");
 	
 	wiz_res = PQexec(conn, query_string);
@@ -699,7 +638,6 @@ static int import_button_cb(void) {
 		return 1;
 	}
 
-	printf("tag count: %d\n", wc);
 	file_count_update(file_label, vbox);
 
 	wiz_res = PQexec(conn, "COMMIT TRANSACTION;");
@@ -830,6 +768,7 @@ extern void import_wizard(GtkWidget *import_page, gpointer user_data) {
 	gtk_scrolled_window_set_propagate_natural_height(GTK_SCROLLED_WINDOW(scrolled_window), TRUE);
 	gtk_notebook_set_tab_label_text(notebook, scrolled_window, "Import");
 	gtk_notebook_set_current_page(notebook, page_count);
+	gtk_notebook_set_tab_reorderable(notebook, scrolled_window, TRUE);
 
 	//while (gtk_text_buffer_get_modified(tb) == FALSE) {
 	//	gtk_widget_set_sensitive(imp_button, FALSE);

@@ -118,4 +118,5 @@ extern void new_character_activate(void) {
 	gtk_container_add(GTK_CONTAINER(notebook), character_vbox);
 	gtk_notebook_set_tab_label_text(notebook, character_vbox, "New character");
 	gtk_notebook_set_current_page(notebook, page_count);
+	gtk_notebook_set_tab_reorderable(notebook, character_vbox, TRUE);
 }

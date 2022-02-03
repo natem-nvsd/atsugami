@@ -1,12 +1,12 @@
 -- atsugami.sql
 
-CREATE SEQUENCE public.files_id_seq
-AS BIGINT
-START WITH 1
-INCREMENT BY 1
-NO MINVALUE
-NO MAXVALUE
-CACHE 1;
+-- CREATE SEQUENCE public.files_id_seq
+-- AS BIGINT
+-- START WITH 1
+-- INCREMENT BY 1
+-- NO MINVALUE
+-- NO MAXVALUE
+-- CACHE 1;
 
 CREATE TABLE public.files (
 id SERIAL PRIMARY KEY,
@@ -16,6 +16,8 @@ source TEXT,
 created_at TIMESTAMP NOT NULL DEFAULT now(),
 updated_at TIMESTAMP NOT NULL DEFAULT now()
 );
+
+-- ALTER SEQUENCE public.files_id_seq OWNED BY public.files.id;
 
 CREATE TABLE public.children (
 child_id INTEGER NOT NULL,
@@ -37,13 +39,13 @@ file_id INTEGER NOT NULL,
 tag_id INTEGER NOT NULL
 );
 
-CREATE SEQUENCE public.tags_id_seq
-AS BIGINT
-START WITH 1
-INCREMENT BY 1
-NO MINVALUE
-NO MAXVALUE
-CACHE 1;
+-- CREATE SEQUENCE public.tags_id_seq
+-- AS BIGINT
+-- START WITH 1
+-- INCREMENT BY 1
+-- NO MINVALUE
+-- NO MAXVALUE
+-- CACHE 1;
 
 CREATE TABLE public.tags (
 id SERIAL PRIMARY KEY,
@@ -51,6 +53,8 @@ name TEXT UNIQUE NOT NULL,
 created_at TIMESTAMP NOT NULL DEFAULT now(),
 updated_at TIMESTAMP NOT NULL DEFAULT now()
 );
+
+-- ALTER SEQUENCE public.tags_id_seq OWNED BY public.tags.id;
 
 CREATE TABLE public.tags_categories (
 tag_id INTEGER NOT NULL,
@@ -76,7 +80,8 @@ updated_at TIMESTAMP NOT NULL DEFAULT now()
 
 CREATE TABLE public.settings (
 store_dir TEXT UNIQUE NOT NULL,
-thumb_dir TEXT UNIQUE NOT NULL
+thumb_dir TEXT UNIQUE NOT NULL,
+thumb_siz TEXT UNIQUE NOT NULL
 );
 
 ALTER TABLE public.children ADD FOREIGN KEY (child_id) REFERENCES public.files (id);
