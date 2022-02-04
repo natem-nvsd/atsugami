@@ -38,6 +38,7 @@ char main_psql_error[2048];
 GtkNotebook *notebook;
 GtkWidget *vbox;
 GtkWidget *file_label;
+GtkWidget *window;
 
 /* Quit function */
 static void quit_activate(gpointer user_data) {
@@ -89,7 +90,6 @@ int main(int argc, char *argv[]) {
 					 */
 
 	/* THis is in order of appearance */
-	GtkWidget *window;
 	GtkWidget *menu_bar;
 	GtkWidget *toolbar;
 

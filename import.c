@@ -21,7 +21,6 @@ static void open_response_cb(GtkNativeDialog *dialog, gint response_id, gpointer
 		/* Copy the path into `import_file_path`, since `file_path` is cleared when the dialog is destroyed. */
 		strcpy(import_file_path, file_path);
 		SHA256_File(import_file_path, file_sha256);
-		printf("%s\n", file_sha256);
 
 		/* Run the wizard; the file chooser window is destroyed before the wizard opens. */
 		import_wizard();

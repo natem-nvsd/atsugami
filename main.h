@@ -1,7 +1,4 @@
 /* main.h */
-//#define GLADEFILE "/usr/local/share/atsugami/atsugami.glade"
-#define GLADEFILE "atsugami.glade"
-#define VERSION 0.79
 #define EOL -1
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"
 #pragma clang diagnostic ignored "-Wsometimes-uninitialized"
@@ -21,5 +18,6 @@ extern char conninfo[];
 extern void destroy_window(gpointer user_data);
 extern GtkNotebook *notebook;
 extern GtkWidget *file_label, *vbox;
+extern GtkWidget *window;
 
 #endif

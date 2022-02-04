@@ -1,7 +1,8 @@
 include config.mk
 
 TARGET=atsugami
-SRC=about.c import.c new_artist.c file_count.c new_copyright.c new_character.c new_tag.c new_meta.c notebook.c import_wizard.c list_tags.c main.c
+#SRC=about.c import.c new_artist.c file_count.c new_copyright.c new_character.c new_tag.c new_meta.c notebook.c import_wizard.c list_tags.c main.c
+SRC=main.c about.c import.c new_artist.c file_count.c new_copyright.c new_character.c new_tag.c new_meta.c notebook.c import_wizard.c list_tags.c
 OBJ=${SRC:.c=.o}
 
 all: options atsugami

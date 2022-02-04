@@ -15,8 +15,9 @@ GtkEntry *entry0, *entry1, *entry2, *entry3, *entry5, *entry6;
 GtkTextView *tv;
 GtkTextBuffer *tb;
 GtkTextIter istart, iend;
-GtkWidget *import_thumb, *cbox, *can_button, *imp_button;
+GtkWidget *import_thumb, *cbox, *can_button, *imp_button, *diag;
 GdkPixbuf *import_thumb_pixbuf;
+GtkImage *diag_ico;
 gint page_count = 0;
 gboolean parent_bool = FALSE;
 gboolean child_bool = FALSE;
@@ -27,15 +28,26 @@ static void cancel_button_cb(void) {
 	gtk_notebook_detach_tab(notebook, scrolled_window);
 }
 
+static void incomplete_diag(const char *label) {
+	GtkDialogFlags diag_flags = GTK_RESPONSE_ACCEPT;
+
+	diag = gtk_message_dialog_new(window, diag_flags, GTK_MESSAGE_ERROR, GTK_BUTTONS_OK, "Form Error");
+
+	gtk_message_dialog_format_secondary_text(diag, "%s", label);
+	gtk_dialog_run(GTK_DIALOG(diag));
+	//g_signal_connect(diag, "resonse", G_CALLBACK(cancel_button_cb), NULL);
+	//g_signal_connect(diag, "close", G_CALLBACK(cancel_button_cb), NULL);
+	g_signal_connect_after(diag, "button_release", G_CALLBACK(cancel_button_cb), NULL);
+}
+
 static int import_button_cb(void) {
 	if (gtk_text_buffer_get_modified(tb) == TRUE) {
 		gtk_text_buffer_get_iter_at_offset(tb, &istart, 0);
 		gtk_text_buffer_get_iter_at_offset(tb, &iend, -1);
 	}
 	else {
-		fprintf(stderr, "Text buffer not modified.\n");
-		gtk_notebook_detach_tab(notebook, scrolled_window);
-		// Put an error dialog here.
+		incomplete_diag("One or more fields were not filled.\nPlease complete them and try again.");
+
 		return 1;
 	}
 
@@ -620,7 +632,6 @@ static int import_button_cb(void) {
 	strcpy(query_string, "INSERT INTO public.tag_count (file_id, tag_count) VALUES (");
 	strcat(query_string, file_id);
 	strcat(query_string, ", ");
-	//sprintf(query_string, "%d", wc);
 	strcat(query_string, word_count);
 	strcat(query_string, ");");
 	
@@ -641,6 +652,16 @@ static int import_button_cb(void) {
 	file_count_update(file_label, vbox);
 
 	wiz_res = PQexec(conn, "COMMIT TRANSACTION;");
+
+	/* Move the file to the storage directory */
+	//const char cmd[999];
+	//strcpy(cmd, "mv ");
+	//strcat(cmd, import_file_path);
+	//strcat(cmd, " ");
+	//strcat(cmd, store_dir);
+	//system(cmd);
+
+	/* Create thumbnails of the image */
 
 	PQclear(wiz_res);
 	gtk_notebook_detach_tab(notebook, scrolled_window);
