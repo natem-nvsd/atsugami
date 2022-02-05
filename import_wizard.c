@@ -1,22 +1,27 @@
+#include <ctype.h>
 #include <gtk/gtk.h>
 #include "import.h"
 #include <libpq-fe.h>
 #include "main.h"
 #include "notebook.h"
+#include "file_count.h"
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>
 #include "import_wizard.h"
+#include <wand/MagickWand.h>
 
 PGresult *wiz_res;
 GtkWidget *label0, *label1, *label2, *label3, *label4, *label5, *label6;
+//GtkEntry *entry0, *entry1, *entry2, *entry3, *entry5, *entry6;
 GtkEntry *entry0, *entry1, *entry2, *entry3, *entry5, *entry6;
 GtkTextView *tv;
 GtkTextBuffer *tb;
 GtkTextIter istart, iend;
 GtkWidget *import_thumb, *cbox, *can_button, *imp_button, *diag;
-GdkPixbuf *import_thumb_pixbuf;
+GdkPixbuf *import_thumb_pixbuf, *thumb_pixbuf;
+GError *thumb_write_err;
 GtkImage *diag_ico;
 gint page_count = 0;
 gboolean parent_bool = FALSE;
@@ -32,13 +37,7 @@ static void cancel_button_cb(void) {
 static void incomplete_diag(const char *label) {
 	GtkDialogFlags diag_flags = GTK_RESPONSE_ACCEPT;
 
-	diag = gtk_message_dialog_new(window, diag_flags, GTK_MESSAGE_ERROR, GTK_BUTTONS_OK, "Form Error");
-
-	gtk_message_dialog_format_secondary_text(diag, "%s", label);
-	gtk_dialog_run(GTK_DIALOG(diag));
-	gtk_widget_destroy(diag);
-
-	/* Set the labels of required text fields to STYLE_CLASS_DESTRUCTIVE_ACTION */
+	/* Set the labels of required text fields to STYLE_CLASS_ERROR */
 	contxt0 = gtk_widget_get_style_context(label1);
 	contxt1 = gtk_widget_get_style_context(label4);
 	contxt2 = gtk_widget_get_style_context(label6);
@@ -47,9 +46,16 @@ static void incomplete_diag(const char *label) {
 	gtk_style_context_add_class(contxt1, "error");
 	gtk_style_context_add_class(contxt2, "error");
 
-	gtk_label_set_text(label1, "Artist(s)						* This field is required.");
-	gtk_label_set_text(label4, "General						* This field is required.");
-	gtk_label_set_text(label6, "Rating						* This field is required.");
+	gtk_label_set_markup(label1, "Artist(s)						<b>* This field is required.</b>");
+	gtk_label_set_markup(label4, "General						<b>* This field is required.</b>");
+	gtk_label_set_markup(label6, "Rating						<b>* This field is required.</b>");
+
+	diag = gtk_message_dialog_new(window, diag_flags, GTK_MESSAGE_ERROR, GTK_BUTTONS_OK, "Form Error");
+
+	gtk_message_dialog_format_secondary_text(diag, "%s", label);
+	gtk_dialog_run(GTK_DIALOG(diag));
+	gtk_widget_destroy(diag);
+
 }
 
 static int import_button_cb(void) {
@@ -116,6 +122,10 @@ static int import_button_cb(void) {
 	char gen_tag[gen_size];
 	char met_tag[met_size];
 	char word_count[19];
+	char *cmd;
+	char *path;
+	char *size_names[5];
+	int size_res[5];
 
 	wiz_res = PQexec(conn, "BEGIN TRANSACTION");
 	PQclear(wiz_res);
@@ -164,8 +174,8 @@ static int import_button_cb(void) {
 	b = 0;
 
 	for (a = 0; a < strlen(art_arr); a++) {
-		if (isspace(art_arr[a]) == 0 || art_arr[a] == '%' || art_arr[a] == '\'' ||	// Preventing SQL injection
-		art_arr[a] == '"' || art_arr[a] == ';' || (art_arr[a] == '-' && art_arr[a + 1] == '-') || art_arr[a] == '*') {
+		if (isspace(art_arr[a]) == 0 || art_arr[a] != '%' || art_arr[a] != '\'' ||	// Preventing SQL injection
+		art_arr[a] != '"' || art_arr[a] != ';' || (art_arr[a] != '-' && art_arr[a + 1] != '-') || art_arr[a] != '*') {
 			art_tag[b] = art_arr[a];
 			++b;
 		}
@@ -263,8 +273,8 @@ static int import_button_cb(void) {
 	b = 0;
 
 	for (a = 0; a < strlen(cop_arr); a++) {
-		if (isspace(cop_arr[a]) == 0 || cop_arr[a] == '%' || cop_arr[a] == '\'' ||	// Preventing SQL injection
-		cop_arr[a] == '"' || cop_arr[a] == ';' || (cop_arr[a] == '-' && cop_arr[a + 1] == '-') || cop_arr[a] == '*') {
+		if (isspace(cop_arr[a]) == 0 || cop_arr[a] != '%' || cop_arr[a] != '\'' ||	// Preventing SQL injection
+		cop_arr[a] != '"' || cop_arr[a] != ';' || (cop_arr[a] != '-' && cop_arr[a + 1] != '-') || cop_arr[a] != '*') {
 			cop_tag[b] = cop_arr[a];
 			++b;
 		}
@@ -361,8 +371,8 @@ static int import_button_cb(void) {
 	b = 0;
 
 	for (a = 0; a < strlen(cha_arr); a++) {
-		if (isspace(cha_arr[a]) == 0 || cha_arr[a] == '%' || cha_arr[a] == '\'' ||	// Preventing SQL injection
-		cha_arr[a] == '"' || cha_arr[a] == ';' || (cha_arr[a] == '-' && cha_arr[a + 1] == '-') || cha_arr[a] == '*') {
+		if (isspace(cha_arr[a]) == 0 || cha_arr[a] != '%' || cha_arr[a] != '\'' ||	// Preventing SQL injection
+		cha_arr[a] != '"' || cha_arr[a] != ';' || (cha_arr[a] != '-' && cha_arr[a + 1] != '-') || cha_arr[a] != '*') {
 			cha_tag[b] = cha_arr[a];
 			++b;
 		}
@@ -459,8 +469,8 @@ static int import_button_cb(void) {
 	b = 0;
 
 	for (a = 0; a < strlen(gen_arr); a++) {
-		if (isspace(gen_arr[a]) == 0 || gen_arr[a] == '%' || gen_arr[a] == '\'' ||	// Preventing SQL injection
-		gen_arr[a] == '"' || gen_arr[a] == ';' || (gen_arr[a] == '-' && gen_arr[a + 1] == '-') || gen_arr[a] == '*') {
+		if (isspace(gen_arr[a]) == 0 || gen_arr[a] != '%' || gen_arr[a] != '\'' ||	// Preventing SQL injection
+		gen_arr[a] != '"' || gen_arr[a] != ';' || (gen_arr[a] != '-' && gen_arr[a + 1] != '-') || gen_arr[a] != '*') {
 			gen_tag[b] = gen_arr[a];
 			++b;
 		}
@@ -557,8 +567,8 @@ static int import_button_cb(void) {
 	b = 0;
 
 	for (a = 0; a < strlen(met_arr); a++) {
-		if (isspace(met_arr[a]) == 0 || met_arr[a] == '%' || met_arr[a] == '\'' ||	// Preventing SQL injection
-		met_arr[a] == '"' || met_arr[a] == ';' || (met_arr[a] == '-' && met_arr[a + 1] == '-') || met_arr[a] == '*') {
+		if (isspace(met_arr[a]) == 0 || met_arr[a] != '%' || met_arr[a] != '\'' ||	// Preventing SQL injection
+		met_arr[a] != '"' || met_arr[a] != ';' || (met_arr[a] != '-' && met_arr[a + 1] != '-') || met_arr[a] != '*') {
 			met_tag[b] = met_arr[a];
 			++b;
 		}
@@ -648,6 +658,7 @@ static int import_button_cb(void) {
 			b = 0;
 		}
 	}
+
 	sprintf(word_count, "%d", wc);
 	strcpy(query_string, "INSERT INTO public.tag_count (file_id, tag_count) VALUES (");
 	strcat(query_string, file_id);
@@ -669,19 +680,60 @@ static int import_button_cb(void) {
 		return 1;
 	}
 
-	file_count_update(file_label, vbox);
-
 	wiz_res = PQexec(conn, "COMMIT TRANSACTION;");
 
-	/* Move the file to the storage directory */
-	//const char cmd[999];
-	//strcpy(cmd, "mv ");
-	//strcat(cmd, import_file_path);
-	//strcat(cmd, " ");
-	//strcat(cmd, store_dir);
-	//system(cmd);
+	/* Create thumbnails of the image
+	 * Windows ports may not like the lack of file extensions.
+	 */
+	size_names[0] = "gigantic";
+	size_names[1] = "huge";
+	size_names[2] = "large";
+	size_names[3] = "medium";
+	size_names[4] = "small";
 
-	/* Create thumbnails of the image */
+	size_res[0] = 360;
+	size_res[1] = 270;
+	size_res[2] = 225;
+	size_res[3] = 180;
+	size_res[4] = 150;
+
+	wiz_res = PQexec(conn, "SELECT thumb_dir FROM public.settings;");
+	thumb_write_err = g_error_new(0x01, 1, "An error occured while creating the thumbnail.\n");
+	path = wiz_res;
+
+	for (a = 0; a <= 4; a++) {
+		thumb_pixbuf = gdk_pixbuf_new_from_file_at_scale(import_file_path, size_res[a], size_res[a], TRUE, &thumb_write_err);
+
+		strcpy(cmd, path);
+		strcat(cmd, "/");
+		sprintf(cmd, "%s", size_names[a]);
+		strcat(cmd, "/");
+		strcat(cmd, file_sha256);
+		gdk_pixbuf_save(thumb_pixbuf, cmd, "png", &thumb_write_err, NULL);
+		printf("%s\n", cmd);
+		strcpy(path, "");
+	}
+
+	PQclear(wiz_res);
+
+	/* Move the file to the storage directory */
+	wiz_res = PQexec(conn, "SELECT store_dir FROM public.settings;");
+	path = wiz_res;
+
+	PQclear(wiz_res);
+	strcpy(cmd, "mv ");
+	strcat(cmd, import_file_path);
+	strcat(cmd, " /");
+	strcat(cmd, path);
+	strcat(cmd, "/");
+	strcat(cmd, file_sha256);
+	system(cmd);
+
+	strcpy(path, "");
+	PQclear(wiz_res);
+
+	// Why is this an implicit declaration? file_count.h is included.
+	file_count_update(file_label, vbox);
 
 	PQclear(wiz_res);
 	gtk_notebook_detach_tab(notebook, scrolled_window);

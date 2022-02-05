@@ -3,8 +3,8 @@
 # Paths
 PREFIX = /usr
 
-GTKINC = `pkg-config --cflags gtk+-3.0 gcr-3`
-GTKLIB = `pkg-config --libs gtk+-3.0 gcr-3`
+GTKINC = `pkg-config --cflags gtk+-3.0`
+GTKLIB = `pkg-config --libs gtk+-3.0`
 
 GDKPIXBUFINC = `pkg-config --cflags gdk-pixbuf-2.0`
 GDKPIXBUFLIB = `pkg-config --libs gdk-pixbuf-2.0`

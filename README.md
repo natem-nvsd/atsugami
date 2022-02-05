@@ -28,13 +28,13 @@ TODO:
 *	Export function
 *	Tag list
 *	Tag blacklisting
+*	Locking on files being imported
 
 Dependencies
 ------------
 
 * PostgreSQL (Tested on 14 and 14.1)  
 * GTK3  
-* GCR 3 (build-time only)  
 * pkgconf (build-time ony)
 * libmagickwand
 * [BSD make (bmake)](https://github.com/natem-nvsd/bmake) (build-time only)

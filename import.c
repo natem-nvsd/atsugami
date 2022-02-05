@@ -16,6 +16,7 @@ static void open_response_cb(GtkNativeDialog *dialog, gint response_id, gpointer
 
 	if (response_id == GTK_RESPONSE_ACCEPT) {
 		/* Get the path of the file selected when the user presses "Import" */
+		// Create a lock on the file here lock_function(gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(native)));
 		file_path = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(native));
 		
 		/* Copy the path into `import_file_path`, since `file_path` is cleared when the dialog is destroyed. */
