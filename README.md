@@ -36,6 +36,7 @@ Dependencies
 * GTK3  
 * GCR 3 (build-time only)  
 * pkgconf (build-time ony)
+* libmagickwand
 * [BSD make (bmake)](https://github.com/natem-nvsd/bmake) (build-time only)
 
 Building and installation

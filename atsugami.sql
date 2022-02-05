@@ -84,25 +84,25 @@ thumb_dir TEXT UNIQUE NOT NULL,
 thumb_siz TEXT UNIQUE NOT NULL
 );
 
-ALTER TABLE public.children ADD FOREIGN KEY (child_id) REFERENCES public.files (id);
+ALTER TABLE public.children ADD FOREIGN KEY (child_id) REFERENCES public.files (id) ON DELETE CASCADE;
 
-ALTER TABLE public.children ADD FOREIGN KEY (parent_id) REFERENCES public.files (id);
+ALTER TABLE public.children ADD FOREIGN KEY (parent_id) REFERENCES public.files (id) ON DELETE CASCADE;
 
-ALTER TABLE public.tag_count ADD FOREIGN KEY (file_id) REFERENCES public.files (id);
+ALTER TABLE public.tag_count ADD FOREIGN KEY (file_id) REFERENCES public.files (id) ON DELETE CASCADE;
 
-ALTER TABLE public.favourites ADD FOREIGN KEY (file_id) REFERENCES public.files (id);
+ALTER TABLE public.favourites ADD FOREIGN KEY (file_id) REFERENCES public.files (id) ON DELETE CASCADE;
 
-ALTER TABLE public.files_tags ADD FOREIGN KEY (file_id) REFERENCES public.files (id);
+ALTER TABLE public.files_tags ADD FOREIGN KEY (file_id) REFERENCES public.files (id) ON DELETE CASCADE;
 
-ALTER TABLE public.files_tags ADD FOREIGN KEY (tag_id) REFERENCES public.tags (id);
+ALTER TABLE public.files_tags ADD FOREIGN KEY (tag_id) REFERENCES public.tags (id) ON DELETE CASCADE;
 
-ALTER TABLE public.tags_categories ADD FOREIGN KEY (tag_id) REFERENCES public.tags (id);
+ALTER TABLE public.tags_categories ADD FOREIGN KEY (tag_id) REFERENCES public.tags (id) ON DELETE CASCADE;
 
-ALTER TABLE public.tags_categories ADD FOREIGN KEY (category_id) REFERENCES public.categories (id);
+ALTER TABLE public.tags_categories ADD FOREIGN KEY (category_id) REFERENCES public.categories (id) ON DELETE CASCADE;
 
-ALTER TABLE public.blacklists ADD FOREIGN KEY (tag_id) REFERENCES public.tags (id);
+ALTER TABLE public.blacklists ADD FOREIGN KEY (tag_id) REFERENCES public.tags (id) ON DELETE CASCADE;
 
-ALTER TABLE public.wikis ADD FOREIGN KEY (tag_id) REFERENCES public.tags (id);
+ALTER TABLE public.wikis ADD FOREIGN KEY (tag_id) REFERENCES public.tags (id) ON DELETE CASCADE;
 
 CREATE INDEX ON public.files ("id", "sha256");
 

@@ -2,7 +2,6 @@
 
 # Paths
 PREFIX = /usr
-MANPREFIX = ${PREFIX}/share/man
 
 GTKINC = `pkg-config --cflags gtk+-3.0 gcr-3`
 GTKLIB = `pkg-config --libs gtk+-3.0 gcr-3`
@@ -14,9 +13,13 @@ GDKPIXBUFLIB = `pkg-config --libs gdk-pixbuf-2.0`
 LPQINC = `pkg-config --cflags libpq`
 LPQLIB = `pkg-config --libs libpq`
 
+# MagickWand libraries
+MAGICKWANDINC = `pkg-config --cflags MagickWand`
+MAGICKWANDLIB = `pkg-config --libs MagickWand`
+
 # includes and libs
-INCS = $(X11INC) $(GTKINC) $(CAIROINC) $(GDKPIXBUFINC) $(GDKINC) $(LPQINC)
-LIBS = $(X11LIB) $(GTKLIB) $(CAIROLIB) $(GDKPIXBUFLIB) $(LPQLIB) -lgthread-2.0
+INCS = $(GTKINC) $(GDKPIXBUFINC) $(GDKINC) $(MAGICKWANDINC) $(LPQINC)
+LIBS = $(GTKLIB) $(GDKPIXBUFLIB) $(LPQLIB) $(MAGICKWANDLIB) -lgthread-2.0
 
 # flags
 CFLAGS   = -g -std=c11 -pedantic -Wall -Wno-deprecated-declarations -D_FORTIFY_SOURCE=2 ${INCS}

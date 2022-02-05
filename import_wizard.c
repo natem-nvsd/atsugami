@@ -23,6 +23,7 @@ gboolean parent_bool = FALSE;
 gboolean child_bool = FALSE;
 gboolean has_children = FALSE;
 GtkWidget *header_box, *scrolled_window;
+GtkStyleContext *contxt0, *contxt1, *contxt2;
 
 static void cancel_button_cb(void) {
 	gtk_notebook_detach_tab(notebook, scrolled_window);
@@ -35,12 +36,24 @@ static void incomplete_diag(const char *label) {
 
 	gtk_message_dialog_format_secondary_text(diag, "%s", label);
 	gtk_dialog_run(GTK_DIALOG(diag));
-	//g_signal_connect(diag, "resonse", G_CALLBACK(cancel_button_cb), NULL);
-	//g_signal_connect(diag, "close", G_CALLBACK(cancel_button_cb), NULL);
-	g_signal_connect_after(diag, "button_release", G_CALLBACK(cancel_button_cb), NULL);
+	gtk_widget_destroy(diag);
+
+	/* Set the labels of required text fields to STYLE_CLASS_DESTRUCTIVE_ACTION */
+	contxt0 = gtk_widget_get_style_context(label1);
+	contxt1 = gtk_widget_get_style_context(label4);
+	contxt2 = gtk_widget_get_style_context(label6);
+
+	gtk_style_context_add_class(contxt0, "error");
+	gtk_style_context_add_class(contxt1, "error");
+	gtk_style_context_add_class(contxt2, "error");
+
+	gtk_label_set_text(label1, "Artist(s)						* This field is required.");
+	gtk_label_set_text(label4, "General						* This field is required.");
+	gtk_label_set_text(label6, "Rating						* This field is required.");
 }
 
 static int import_button_cb(void) {
+	/* Check if the text buffer was modified. This MUST be done before initializing text4. */
 	if (gtk_text_buffer_get_modified(tb) == TRUE) {
 		gtk_text_buffer_get_iter_at_offset(tb, &istart, 0);
 		gtk_text_buffer_get_iter_at_offset(tb, &iend, -1);
@@ -48,6 +61,12 @@ static int import_button_cb(void) {
 	else {
 		incomplete_diag("One or more fields were not filled.\nPlease complete them and try again.");
 
+		return 1;
+	}
+
+	/* Check if text fields are empty. */
+	if (strlen(gtk_entry_get_text(entry1)) == 0 || strlen(gtk_entry_get_text(entry6)) == 0) {
+		incomplete_diag("One or more fields were not filled.\nPlease complete them and try again.");
 		return 1;
 	}
 
@@ -61,6 +80,7 @@ static int import_button_cb(void) {
 	const char *text4 = gtk_text_buffer_get_text(tb, &istart, &iend, FALSE); /* General */
 	const char *text5 = gtk_entry_get_text(entry5);	/* Meta */
 	const char *text6 = gtk_entry_get_text(entry6);	/* Invisible */
+
 	const char *value0;
 	const char *value1;
 	const char *value2;
@@ -780,8 +800,6 @@ extern void import_wizard(GtkWidget *import_page, gpointer user_data) {
 	g_signal_connect(can_button, "clicked", G_CALLBACK(cancel_button_cb), NULL);
 	g_signal_connect(imp_button, "clicked", G_CALLBACK(import_button_cb), NULL);
 
-	/* Disable import button until the value of most fields */
-	
 	/* init stuff */
 	gtk_widget_show_all(import_page);
 	gtk_widget_show_all(scrolled_window);
@@ -790,9 +808,4 @@ extern void import_wizard(GtkWidget *import_page, gpointer user_data) {
 	gtk_notebook_set_tab_label_text(notebook, scrolled_window, "Import");
 	gtk_notebook_set_current_page(notebook, page_count);
 	gtk_notebook_set_tab_reorderable(notebook, scrolled_window, TRUE);
-
-	//while (gtk_text_buffer_get_modified(tb) == FALSE) {
-	//	gtk_widget_set_sensitive(imp_button, FALSE);
-	//}
-	//gtk_widget_set_sensitive(imp_button, TRUE);
 }

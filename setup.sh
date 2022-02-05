@@ -1,7 +1,6 @@
 #!/bin/sh
 # Prototype for future use in Atsugami
 
-USERNAME=`whoami`
 ATSUDIR=$HOME/.config/atsugami
 
 # Create the required directories
