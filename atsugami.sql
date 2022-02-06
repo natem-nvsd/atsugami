@@ -81,28 +81,29 @@ updated_at TIMESTAMP NOT NULL DEFAULT now()
 CREATE TABLE public.settings (
 store_dir TEXT UNIQUE NOT NULL,
 thumb_dir TEXT UNIQUE NOT NULL,
+last_dir TEXT NOT NULL,
 thumb_siz TEXT UNIQUE NOT NULL
 );
 
-ALTER TABLE public.children ADD FOREIGN KEY (child_id) REFERENCES public.files (id) ON DELETE CASCADE;
+ALTER TABLE public.children ADD FOREIGN KEY (child_id) REFERENCES public.files (id) ON DELETE RESTRICT;
 
-ALTER TABLE public.children ADD FOREIGN KEY (parent_id) REFERENCES public.files (id) ON DELETE CASCADE;
+ALTER TABLE public.children ADD FOREIGN KEY (parent_id) REFERENCES public.files (id) ON DELETE RESTRICT;
 
-ALTER TABLE public.tag_count ADD FOREIGN KEY (file_id) REFERENCES public.files (id) ON DELETE CASCADE;
+ALTER TABLE public.tag_count ADD FOREIGN KEY (file_id) REFERENCES public.files (id) ON DELETE RESTRICT;
 
-ALTER TABLE public.favourites ADD FOREIGN KEY (file_id) REFERENCES public.files (id) ON DELETE CASCADE;
+ALTER TABLE public.favourites ADD FOREIGN KEY (file_id) REFERENCES public.files (id) ON DELETE RESTRICT;
 
 ALTER TABLE public.files_tags ADD FOREIGN KEY (file_id) REFERENCES public.files (id) ON DELETE CASCADE;
 
-ALTER TABLE public.files_tags ADD FOREIGN KEY (tag_id) REFERENCES public.tags (id) ON DELETE CASCADE;
+ALTER TABLE public.files_tags ADD FOREIGN KEY (tag_id) REFERENCES public.tags (id) ON DELETE RESTRICT;
 
-ALTER TABLE public.tags_categories ADD FOREIGN KEY (tag_id) REFERENCES public.tags (id) ON DELETE CASCADE;
+ALTER TABLE public.tags_categories ADD FOREIGN KEY (tag_id) REFERENCES public.tags (id) ON DELETE RESTRICT;
 
 ALTER TABLE public.tags_categories ADD FOREIGN KEY (category_id) REFERENCES public.categories (id) ON DELETE CASCADE;
 
-ALTER TABLE public.blacklists ADD FOREIGN KEY (tag_id) REFERENCES public.tags (id) ON DELETE CASCADE;
+ALTER TABLE public.blacklists ADD FOREIGN KEY (tag_id) REFERENCES public.tags (id) ON DELETE RESTRICT;
 
-ALTER TABLE public.wikis ADD FOREIGN KEY (tag_id) REFERENCES public.tags (id) ON DELETE CASCADE;
+ALTER TABLE public.wikis ADD FOREIGN KEY (tag_id) REFERENCES public.tags (id) ON DELETE RESTRICT;
 
 CREATE INDEX ON public.files ("id", "sha256");
 
@@ -120,15 +121,15 @@ CREATE INDEX ON public.wikis ("body_text");
 
 --
 -- Set tag categories.
--- Tag categories have these values for compatiblity with Danbooru.
+-- Compatitbility with Danbooru should be done in Atsugami; NOT THE DATABASE.
 --
 
-INSERT INTO public.categories (id, name) VALUES (0, 'general');
+INSERT INTO public.categories (id, name) VALUES (0, 'general');		-- Danbooru: 0
 
-INSERT INTO public.categories (id, name) VALUES (1, 'artist');
+INSERT INTO public.categories (id, name) VALUES (1, 'artist');		-- Danbooru: 1
 
-INSERT INTO public.categories (id, name) VALUES (3, 'copyright');
+INSERT INTO public.categories (id, name) VALUES (2, 'copyright');	-- Danbooru: 3
 
-INSERT INTO public.categories (id, name) VALUES (4, 'character');
+INSERT INTO public.categories (id, name) VALUES (3, 'character');	-- Danbooru: 4
 
-INSERT INTO public.categories (id, name) VALUES (5, 'meta');
+INSERT INTO public.categories (id, name) VALUES (4, 'meta');		-- Danbooru: 5

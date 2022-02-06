@@ -19,9 +19,8 @@ GtkEntry *entry0, *entry1, *entry2, *entry3, *entry5, *entry6;
 GtkTextView *tv;
 GtkTextBuffer *tb;
 GtkTextIter istart, iend;
-GtkWidget *import_thumb, *cbox, *can_button, *imp_button, *diag;
+GtkWidget *import_thumb, *cbox, *can_button, *imp_button;
 GdkPixbuf *import_thumb_pixbuf, *thumb_pixbuf;
-GError *thumb_write_err;
 GtkImage *diag_ico;
 gint page_count = 0;
 gboolean parent_bool = FALSE;
@@ -35,6 +34,7 @@ static void cancel_button_cb(void) {
 }
 
 static void incomplete_diag(const char *label) {
+	GtkWidget *diag;
 	GtkDialogFlags diag_flags = GTK_RESPONSE_ACCEPT;
 
 	/* Set the labels of required text fields to STYLE_CLASS_ERROR */
@@ -58,6 +58,18 @@ static void incomplete_diag(const char *label) {
 
 }
 
+static void tag_process_fail_diag(const char *title, const char *body) {
+	GtkWidget *diag;
+	GtkDialogFlags diag_flags;
+
+	diag_flags = GTK_RESPONSE_ACCEPT;
+	diag = gtk_message_dialog_new(window, diag_flags, GTK_MESSAGE_ERROR, GTK_BUTTONS_OK, "%s", title);
+
+	gtk_message_dialog_format_secondary_text(diag, "%s", body);
+	gtk_dialog_run(GTK_DIALOG(diag));
+	gtk_widget_destroy(diag);
+}
+
 static int import_button_cb(void) {
 	/* Check if the text buffer was modified. This MUST be done before initializing text4. */
 	if (gtk_text_buffer_get_modified(tb) == TRUE) {
@@ -76,56 +88,51 @@ static int import_button_cb(void) {
 		return 1;
 	}
 
-	int a, b, c;
+	int a, b = 0, c;	// What do these represent? Rename them to be more informative.
+	int tag_id, tag_number;
 	int wc = 0;
-	size_t d = 0;
-	const char *text0 = gtk_entry_get_text(entry0);	/* Source */
-	const char *text1 = gtk_entry_get_text(entry1);	/* Artists */
-	const char *text2 = gtk_entry_get_text(entry2);	/* Copyrights */
-	const char *text3 = gtk_entry_get_text(entry3);	/* Characters */
-	const char *text4 = gtk_text_buffer_get_text(tb, &istart, &iend, FALSE); /* General */
-	const char *text5 = gtk_entry_get_text(entry5);	/* Meta */
-	const char *text6 = gtk_entry_get_text(entry6);	/* Invisible */
+	size_t d = 0;	// Again, what is this?
+	size_t text0_size = (strlen(gtk_entry_get_text(entry0) + 1));
+	size_t text1_size = (strlen(gtk_entry_get_text(entry1) + 1));
+	size_t text2_size = (strlen(gtk_entry_get_text(entry2) + 1));
+	size_t text3_size = (strlen(gtk_entry_get_text(entry3) + 1));
+	size_t text4_size = (strlen(gtk_text_buffer_get_text(tb, &istart, &iend, FALSE) + 1));
+	size_t text5_size = (strlen(gtk_entry_get_text(entry5) + 1));			
+//	size_t pat_size = (strlen(		/* Path */
 
-	const char *value0;
-	const char *value1;
-	const char *value2;
-	const char *value3;
-	const char *value4;
-	const char *value5;
-	const char *value6;
+	char *text0 = (char *) malloc(text0_size);	// Source		NOT FREED
+	char *text1 = (char *) malloc(text1_size);	// Artists		NOT FREED
+	char *text2 = (char *) malloc(text2_size);	// Copyrights		NOT FREED
+	char *text3 = (char *) malloc(text3_size);	// Characters		NOT FREED
+	char *text4 = (char *) malloc(text4_size);	// General		NOT FREED
+	char *text5 = (char *) malloc(text5_size);	// Meta			NOT FREED
+	char *text6 = (char *) malloc(2);		// Rating		NOT FREED
 
-	strcpy(&value0, &text0);
-	strcpy(&value1, &text1);
-	strcpy(&value2, &text2);
-	strcpy(&value3, &text3);
-	strcpy(&value4, &text4);
-	strcpy(&value5, &text5);
-	strcpy(&value6, &text6);
+	strcpy(text0, gtk_entry_get_text(entry0));
+	strcpy(text1, gtk_entry_get_text(entry1));
+	strcpy(text2, gtk_entry_get_text(entry2));
+	strcpy(text3, gtk_entry_get_text(entry3));
+	strcpy(text4, gtk_text_buffer_get_text(tb, &istart, &iend, FALSE));
+	strcpy(text5, gtk_entry_get_text(entry5));
+	strcpy(text6, gtk_entry_get_text(entry6));
 
-	const int src_size = strlen(&value0);
-	const int art_size = strlen(&value1);
-	const int cop_size = strlen(&value2);
-	const int cha_size = strlen(&value3);
-	const int gen_size = strlen(&value4);
-	const int met_size = strlen(&value5);
-	const char query_string[159 + src_size];
-	char art_arr[art_size + 2];
-	char cop_arr[cop_size + 3];
-	char cha_arr[cha_size + 2];
-	char gen_arr[gen_size + 2];
-	char met_arr[met_size + 2];
-	char file_id[19];
-	char art_tag[art_size];
-	char cop_tag[cop_size];
-	char cha_tag[cha_size];
-	char gen_tag[gen_size];
-	char met_tag[met_size];
+	char query_string[155 + text0_size];
+	char file_id[sizeof(long)];
 	char word_count[19];
-	char *cmd;
-	char *path;
+	char *cmd = NULL;
+	char *path = NULL;
 	char *size_names[5];
 	int size_res[5];
+
+	printf("%s\n", text0);
+	printf("%s\n", text1);
+	printf("%s\n", text2);
+	printf("%s\n", text3);
+	printf("%s\n", text4);
+	printf("%s\n", text5);
+	printf("%s\n", text6);
+
+	return 1;
 
 	wiz_res = PQexec(conn, "BEGIN TRANSACTION");
 	PQclear(wiz_res);
@@ -159,32 +166,29 @@ static int import_button_cb(void) {
 		PQclear(wiz_res);
 
 		wiz_res = PQexec(conn, "ROLLBACK TRANSACTION;");
-		PQclear(wiz_res);
+
 		gtk_notebook_detach_tab(notebook, scrolled_window);
 		fprintf(stderr, "Command failed.\n");
-		// Spawn an error dialog here
+		tag_process_fail_diag("Error", PQerrorMessage(conn));
+		PQclear(wiz_res);
 		return 1;
 	}
 
 	/* Create artist tags */
 	// It may be possible to use only one of this for loop
-	strcpy(art_arr, text1);
-	strcat(art_arr, " ");
-
-	b = 0;
-
+		// doing the for loop now.
 	for (a = 0; a < strlen(art_arr); a++) {
-		if (isspace(art_arr[a]) == 0 || art_arr[a] != '%' || art_arr[a] != '\'' ||	// Preventing SQL injection
-		art_arr[a] != '"' || art_arr[a] != ';' || (art_arr[a] != '-' && art_arr[a + 1] != '-') || art_arr[a] != '*') {
+		if (isspace(art_arr[a]) == 0) {
 			art_tag[b] = art_arr[a];
 			++b;
 		}
 		else {
+			printf("%s\n", art_tag);
 			++wc;
 			d = strlen(art_tag);
 			art_tag[b] = '\0';
 			char *tag_id;
-			const char query[94 + d];
+			char query[94 + d];
 
 			/* Insert the tag into the database */
 			strcpy(query, "INSERT INTO public.tags (name) VALUES ('");
@@ -223,9 +227,10 @@ static int import_button_cb(void) {
 					PQclear(wiz_res);
 
 					wiz_res = PQexec(conn, "ROLLBACK TRANSACTION;");
-					PQclear(wiz_res);
+
 					gtk_notebook_detach_tab(notebook, scrolled_window);
-					// Spawn an error dialog here
+					tag_process_fail_diag("Error", PQerrorMessage(conn));
+					PQclear(wiz_res);
 					return 1;
 				}
 
@@ -241,9 +246,10 @@ static int import_button_cb(void) {
 					PQclear(wiz_res);
 
 					wiz_res = PQexec(conn, "ROLLBACK TRANSACTION;");
-					PQclear(wiz_res);
+
 					gtk_notebook_detach_tab(notebook, scrolled_window);
-					// Spawn an error dialog here
+					tag_process_fail_diag("Error", PQerrorMessage(conn));
+					PQclear(wiz_res);
 					return 1;
 				}
 			}
@@ -252,407 +258,14 @@ static int import_button_cb(void) {
 				PQclear(wiz_res);
 
 				wiz_res = PQexec(conn, "ROLLBACK TRANSACTION;");
-				PQclear(wiz_res);
+
 				gtk_notebook_detach_tab(notebook, scrolled_window);
-				// Spawn an error dialog here
+				tag_process_fail_diag("Error", PQerrorMessage(conn));
+				PQclear(wiz_res);
 				return 1;
 			}
 			for (c = 0; c < d; c++) {
 				art_tag[c] = ' ';
-			}
-
-			b = 0;
-		}
-	}
-
-	/* Create copyright tags */
-	strcpy(cop_arr, text2);
-	strcat(cop_arr, " ");
-
-	d = 0;
-	b = 0;
-
-	for (a = 0; a < strlen(cop_arr); a++) {
-		if (isspace(cop_arr[a]) == 0 || cop_arr[a] != '%' || cop_arr[a] != '\'' ||	// Preventing SQL injection
-		cop_arr[a] != '"' || cop_arr[a] != ';' || (cop_arr[a] != '-' && cop_arr[a + 1] != '-') || cop_arr[a] != '*') {
-			cop_tag[b] = cop_arr[a];
-			++b;
-		}
-		else {
-			++wc;
-			d = strlen(cop_tag);
-			cop_tag[b] = '\0';
-			char *tag_id;
-			const char query[94 + d];
-
-			/* Insert the tag into the database */
-			strcpy(query, "INSERT INTO public.tags (name) VALUES ('");
-			for (c = 0; c < 1; c++) {
-				strcat(query, &cop_tag[c]);
-			}
-			strcat(query, "') ON CONFLICT DO NOTHING;");
-			wiz_res = PQexec(conn, query);
-			strcpy(query, "");
-
-			if (PQresultStatus(wiz_res) == PGRES_COMMAND_OK) {
-				PQclear(wiz_res);
-
-				strcpy(query, "SELECT id FROM public.tags WHERE name = '");
-				for (c = 0; c < 1; c++) {
-					strcat(query, &cop_tag[c]);
-				}
-
-				strcat(query, "';");
-
-				wiz_res = PQexec(conn, &query);
-				tag_id = PQgetvalue(wiz_res, 0, 0);
-
-				strcpy(&query, "");
-				PQclear(wiz_res);
-
-				/* Add the tag to the bridge */
-				strcpy(&query, "INSERT INTO public.tags_categories (tag_id, category_id) VALUES (");
-				strcat(&query, tag_id);
-				strcat(&query, ", 3);");
-				wiz_res = PQexec(conn, &query);
-
-				if (PQresultStatus(wiz_res) != PGRES_COMMAND_OK) {
-					fprintf(stderr, "%s\n", PQerrorMessage(conn));
-					PQclear(wiz_res);
-
-					wiz_res = PQexec(conn, "ROLLBACK TRANSACTION;");
-					PQclear(wiz_res);
-					gtk_notebook_detach_tab(notebook, scrolled_window);
-					// Spawn an error dialog here
-					return 1;
-				}
-
-				/* Add the tag to the file-tag bridge */
-				strcpy(&query, "INSERT INTO public.files_tags (file_id, category_id) VALUES (");
-				strcat(&query, file_id);
-				strcat(&query, ", ");
-				strcat(&query, tag_id);
-				strcat(&query, ");");
-
-				if (PQresultStatus(wiz_res) != PGRES_COMMAND_OK) {
-					fprintf(stderr, "%s\n", PQerrorMessage(conn));
-					PQclear(wiz_res);
-
-					wiz_res = PQexec(conn, "ROLLBACK TRANSACTION;");
-					PQclear(wiz_res);
-					gtk_notebook_detach_tab(notebook, scrolled_window);
-					// Spawn an error dialog here
-					return 1;
-				}
-			}
-			else {
-				fprintf(stderr, "%s\n", PQerrorMessage(conn));
-				PQclear(wiz_res);
-
-				wiz_res = PQexec(conn, "ROLLBACK TRANSACTION;");
-				PQclear(wiz_res);
-				gtk_notebook_detach_tab(notebook, scrolled_window);
-				// Spawn an error dialog here
-				return 1;
-			}
-			for (c = 0; c < d; c++) {
-				cop_tag[c] = ' ';
-			}
-
-			b = 0;
-		}
-	}
-
-	/* Create character tags */
-	strcpy(cha_arr, text3);
-	strcat(cha_arr, " ");
-
-	d = 0;
-	b = 0;
-
-	for (a = 0; a < strlen(cha_arr); a++) {
-		if (isspace(cha_arr[a]) == 0 || cha_arr[a] != '%' || cha_arr[a] != '\'' ||	// Preventing SQL injection
-		cha_arr[a] != '"' || cha_arr[a] != ';' || (cha_arr[a] != '-' && cha_arr[a + 1] != '-') || cha_arr[a] != '*') {
-			cha_tag[b] = cha_arr[a];
-			++b;
-		}
-		else {
-			++wc;
-			d = strlen(cha_tag);
-			cha_tag[b] = '\0';
-			char *tag_id;
-			const char query[94 + d];
-
-			/* Insert the tag into the database */
-			strcpy(query, "INSERT INTO public.tags (name) VALUES ('");
-			for (c = 0; c < 1; c++) {
-				strcat(query, &cha_tag[c]);
-			}
-			strcat(query, "') ON CONFLICT DO NOTHING;");
-			wiz_res = PQexec(conn, query);
-			strcpy(query, "");
-
-			if (PQresultStatus(wiz_res) == PGRES_COMMAND_OK) {
-				PQclear(wiz_res);
-
-				strcpy(query, "SELECT id FROM public.tags WHERE name = '");
-				for (c = 0; c < 1; c++) {
-					strcat(query, &cha_tag[c]);
-				}
-
-				strcat(query, "';");
-
-				wiz_res = PQexec(conn, &query);
-				tag_id = PQgetvalue(wiz_res, 0, 0);
-
-				strcpy(&query, "");
-				PQclear(wiz_res);
-
-				/* Add the tag to the bridge */
-				strcpy(&query, "INSERT INTO public.tags_categories (tag_id, category_id) VALUES (");
-				strcat(&query, tag_id);
-				strcat(&query, ", 4);");
-				wiz_res = PQexec(conn, &query);
-
-				if (PQresultStatus(wiz_res) != PGRES_COMMAND_OK) {
-					fprintf(stderr, "%s\n", PQerrorMessage(conn));
-					PQclear(wiz_res);
-
-					wiz_res = PQexec(conn, "ROLLBACK TRANSACTION;");
-					PQclear(wiz_res);
-					gtk_notebook_detach_tab(notebook, scrolled_window);
-					// Spawn an error dialog here
-					return 1;
-				}
-
-				/* Add the tag to the file-tag bridge */
-				strcpy(&query, "INSERT INTO public.files_tags (file_id, category_id) VALUES (");
-				strcat(&query, file_id);
-				strcat(&query, ", ");
-				strcat(&query, tag_id);
-				strcat(&query, ");");
-
-				if (PQresultStatus(wiz_res) != PGRES_COMMAND_OK) {
-					fprintf(stderr, "%s\n", PQerrorMessage(conn));
-					PQclear(wiz_res);
-
-					wiz_res = PQexec(conn, "ROLLBACK TRANSACTION;");
-					PQclear(wiz_res);
-					gtk_notebook_detach_tab(notebook, scrolled_window);
-					// Spawn an error dialog here
-					return 1;
-				}
-			}
-			else {
-				fprintf(stderr, "%s\n", PQerrorMessage(conn));
-				PQclear(wiz_res);
-
-				wiz_res = PQexec(conn, "ROLLBACK TRANSACTION;");
-				PQclear(wiz_res);
-				gtk_notebook_detach_tab(notebook, scrolled_window);
-				// Spawn an error dialog here
-				return 1;
-			}
-			for (c = 0; c < d; c++) {
-				cha_tag[c] = ' ';
-			}
-
-			b = 0;
-		}
-	}
-
-	/* Create general tags */
-	strcpy(gen_arr, text5);
-	strcat(gen_arr, " ");
-
-	d = 0;
-	b = 0;
-
-	for (a = 0; a < strlen(gen_arr); a++) {
-		if (isspace(gen_arr[a]) == 0 || gen_arr[a] != '%' || gen_arr[a] != '\'' ||	// Preventing SQL injection
-		gen_arr[a] != '"' || gen_arr[a] != ';' || (gen_arr[a] != '-' && gen_arr[a + 1] != '-') || gen_arr[a] != '*') {
-			gen_tag[b] = gen_arr[a];
-			++b;
-		}
-		else {
-			++wc;
-			d = strlen(gen_tag);
-			gen_tag[b] = '\0';
-			char *tag_id;
-			const char query[94 + d];
-
-			/* Insert the tag into the database */
-			strcpy(query, "INSERT INTO public.tags (name) VALUES ('");
-			for (c = 0; c < 1; c++) {
-				strcat(query, &gen_tag[c]);
-			}
-			strcat(query, "') ON CONFLICT DO NOTHING;");
-			wiz_res = PQexec(conn, query);
-			strcpy(query, "");
-
-			if (PQresultStatus(wiz_res) == PGRES_COMMAND_OK) {
-				PQclear(wiz_res);
-
-				strcpy(query, "SELECT id FROM public.tags WHERE name = '");
-				for (c = 0; c < 1; c++) {
-					strcat(query, &gen_tag[c]);
-				}
-
-				strcat(query, "';");
-
-				wiz_res = PQexec(conn, &query);
-				tag_id = PQgetvalue(wiz_res, 0, 0);
-
-				strcpy(&query, "");
-				PQclear(wiz_res);
-
-				/* Add the tag to the bridge */
-				strcpy(&query, "INSERT INTO public.tags_categories (tag_id, category_id) VALUES (");
-				strcat(&query, tag_id);
-				strcat(&query, ", 0);");
-				wiz_res = PQexec(conn, &query);
-
-				if (PQresultStatus(wiz_res) != PGRES_COMMAND_OK) {
-					fprintf(stderr, "%s\n", PQerrorMessage(conn));
-					PQclear(wiz_res);
-
-					wiz_res = PQexec(conn, "ROLLBACK TRANSACTION;");
-					PQclear(wiz_res);
-					gtk_notebook_detach_tab(notebook, scrolled_window);
-					// Spawn an error dialog here
-					return 1;
-				}
-
-				/* Add the tag to the file-tag bridge */
-				strcpy(&query, "INSERT INTO public.files_tags (file_id, category_id) VALUES (");
-				strcat(&query, file_id);
-				strcat(&query, ", ");
-				strcat(&query, tag_id);
-				strcat(&query, ");");
-
-				if (PQresultStatus(wiz_res) != PGRES_COMMAND_OK) {
-					fprintf(stderr, "%s\n", PQerrorMessage(conn));
-					PQclear(wiz_res);
-
-					wiz_res = PQexec(conn, "ROLLBACK TRANSACTION;");
-					PQclear(wiz_res);
-					gtk_notebook_detach_tab(notebook, scrolled_window);
-					// Spawn an error dialog here
-					return 1;
-				}
-			}
-			else {
-				fprintf(stderr, "%s\n", PQerrorMessage(conn));
-				PQclear(wiz_res);
-
-				wiz_res = PQexec(conn, "ROLLBACK TRANSACTION;");
-				PQclear(wiz_res);
-				gtk_notebook_detach_tab(notebook, scrolled_window);
-				// Spawn an error dialog here
-				return 1;
-			}
-			for (c = 0; c < d; c++) {
-				gen_tag[c] = ' ';
-			}
-
-			b = 0;
-		}
-	}
-
-	/* Create meta tags */
-	strcpy(met_arr, text5);
-	strcat(met_arr, " ");
-
-	d = 0;
-	b = 0;
-
-	for (a = 0; a < strlen(met_arr); a++) {
-		if (isspace(met_arr[a]) == 0 || met_arr[a] != '%' || met_arr[a] != '\'' ||	// Preventing SQL injection
-		met_arr[a] != '"' || met_arr[a] != ';' || (met_arr[a] != '-' && met_arr[a + 1] != '-') || met_arr[a] != '*') {
-			met_tag[b] = met_arr[a];
-			++b;
-		}
-		else {
-			++wc;
-			d = strlen(met_tag);
-			met_tag[b] = '\0';
-			char *tag_id;
-			const char query[94 + d];
-
-			/* Insert the tag into the database */
-			strcpy(query, "INSERT INTO public.tags (name) VALUES ('");
-			for (c = 0; c < 1; c++) {
-				strcat(query, &met_tag[c]);
-			}
-			strcat(query, "') ON CONFLICT DO NOTHING;");
-			wiz_res = PQexec(conn, query);
-			strcpy(query, "");
-
-			if (PQresultStatus(wiz_res) == PGRES_COMMAND_OK) {
-				PQclear(wiz_res);
-
-				strcpy(query, "SELECT id FROM public.tags WHERE name = '");
-				for (c = 0; c < 1; c++) {
-					strcat(query, &met_tag[c]);
-				}
-
-				strcat(query, "';");
-
-				wiz_res = PQexec(conn, &query);
-				tag_id = PQgetvalue(wiz_res, 0, 0);
-
-				strcpy(&query, "");
-				PQclear(wiz_res);
-
-				/* Add the tag to the tag-category bridge */
-				strcpy(&query, "INSERT INTO public.tags_categories (tag_id, category_id) VALUES (");
-				strcat(&query, tag_id);
-				strcat(&query, ", 5);");
-				wiz_res = PQexec(conn, &query);
-
-				if (PQresultStatus(wiz_res) != PGRES_COMMAND_OK) {
-					fprintf(stderr, "%s\n", PQerrorMessage(conn));
-					PQclear(wiz_res);
-
-					wiz_res = PQexec(conn, "ROLLBACK TRANSACTION;");
-					PQclear(wiz_res);
-					gtk_notebook_detach_tab(notebook, scrolled_window);
-					// Spawn an error dialog here
-					return 1;
-				}
-
-				/* Add the tag to the file-tag bridge */
-				strcpy(&query, "INSERT INTO public.files_tags (file_id, category_id) VALUES (");
-				strcat(&query, file_id);
-				strcat(&query, ", ");
-				strcat(&query, tag_id);
-				strcat(&query, ");");
-
-				if (PQresultStatus(wiz_res) != PGRES_COMMAND_OK) {
-					fprintf(stderr, "%s\n", PQerrorMessage(conn));
-					PQclear(wiz_res);
-
-					wiz_res = PQexec(conn, "ROLLBACK TRANSACTION;");
-					PQclear(wiz_res);
-					gtk_notebook_detach_tab(notebook, scrolled_window);
-					// Spawn an error dialog here
-					return 1;
-				}
-			}
-
-			else {
-				fprintf(stderr, "%s\n", PQerrorMessage(conn));
-				PQclear(wiz_res);
-
-				wiz_res = PQexec(conn, "ROLLBACK TRANSACTION;");
-				PQclear(wiz_res);
-				gtk_notebook_detach_tab(notebook, scrolled_window);
-				// Spawn an error dialog here
-				return 1;
-			}
-
-			for (c = 0; c < d; c++) {
-				met_tag[c] = ' ';
 			}
 
 			b = 0;
@@ -674,9 +287,10 @@ static int import_button_cb(void) {
 		PQclear(wiz_res);
 
 		wiz_res = PQexec(conn, "ROLLBACK TRANSACTION;");
-		PQclear(wiz_res);
+
 		gtk_notebook_detach_tab(notebook, scrolled_window);
-		// Spawn an error dialog here
+		tag_process_fail_diag("Error", PQerrorMessage(conn));
+		PQclear(wiz_res);
 		return 1;
 	}
 
@@ -685,31 +299,37 @@ static int import_button_cb(void) {
 	/* Create thumbnails of the image
 	 * Windows ports may not like the lack of file extensions.
 	 */
+	GError *thumb_write_err;
+
 	size_names[0] = "gigantic";
 	size_names[1] = "huge";
 	size_names[2] = "large";
 	size_names[3] = "medium";
 	size_names[4] = "small";
-
 	size_res[0] = 360;
 	size_res[1] = 270;
 	size_res[2] = 225;
 	size_res[3] = 180;
 	size_res[4] = 150;
-
+	thumb_write_err = g_error_new(1, 1, "An error occured while creating the thumbnail.");
 	wiz_res = PQexec(conn, "SELECT thumb_dir FROM public.settings;");
-	thumb_write_err = g_error_new(0x01, 1, "An error occured while creating the thumbnail.\n");
-	path = wiz_res;
 
 	for (a = 0; a <= 4; a++) {
-		thumb_pixbuf = gdk_pixbuf_new_from_file_at_scale(import_file_path, size_res[a], size_res[a], TRUE, &thumb_write_err);
+		//thumb_pixbuf = gdk_pixbuf_new_from_file_at_scale(import_file_path, size_res[a], size_res[a], TRUE, &thumb_write_err);
+		thumb_pixbuf = gdk_pixbuf_new_from_file_at_scale(import_file_path, size_res[a], size_res[a], TRUE, NULL);
 
-		strcpy(cmd, path);
+		printf("strcpy\n");
+		strcpy(cmd, PQgetvalue(wiz_res, 0, 0));
 		strcat(cmd, "/");
 		sprintf(cmd, "%s", size_names[a]);
 		strcat(cmd, "/");
 		strcat(cmd, file_sha256);
-		gdk_pixbuf_save(thumb_pixbuf, cmd, "png", &thumb_write_err, NULL);
+		//gdk_pixbuf_save(thumb_pixbuf, cmd, "png", &thumb_write_err, NULL);
+	//	gdk_pixbuf_save(thumb_pixbuf, cmd, "png", &thumb_write_err);
+		gdk_pixbuf_save(thumb_pixbuf, cmd, "jpeg", &thumb_write_err, "quality", "100", NULL);
+
+	//	gdk_pixbuf_save(pixbuf, handle, "jpeg", &error, "quality", "100", NULL);
+
 		printf("%s\n", cmd);
 		strcpy(path, "");
 	}
@@ -718,13 +338,12 @@ static int import_button_cb(void) {
 
 	/* Move the file to the storage directory */
 	wiz_res = PQexec(conn, "SELECT store_dir FROM public.settings;");
-	path = wiz_res;
+	printf("path: %s\n", PQgetvalue(wiz_res, 0, 0));
 
-	PQclear(wiz_res);
 	strcpy(cmd, "mv ");
 	strcat(cmd, import_file_path);
 	strcat(cmd, " /");
-	strcat(cmd, path);
+	strcat(cmd, PQgetvalue(wiz_res, 0, 0));
 	strcat(cmd, "/");
 	strcat(cmd, file_sha256);
 	system(cmd);
