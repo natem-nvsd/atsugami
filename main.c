@@ -83,12 +83,6 @@ extern void destroy_window(gpointer user_data) {	/* this doesn't close the progr
 }
 
 int main(int argc, char *argv[]) {
-	conn = PQconnectdb(conninfo);	/* Connect to PostgreSQL
-					 *
-					 * If the user running Atsugami does not have a PostgreSQL role,
-					 * or an Atsugami database, there will be a segmentation fault.
-					 */
-
 	/* THis is in order of appearance */
 	GtkWidget *menu_bar;
 	GtkWidget *toolbar;
@@ -100,14 +94,30 @@ int main(int argc, char *argv[]) {
 
 	/* Window definition */
 	window = GTK_WIDGET(gtk_window_new(GTK_WINDOW_TOPLEVEL));
-	g_signal_connect(window, "destroy", G_CALLBACK(gtk_main_quit), NULL);
-
 	actions = (GActionGroup*)g_simple_action_group_new();
+	conn = PQconnectdb(conninfo);	/* Connect to PostgreSQL */
+	vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
+
+	if (PQstatus(conn) != CONNECTION_OK) {
+		GtkWidget *diag;
+		GtkDialogFlags diag_flags = GTK_RESPONSE_ACCEPT;
+
+		diag = gtk_message_dialog_new(window, diag_flags, GTK_MESSAGE_ERROR, GTK_BUTTONS_OK, "Database error");
+
+		gtk_message_dialog_format_secondary_text(diag, "Atsugami encountered a non-recoverable error with the database.\nAre you sure PostreSQL is installed or the database has been setup?");
+		gtk_window_set_position(GTK_DIALOG(diag), GTK_WIN_POS_CENTER_ALWAYS);
+		gtk_window_set_resizable(GTK_DIALOG(diag), FALSE);
+		gtk_dialog_run(GTK_DIALOG(diag));
+		gtk_widget_destroy(diag);
+		PQfinish(conn);
+		return 1;
+	}
+
+	g_signal_connect(window, "destroy", G_CALLBACK(gtk_main_quit), NULL);
 	//g_action_map_add_action_entries(G_ACTION_MAP(actions), app_entries, G_N_ELEMENTS(app_entries), window);
 	gtk_widget_insert_action_group(window, "app", actions);
 
 	/* Create the virtical box */
-	vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
 	gtk_container_set_border_width(GTK_CONTAINER(vbox), 0);
 	gtk_container_add(GTK_CONTAINER(window), vbox);
 

@@ -84,12 +84,12 @@ static int import_button_cb(void) {
 
 	char *tag_arr[6];
 	int wc = 0;
-	size_t text0_size = (strlen(gtk_entry_get_text(entry0) + 1));
-	size_t text1_size = (strlen(gtk_entry_get_text(entry1) + 1));
-	size_t text2_size = (strlen(gtk_entry_get_text(entry2) + 1));
-	size_t text3_size = (strlen(gtk_entry_get_text(entry3) + 1));
-	size_t text4_size = (strlen(gtk_text_buffer_get_text(tb, &istart, &iend, FALSE) + 1));
-	size_t text5_size = (strlen(gtk_entry_get_text(entry5) + 1));
+	const size_t text0_size = (strlen(gtk_entry_get_text(entry0) + 1));
+	const size_t text1_size = (strlen(gtk_entry_get_text(entry1) + 1));
+	const size_t text2_size = (strlen(gtk_entry_get_text(entry2) + 1));
+	const size_t text3_size = (strlen(gtk_entry_get_text(entry3) + 1));
+	const size_t text4_size = (strlen(gtk_text_buffer_get_text(tb, &istart, &iend, FALSE) + 1));
+	const size_t text5_size = (strlen(gtk_entry_get_text(entry5)));
 
 	/* Check if text fields are empty. */
 	if (text1_size == 0 || strlen(gtk_entry_get_text(entry6)) == 0) {
@@ -97,25 +97,40 @@ static int import_button_cb(void) {
 		return 1;
 	}
 
-	//if (text1_size == 1 || text2_size == 1 ||
-
 	char text0[text0_size];
 	char text1[text1_size];
 	char text2[text2_size];
 	char text3[text3_size];
 	char text4[text4_size];
 	char text5[text5_size];
-	char text6[1];
+	char text6[2];
+
+	printf("text2: '%s'\n", gtk_entry_get_text(entry2));
+	printf("text3: '%s'\n\n", gtk_entry_get_text(entry3));
 
 	sprintf(text0, "%s", gtk_entry_get_text(entry0));				// Source
-	sprintf(text1, "%s", gtk_entry_get_text(entry1));				// Artist
-	sprintf(text2, "%s", gtk_entry_get_text(entry2));				// Copyrights
-	sprintf(text3, "%s", gtk_entry_get_text(entry3));				// Characters
-	sprintf(text4, "%s", gtk_text_buffer_get_text(tb, &istart, &iend, FALSE));	// General
-	sprintf(text5, "%s", gtk_entry_get_text(entry5));				// Meta
-	sprintf(text6, "%s", gtk_entry_get_text(entry6));				// Rating
+	printf("text0: \'%s\'\n", text0);
 
-	char query_string[155 + text0_size];
+	sprintf(text1, "%s ", gtk_entry_get_text(entry1));				// Artist
+	printf("text1: \'%s\'\n", text1);
+
+	sprintf(text2, "%s ", gtk_entry_get_text(entry2));				// Copyrights 
+	printf("text2: \'%s\'\n", text2);
+
+	sprintf(text3, "%s ", gtk_entry_get_text(entry3));				// Characters
+	printf("text3: \'%s\'\n", text3);	// NULL for some reason...
+
+	sprintf(text4, "%s ", gtk_text_buffer_get_text(tb, &istart, &iend, FALSE));	// General
+	printf("text4: \'%s\'\n", text4);	// NULL for some reason...
+
+	sprintf(text5, "%s ", gtk_entry_get_text(entry5));				// Meta
+	printf("text5: \'%s\'\n", text5);
+
+	sprintf(text6, "%s", gtk_entry_get_text(entry6));				// Rating
+	printf("text6: \'%s\'\n", text6);
+
+
+	char query_string[160 + text0_size];
 	char file_id[sizeof(long)];
 	char *cmd = NULL;
 	char *path = NULL;
@@ -131,8 +146,9 @@ static int import_button_cb(void) {
 	strcat(query_string, "', '");
 	strcat(query_string, text6);
 	strcat(query_string, "', '");
-	strcat(query_string, tag_arr[0]);
-	strcat(query_string, "') ON CONFLICT DO NOTHING;");
+	sprintf(query_string, "%s') ON CONFLICT DO NOTHING;", text0);
+	//strcat(query_string, "') ON CONFLICT DO NOTHING;");
+	printf("\'%s\'\n", query_string);
 
 	wiz_res = PQexec(conn, query_string);
 	strcpy(query_string, "");
@@ -151,13 +167,15 @@ static int import_button_cb(void) {
 		PQclear(wiz_res);
 	}
 	else {
+		char *err = NULL;
 		PQclear(wiz_res);
 
 		wiz_res = PQexec(conn, "ROLLBACK TRANSACTION;");
 
 		gtk_notebook_detach_tab(notebook, scrolled_window);
-		fprintf(stderr, "Command failed.\n");
-		tag_process_fail_diag("Error", PQerrorMessage(conn));
+		fprintf(stderr, "%s", PQerrorMessage(conn));
+		sprintf(err, "%s", PQerrorMessage(conn));
+		tag_process_fail_diag("Error", err);
 		PQclear(wiz_res);
 		return 1;
 	}
@@ -166,7 +184,6 @@ static int import_button_cb(void) {
 	char *tag_str = NULL;	// Tags are copied here for string for processing.
 	int catid;		// Category id
 	int charid;
-	size_t array_size;
 	char *text[5];
 
 	strcpy(text[0], text1);
@@ -184,7 +201,7 @@ static int import_button_cb(void) {
 				sprintf(tag_str, "%c", buffer[charid]);
 			else {
 				char query[72 + strlen(tag_str)];
-				char *tagid;
+				char tagid[sizeof(unsigned long)];
 
 				/* Create the tag */
 				sprintf(tag_str, "%c", ' ');
