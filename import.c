@@ -2,22 +2,31 @@
 #include "import.h"
 #include <gtk-3.0/gtk/gtk.h>
 #include "main.h"
-#include <string.h>
 #include "import_wizard.h"
+#include <libpq-fe.h>
 #include <sha256.h>
+#include <string.h>
 
 gchar import_file_path[10240];
 char file_sha256[65];
 
 /* The "Import" function */
 static void open_response_cb(GtkNativeDialog *dialog, gint response_id, gpointer user_data) {
+	//PGresult *import_res;
 	GtkFileChooserNative *native = user_data;
 	char *file_path;
+	//char *query;
 
 	if (response_id == GTK_RESPONSE_ACCEPT) {
 		/* Get the path of the file selected when the user presses "Import" */
 		// Create a lock on the file here lock_function(gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(native)));
 		file_path = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(native));
+
+		//strcpy(query, "UPDATE public.settings SET last_dir = '");
+		//strcat(query, file_path);
+		//strcat(query, "';");
+
+		//import_res = PQexec(conn, query);
 		
 		/* Copy the path into `import_file_path`, since `file_path` is cleared when the dialog is destroyed. */
 		strcpy(import_file_path, file_path);
