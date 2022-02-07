@@ -89,7 +89,7 @@ static int import_button_cb(void) {
 	size_t text2_size = (strlen(gtk_entry_get_text(entry2) + 1));
 	size_t text3_size = (strlen(gtk_entry_get_text(entry3) + 1));
 	size_t text4_size = (strlen(gtk_text_buffer_get_text(tb, &istart, &iend, FALSE) + 1));
-	size_t text5_size = (strlen(gtk_entry_get_text(entry5) + 1));			
+	size_t text5_size = (strlen(gtk_entry_get_text(entry5) + 1));
 
 	/* Check if text fields are empty. */
 	if (text1_size == 0 || strlen(gtk_entry_get_text(entry6)) == 0) {
@@ -107,13 +107,13 @@ static int import_button_cb(void) {
 	char text5[text5_size];
 	char text6[1];
 
-	sprintf(text0, "%s", gtk_entry_get_text(entry0));
-	sprintf(text1, "%s", gtk_entry_get_text(entry1));
-	sprintf(text2, "%s", gtk_entry_get_text(entry2));
-	sprintf(text3, "%s", gtk_entry_get_text(entry3));
-	sprintf(text4, "%s", gtk_text_buffer_get_text(tb, &istart, &iend, FALSE));
-	sprintf(text5, "%s", gtk_entry_get_text(entry5));
-	sprintf(text6, "%s", gtk_entry_get_text(entry6));
+	sprintf(text0, "%s", gtk_entry_get_text(entry0));				// Source
+	sprintf(text1, "%s", gtk_entry_get_text(entry1));				// Artist
+	sprintf(text2, "%s", gtk_entry_get_text(entry2));				// Copyrights
+	sprintf(text3, "%s", gtk_entry_get_text(entry3));				// Characters
+	sprintf(text4, "%s", gtk_text_buffer_get_text(tb, &istart, &iend, FALSE));	// General
+	sprintf(text5, "%s", gtk_entry_get_text(entry5));				// Meta
+	sprintf(text6, "%s", gtk_entry_get_text(entry6));				// Rating
 
 	char query_string[155 + text0_size];
 	char file_id[sizeof(long)];
@@ -164,21 +164,31 @@ static int import_button_cb(void) {
 
 	/* Create and apply tags */
 	char *tag_str = NULL;	// Tags are copied here for string for processing.
-	int catid;	// Directly corelated with the text number.
+	int catid;		// Category id
 	int charid;
 	size_t array_size;
-	char *text[] = {"text", "more_text"};
+	char *text[5];
 
-	for (catid = 0; catid < 5; catid++) {
+	strcpy(text[0], text1);
+	strcpy(text[1], text2);
+	strcpy(text[2], text3);
+	strcpy(text[3], text4);
+	strcpy(text[4], text5);
+
+	for (catid = 1; catid < 6; catid++) {
+		char buffer[strlen((text[catid]) + 1)];
+		strcpy(buffer, text[catid]);
+
 		for (charid = 0; charid <= strlen(tag_arr[catid]); charid++) {
-			if (isspace(text[catid][charid]) == 0)
-				sprintf(tag_str, "%c", text[catid][charid]);
+			if (isspace(buffer[charid]) == 0)
+				sprintf(tag_str, "%c", buffer[charid]);
 			else {
 				char query[72 + strlen(tag_str)];
 				char *tagid;
 
 				/* Create the tag */
-				printf("%s\n", tag_str);
+				sprintf(tag_str, "%c", ' ');
+				printf("\'%s\'\n", tag_str);
 				++wc;
 				strcpy(query, "INSERT INTO public.tags (name) VALUES ('");
 				strcat(query, tag_str);
@@ -248,8 +258,11 @@ static int import_button_cb(void) {
 					return 1;
 				}
 			}
+
 			strcpy(tag_str, "");
 		}
+
+		strcpy(buffer, "");
 	}
 
 	/* TEMPORARY */

@@ -124,12 +124,12 @@ CREATE INDEX ON public.wikis ("body_text");
 -- Compatitbility with Danbooru should be done in Atsugami; NOT THE DATABASE.
 --
 
-INSERT INTO public.categories (id, name) VALUES (0, 'general');		-- Danbooru: 0
-
 INSERT INTO public.categories (id, name) VALUES (1, 'artist');		-- Danbooru: 1
 
 INSERT INTO public.categories (id, name) VALUES (2, 'copyright');	-- Danbooru: 3
 
 INSERT INTO public.categories (id, name) VALUES (3, 'character');	-- Danbooru: 4
 
-INSERT INTO public.categories (id, name) VALUES (4, 'meta');		-- Danbooru: 5
+INSERT INTO public.categories (id, name) VALUES (4, 'general');		-- Danbooru: 0
+
+INSERT INTO public.categories (id, name) VALUES (5, 'meta');		-- Danbooru: 5
