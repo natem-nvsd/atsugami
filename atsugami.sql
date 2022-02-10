@@ -13,6 +13,7 @@ id SERIAL PRIMARY KEY,
 sha256 VARCHAR(65) UNIQUE NOT NULL,
 rating VARCHAR(1),
 source TEXT,
+count	INT,
 created_at TIMESTAMP NOT NULL DEFAULT now(),
 updated_at TIMESTAMP NOT NULL DEFAULT now()
 );
@@ -22,11 +23,6 @@ updated_at TIMESTAMP NOT NULL DEFAULT now()
 CREATE TABLE public.children (
 child_id INTEGER NOT NULL,
 parent_id INTEGER NOT NULL
-);
-
-CREATE TABLE public.tag_count (
-file_id INTEGER NOT NULL,
-tag_count INTEGER NOT NULL
 );
 
 CREATE TABLE public.favourites (
@@ -88,8 +84,6 @@ thumb_siz TEXT UNIQUE NOT NULL
 ALTER TABLE public.children ADD FOREIGN KEY (child_id) REFERENCES public.files (id) ON DELETE RESTRICT;
 
 ALTER TABLE public.children ADD FOREIGN KEY (parent_id) REFERENCES public.files (id) ON DELETE RESTRICT;
-
-ALTER TABLE public.tag_count ADD FOREIGN KEY (file_id) REFERENCES public.files (id) ON DELETE RESTRICT;
 
 ALTER TABLE public.favourites ADD FOREIGN KEY (file_id) REFERENCES public.files (id) ON DELETE RESTRICT;
 

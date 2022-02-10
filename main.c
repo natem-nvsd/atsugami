@@ -98,6 +98,7 @@ int main(int argc, char *argv[]) {
 	conn = PQconnectdb(conninfo);	/* Connect to PostgreSQL */
 	vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
 
+	/* Error Checking */
 	if (PQstatus(conn) != CONNECTION_OK) {
 		GtkWidget *diag;
 		GtkDialogFlags diag_flags = GTK_RESPONSE_ACCEPT;
@@ -112,6 +113,8 @@ int main(int argc, char *argv[]) {
 		PQfinish(conn);
 		return 1;
 	}
+
+	mainres = PQexec(conn, "SELECT * FROM public.settings;");
 
 	g_signal_connect(window, "destroy", G_CALLBACK(gtk_main_quit), NULL);
 	//g_action_map_add_action_entries(G_ACTION_MAP(actions), app_entries, G_N_ELEMENTS(app_entries), window);

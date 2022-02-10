@@ -36,8 +36,9 @@ Dependencies
 * PostgreSQL (Tested on 14 and 14.1)  
 * GTK3  
 * pkgconf (build-time ony)
-* libmagickwand
+* libmd (Should be preinstalled on BSD systems)
 * [BSD make (bmake)](https://github.com/natem-nvsd/bmake) (build-time only)
+	\* gmake _may_ work
 
 Building and installation
 -------------------------

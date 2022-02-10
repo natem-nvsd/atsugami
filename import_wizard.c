@@ -10,7 +10,6 @@
 #include <stdlib.h>
 #include <sys/types.h>
 #include "import_wizard.h"
-#include <wand/MagickWand.h>
 
 PGresult *wiz_res;
 GtkWidget *label0, *label1, *label2, *label3, *label4, *label5, *label6;
@@ -58,7 +57,7 @@ static void incomplete_diag(const char *label) {
 
 }
 
-static void tag_process_fail_diag(const char *title, const char *body) {
+static void tag_process_fail_diag(const char *title, const char *body, ...) {
 	GtkWidget *diag;
 	GtkDialogFlags diag_flags;
 
@@ -105,50 +104,24 @@ static int import_button_cb(void) {
 	char text5[text5_size];
 	char text6[2];
 
-	printf("text2: '%s'\n", gtk_entry_get_text(entry2));
-	printf("text3: '%s'\n\n", gtk_entry_get_text(entry3));
-
+	// Whitespace is needed at the end to ensure the processing algorithm works properely.
 	sprintf(text0, "%s", gtk_entry_get_text(entry0));				// Source
-	printf("text0: \'%s\'\n", text0);
-
 	sprintf(text1, "%s ", gtk_entry_get_text(entry1));				// Artist
-	printf("text1: \'%s\'\n", text1);
-
 	sprintf(text2, "%s ", gtk_entry_get_text(entry2));				// Copyrights 
-	printf("text2: \'%s\'\n", text2);
-
 	sprintf(text3, "%s ", gtk_entry_get_text(entry3));				// Characters
-	printf("text3: \'%s\'\n", text3);	// NULL for some reason...
-
 	sprintf(text4, "%s ", gtk_text_buffer_get_text(tb, &istart, &iend, FALSE));	// General
-	printf("text4: \'%s\'\n", text4);	// NULL for some reason...
-
 	sprintf(text5, "%s ", gtk_entry_get_text(entry5));				// Meta
-	printf("text5: \'%s\'\n", text5);
-
 	sprintf(text6, "%s", gtk_entry_get_text(entry6));				// Rating
-	printf("text6: \'%s\'\n", text6);
-
 
 	char query_string[160 + text0_size];
 	char file_id[sizeof(long)];
-	char *cmd = NULL;
-	char *path = NULL;
 	char *size_names[5];
 	int size_res[5];
 
 	wiz_res = PQexec(conn, "BEGIN TRANSACTION");
 	PQclear(wiz_res);
 
-	/* Create the base of the query */
-	strcpy(query_string, "INSERT INTO public.files (sha256, rating, source) VALUES ('");
-	strcat(query_string, file_sha256);
-	strcat(query_string, "', '");
-	strcat(query_string, text6);
-	strcat(query_string, "', '");
-	sprintf(query_string, "%s') ON CONFLICT DO NOTHING;", text0);
-	//strcat(query_string, "') ON CONFLICT DO NOTHING;");
-	printf("\'%s\'\n", query_string);
+	sprintf(query_string, "INSERT INTO public.files (sha256, rating, source) VALUES (\'%s\', \'%s\', \'%s\') ON CONFLICT DO NOTHING;", file_sha256, text6, text0);
 
 	wiz_res = PQexec(conn, query_string);
 	strcpy(query_string, "");
@@ -156,9 +129,7 @@ static int import_button_cb(void) {
 	if (PQresultStatus(wiz_res) == PGRES_COMMAND_OK) {
 		PQclear(wiz_res);
 
-		strcpy(query_string, "SELECT id FROM public.files WHERE sha256 = '");
-		strcat(query_string, file_sha256);
-		strcat(query_string, "';");
+		sprintf(query_string, "SELECT id FROM public.files WHERE sha256 = '%s';", file_sha256);
 
 		/* If the file _was_ inserted into the database, then file_id is guaranteed to be non-null */
 		wiz_res = PQexec(conn, query_string);
@@ -166,75 +137,76 @@ static int import_button_cb(void) {
 		strcpy(file_id, PQgetvalue(wiz_res, 0, 0));	/* This appears to cause a segmentation fault. */
 		PQclear(wiz_res);
 	}
+
 	else {
-		char *err = NULL;
 		PQclear(wiz_res);
 
 		wiz_res = PQexec(conn, "ROLLBACK TRANSACTION;");
 
 		gtk_notebook_detach_tab(notebook, scrolled_window);
 		fprintf(stderr, "%s", PQerrorMessage(conn));
-		sprintf(err, "%s", PQerrorMessage(conn));
-		tag_process_fail_diag("Error", err);
+		tag_process_fail_diag("Error", "%s", PQerrorMessage(conn));
 		PQclear(wiz_res);
 		return 1;
 	}
 
-	/* Create and apply tags */
+	/* Create and apply tags
+	 * Move everything before the for loop closer to the start of the function */
 	char *tag_str = NULL;	// Tags are copied here for string for processing.
 	int catid;		// Category id
 	int charid;
 	char *text[5];
 
-	strcpy(text[0], text1);
-	strcpy(text[1], text2);
-	strcpy(text[2], text3);
-	strcpy(text[3], text4);
-	strcpy(text[4], text5);
+	text[0] = (char *) malloc(text1_size);		// NOT FREED
+	text[1] = (char *) malloc(text2_size);		// NOT FREED
+	text[2] = (char *) malloc(text3_size);		// NOT FREED
+	text[3] = (char *) malloc(text4_size);		// NOT FREED
+	text[4] = (char *) malloc(text5_size);		// NOT FREED
+
+	sprintf(text[0], "%s", text1);
+	sprintf(text[1], "%s", text2);
+	sprintf(text[2], "%s", text3);
+	sprintf(text[3], "%s", text4);
+	sprintf(text[4], "%s", text5);
 
 	for (catid = 1; catid < 6; catid++) {
 		char buffer[strlen((text[catid]) + 1)];
-		strcpy(buffer, text[catid]);
+		sprintf(buffer, "%s", text[catid]);
 
 		for (charid = 0; charid <= strlen(tag_arr[catid]); charid++) {
 			if (isspace(buffer[charid]) == 0)
 				sprintf(tag_str, "%c", buffer[charid]);
 			else {
-				char query[72 + strlen(tag_str)];
+		//		const size_t tag_size = strlen(tag_str);
+		//		char query[72 + tag_size];	// segfault
+				char query[strlen(tag_str) + 72];
 				char tagid[sizeof(unsigned long)];
 
 				/* Create the tag */
 				sprintf(tag_str, "%c", ' ');
 				printf("\'%s\'\n", tag_str);
 				++wc;
-				strcpy(query, "INSERT INTO public.tags (name) VALUES ('");
-				strcat(query, tag_str);
-				strcat(query, "') ON CONFLICT DO NOTHING;");
+				sprintf(query, "INSERT INTO public.tags (name) VALUES ('%s') ON CONFLICT DO NOTHING;", tag_str);
 
 				wiz_res = PQexec(conn, query);
 
 				if (PQresultStatus(wiz_res) == PGRES_COMMAND_OK) {
 					/* Create the category-tag bridge */
 					PQclear(wiz_res);
-					strcpy(query, "SELECT id FROM public.tags WHERE name = '");
-					strcat(query, tag_str);
-					strcat(query, "');");
+					sprintf(query, "SELECT id FROM public.tags WHERE name = '%s');", tag_str);
 
 					wiz_res = PQexec(conn, query);
 
 					strcpy(tagid, PQgetvalue(wiz_res, 0, 0));
 					PQclear(wiz_res);
-					strcpy(query, "INSERT INTO public.tags_categories (tag_id, category_id) VALUES (");
-					strcat(query, tagid);
-					sprintf(query, "%d", catid);
-					strcat(query, ");");
+					sprintf(query, "INSERT INTO public.tags_categories (tag_id, category_id) VALUES (%s, %d);", tagid, catid);
 
 					wiz_res = PQexec(conn, query);
 
 					if (PQresultStatus(wiz_res) != PGRES_COMMAND_OK) {
 						fprintf(stderr, "%s\n", PQerrorMessage(conn));
 						gtk_notebook_detach_tab(notebook, scrolled_window);
-						tag_process_fail_diag("Error", PQerrorMessage(conn));
+						tag_process_fail_diag("Error", "%s", PQerrorMessage(conn));
 						PQclear(wiz_res);
 
 						wiz_res = PQexec(conn, "ROLLBACK TRANSACTION;");
@@ -244,16 +216,12 @@ static int import_button_cb(void) {
 					}
 
 					/* Create the tag-file bridge */
-					strcpy(query, "INSERT INTO public.files_tags (file_id, category_id) VALUES (");
-					strcat(query, file_id);
-					strcat(query, ", ");
-					sprintf(query, "%d", catid);
-					strcat(query, ");");
+					sprintf(query, "INSERT INTO public.files_tags (file_id, category_id) VALUES (%s, %d);", file_id, catid);
 
 					if (PQresultStatus(wiz_res) != PGRES_COMMAND_OK) {
 						fprintf(stderr, "%s\n", PQerrorMessage(conn));
 						gtk_notebook_detach_tab(notebook, scrolled_window);
-						tag_process_fail_diag("Error", PQerrorMessage(conn));
+						tag_process_fail_diag("Error", "%s", PQerrorMessage(conn));
 						PQclear(wiz_res);
 
 						wiz_res = PQexec(conn, "ROLLBACK TRANSACTION;");
@@ -266,7 +234,7 @@ static int import_button_cb(void) {
 				else {
 					fprintf(stderr, "%s\n", PQerrorMessage(conn));
 					gtk_notebook_detach_tab(notebook, scrolled_window);
-					tag_process_fail_diag("Error", PQerrorMessage(conn));
+					tag_process_fail_diag("Error", "%s", PQerrorMessage(conn));
 					PQclear(wiz_res);
 
 					wiz_res = PQexec(conn, "ROLLBACK TRANSACTION;");
@@ -288,11 +256,7 @@ static int import_button_cb(void) {
 	return 1;
 	/* END TEMPORARY */
 
-	strcpy(query_string, "INSERT INTO public.tag_count (file_id, tag_count) VALUES (");
-	strcat(query_string, file_id);
-	strcat(query_string, ", ");
-	sprintf(query_string, "%d", wc);
-	strcat(query_string, ");");
+	sprintf(query_string, "INSERT INTO public.tag_count (file_id, tag_count) VALUES (%s, %d);", file_id, wc);
 	
 	wiz_res = PQexec(conn, query_string);
 
@@ -305,7 +269,7 @@ static int import_button_cb(void) {
 		wiz_res = PQexec(conn, "ROLLBACK TRANSACTION;");
 
 		gtk_notebook_detach_tab(notebook, scrolled_window);
-		tag_process_fail_diag("Error", PQerrorMessage(conn));
+		tag_process_fail_diag("Error", "%s", PQerrorMessage(conn));
 		PQclear(wiz_res);
 		return 1;
 	}
@@ -313,8 +277,9 @@ static int import_button_cb(void) {
 	wiz_res = PQexec(conn, "COMMIT TRANSACTION;");
 
 	/* Create thumbnails of the image
-	 * Windows ports may not like the lack of file extensions.
+	 * Windows ports _may_ not like the lack of file extensions.
 	 */
+	char *cmd = NULL;		// Use malloc() on this
 	GError *thumb_write_err;
 
 	size_names[0] = "gigantic";
@@ -331,15 +296,12 @@ static int import_button_cb(void) {
 	wiz_res = PQexec(conn, "SELECT thumb_dir FROM public.settings;");
 
 	for (catid = 0; catid <= 4; catid++) {
-		//thumb_pixbuf = gdk_pixbuf_new_from_file_at_scale(import_file_path, size_res[a], size_res[a], TRUE, &thumb_write_err);
+		//thumb_pixbuf = gdk_pixbuf_new_from_file_at_scale(import_file_path, size_res[catid], size_res[catid], TRUE, &thumb_write_err);
+		//thumb_pixbuf = gdk_pixbuf_new_from_file_at_scale(import_file_path, size_res[catid], size_res[catid], TRUE, &thumb_write_err, NULL);
 		thumb_pixbuf = gdk_pixbuf_new_from_file_at_scale(import_file_path, size_res[catid], size_res[catid], TRUE, NULL);
 
 		printf("strcpy\n");
-		strcpy(cmd, PQgetvalue(wiz_res, 0, 0));
-		strcat(cmd, "/");
-		sprintf(cmd, "%s", size_names[catid]);
-		strcat(cmd, "/");
-		strcat(cmd, file_sha256);
+		sprintf(cmd, "%s/%s/%s", PQgetvalue(wiz_res, 0, 0), size_names[catid], file_sha256);	// Storage path, size, sha256
 		//gdk_pixbuf_save(thumb_pixbuf, cmd, "png", &thumb_write_err, NULL);
 	//	gdk_pixbuf_save(thumb_pixbuf, cmd, "png", &thumb_write_err);
 		gdk_pixbuf_save(thumb_pixbuf, cmd, "jpeg", &thumb_write_err, "quality", "100", NULL);
@@ -347,28 +309,21 @@ static int import_button_cb(void) {
 	//	GNOME example: gdk_pixbuf_save(pixbuf, handle, "jpeg", &error, "quality", "100", NULL);
 
 		printf("%s\n", cmd);
-		strcpy(path, "");
 	}
 
 	PQclear(wiz_res);
 
 	/* Move the file to the storage directory */
 	wiz_res = PQexec(conn, "SELECT store_dir FROM public.settings;");
-	printf("path: %s\n", PQgetvalue(wiz_res, 0, 0));
 
-	strcpy(cmd, "mv ");
-	strcat(cmd, import_file_path);
-	strcat(cmd, " /");
-	strcat(cmd, PQgetvalue(wiz_res, 0, 0));
-	strcat(cmd, "/");
-	strcat(cmd, file_sha256);
+	sprintf(cmd, "mv %s /%s/%s", import_file_path, PQgetvalue(wiz_res, 0, 0), file_sha256);	// Original path, storage path, 
 	system(cmd);
 
-	strcpy(path, "");
 	PQclear(wiz_res);
+	for (catid = 0; catid < 5; catid++)
+		free(text[catid]);
 
-	// Why is this an implicit declaration? file_count.h is included.
-	file_count_update(file_label, vbox);
+	file_count_update(file_label, vbox);	// Why is this an implicit declaration? file_count.h is included.
 
 	PQclear(wiz_res);
 	gtk_notebook_detach_tab(notebook, scrolled_window);
