@@ -145,23 +145,25 @@ static int import_button_cb(void) {
 
 		gtk_notebook_detach_tab(notebook, scrolled_window);
 		fprintf(stderr, "%s", PQerrorMessage(conn));
-		tag_process_fail_diag("Error", "%s", PQerrorMessage(conn));
+		tag_process_fail_diag("Error", "Atsugami encountered an error:\n%s", PQerrorMessage(conn));
 		PQclear(wiz_res);
 		return 1;
 	}
 
 	/* Create and apply tags
 	 * Move everything before the for loop closer to the start of the function */
-	char *tag_str = NULL;	// Tags are copied here for string for processing.
-	int catid;		// Category id
+	char *tag_str;	// Tags are copied here for string for processing.
+	int catid;	// Category id
 	int charid;
 	char *text[5];
 
-	text[0] = (char *) malloc(text1_size);		// NOT FREED
-	text[1] = (char *) malloc(text2_size);		// NOT FREED
-	text[2] = (char *) malloc(text3_size);		// NOT FREED
-	text[3] = (char *) malloc(text4_size);		// NOT FREED
-	text[4] = (char *) malloc(text5_size);		// NOT FREED
+	//tag_str = (char *) malloc(text1_size + text2_size + text3_size + text4_size + text5_size);			// NOT FREED
+			// quick and dirty way to allocate enough memory for tag_str
+	text[0] = (char *) malloc(text1_size);		// FREED
+	text[1] = (char *) malloc(text2_size);		// FREED
+	text[2] = (char *) malloc(text3_size);		// FREED
+	text[3] = (char *) malloc(text4_size);		// FREED
+	text[4] = (char *) malloc(text5_size);		// FREED
 
 	sprintf(text[0], "%s", text1);
 	sprintf(text[1], "%s", text2);
@@ -169,21 +171,27 @@ static int import_button_cb(void) {
 	sprintf(text[3], "%s", text4);
 	sprintf(text[4], "%s", text5);
 
-	for (catid = 1; catid < 6; catid++) {
-		char buffer[strlen((text[catid]) + 1)];
-		sprintf(buffer, "%s", text[catid]);
+	for (catid = 0; catid < 5; catid++) {
+		char buffer[strlen(text[catid]) + 1];
+		tag_str = (char *) malloc(strlen(text[catid]));
 
-		for (charid = 0; charid <= strlen(tag_arr[catid]); charid++) {
+		printf("\ncategory id: %d\n", (catid + 1));
+		sprintf(buffer, "%s", text[catid]);
+		printf("buffer: '%s'\n", buffer);
+
+		// start with -1 to get the entire string
+		for (charid = (0 - 1); charid < strlen(tag_arr[catid]); charid++) {
+			printf("Current character: %c\n", buffer[charid]);
+
 			if (isspace(buffer[charid]) == 0)
 				sprintf(tag_str, "%c", buffer[charid]);
 			else {
-		//		const size_t tag_size = strlen(tag_str);
-		//		char query[72 + tag_size];	// segfault
 				char query[strlen(tag_str) + 72];
 				char tagid[sizeof(unsigned long)];
 
 				/* Create the tag */
-				sprintf(tag_str, "%c", ' ');
+				printf("tag string: %s\n", tag_str);
+				sprintf(tag_str, "%c", ' ');	// doesn't work with meta tags
 				printf("\'%s\'\n", tag_str);
 				++wc;
 				sprintf(query, "INSERT INTO public.tags (name) VALUES ('%s') ON CONFLICT DO NOTHING;", tag_str);
@@ -197,7 +205,8 @@ static int import_button_cb(void) {
 
 					wiz_res = PQexec(conn, query);
 
-					strcpy(tagid, PQgetvalue(wiz_res, 0, 0));
+	//				strcpy(tagid, PQgetvalue(wiz_res, 0, 0));
+					sprintf(tagid, "%s", PQgetvalue(wiz_res, 0, 0));
 					PQclear(wiz_res);
 					sprintf(query, "INSERT INTO public.tags_categories (tag_id, category_id) VALUES (%s, %d);", tagid, catid);
 
@@ -206,7 +215,7 @@ static int import_button_cb(void) {
 					if (PQresultStatus(wiz_res) != PGRES_COMMAND_OK) {
 						fprintf(stderr, "%s\n", PQerrorMessage(conn));
 						gtk_notebook_detach_tab(notebook, scrolled_window);
-						tag_process_fail_diag("Error", "%s", PQerrorMessage(conn));
+						tag_process_fail_diag("Error", "Atsugami encountered an error:\n%s", PQerrorMessage(conn));
 						PQclear(wiz_res);
 
 						wiz_res = PQexec(conn, "ROLLBACK TRANSACTION;");
@@ -219,9 +228,11 @@ static int import_button_cb(void) {
 					sprintf(query, "INSERT INTO public.files_tags (file_id, category_id) VALUES (%s, %d);", file_id, catid);
 
 					if (PQresultStatus(wiz_res) != PGRES_COMMAND_OK) {
+						char err[strlen(PQerrorMessage(conn))];
+
 						fprintf(stderr, "%s\n", PQerrorMessage(conn));
 						gtk_notebook_detach_tab(notebook, scrolled_window);
-						tag_process_fail_diag("Error", "%s", PQerrorMessage(conn));
+						tag_process_fail_diag("Error", "Atsugami encountered an error:\n%s", PQerrorMessage(conn));
 						PQclear(wiz_res);
 
 						wiz_res = PQexec(conn, "ROLLBACK TRANSACTION;");
@@ -234,7 +245,8 @@ static int import_button_cb(void) {
 				else {
 					fprintf(stderr, "%s\n", PQerrorMessage(conn));
 					gtk_notebook_detach_tab(notebook, scrolled_window);
-					tag_process_fail_diag("Error", "%s", PQerrorMessage(conn));
+					//tag_process_fail_diag("Error", "%s", PQerrorMessage(conn));
+					tag_process_fail_diag("Error", "Atsugami encountered an error:\n%s", PQerrorMessage(conn));
 					PQclear(wiz_res);
 
 					wiz_res = PQexec(conn, "ROLLBACK TRANSACTION;");
@@ -244,7 +256,8 @@ static int import_button_cb(void) {
 				}
 			}
 
-			strcpy(tag_str, "");
+	//		strcpy(tag_str, "");
+			free(tag_str);
 		}
 
 		strcpy(buffer, "");
@@ -253,6 +266,7 @@ static int import_button_cb(void) {
 	/* TEMPORARY */
 	wiz_res = PQexec(conn, "ROLLBACK TRANSACTION;");
 	PQclear(wiz_res);
+	printf("SUCCESS\n");
 	return 1;
 	/* END TEMPORARY */
 

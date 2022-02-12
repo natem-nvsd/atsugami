@@ -28,5 +28,5 @@ CFLAGS   = -g -std=c11 -pedantic -Wall -O -Wno-deprecated-declarations -D_FORTIF
 LDFLAGS  += ${LIBS}
 
 # compiler and linker
-CC = cc
-#CC = clang
+#CC = cc
+CC = clang

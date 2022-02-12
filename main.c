@@ -116,6 +116,23 @@ int main(int argc, char *argv[]) {
 
 	mainres = PQexec(conn, "SELECT * FROM public.settings;");
 
+	if (PQgetvalue(mainres, 0, 0) == NULL || PQgetvalue(mainres, 0, 1) == NULL || PQgetvalue(mainres, 0, 2) == NULL || PQgetvalue(mainres, 0, 3) == NULL) {
+		GtkWidget *diag;
+		GtkDialogFlags diag_flags = GTK_RESPONSE_ACCEPT;
+
+		diag = gtk_message_dialog_new(window, diag_flags, GTK_MESSAGE_ERROR, GTK_BUTTONS_OK, "Configuration error");
+
+		gtk_message_dialog_format_secondary_text(diag, "Atsugami could not retrive configuration settings from the database.\nBacktrace:\n\tStorage directory: %s\n\tThumbnail directory: %s\n\tLast directory: %s\n\tThumbnail size: %s", PQgetvalue(mainres, 0, 0), PQgetvalue(mainres, 0, 1), PQgetvalue(mainres, 0, 2), PQgetvalue(mainres, 0, 3));
+		gtk_window_set_position(GTK_DIALOG(diag), GTK_WIN_POS_CENTER_ALWAYS);
+		gtk_window_set_resizable(GTK_DIALOG(diag), FALSE);
+		gtk_dialog_run(GTK_DIALOG(diag));
+		gtk_widget_destroy(diag);
+		PQclear(mainres);
+		PQfinish(conn);
+
+		return 1;
+	}
+
 	g_signal_connect(window, "destroy", G_CALLBACK(gtk_main_quit), NULL);
 	//g_action_map_add_action_entries(G_ACTION_MAP(actions), app_entries, G_N_ELEMENTS(app_entries), window);
 	gtk_widget_insert_action_group(window, "app", actions);
