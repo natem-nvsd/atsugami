@@ -13,7 +13,7 @@ id SERIAL PRIMARY KEY,
 sha256 VARCHAR(65) UNIQUE NOT NULL,
 rating VARCHAR(1),
 source TEXT,
-count	INT,
+count INTEGER,
 created_at TIMESTAMP NOT NULL DEFAULT now(),
 updated_at TIMESTAMP NOT NULL DEFAULT now()
 );
@@ -21,8 +21,8 @@ updated_at TIMESTAMP NOT NULL DEFAULT now()
 -- ALTER SEQUENCE public.files_id_seq OWNED BY public.files.id;
 
 CREATE TABLE public.children (
-child_id INTEGER NOT NULL,
 parent_id INTEGER NOT NULL
+child_id INTEGER NOT NULL,
 );
 
 CREATE TABLE public.favourites (
@@ -81,11 +81,11 @@ last_dir TEXT NOT NULL,
 thumb_siz TEXT UNIQUE NOT NULL
 );
 
-ALTER TABLE public.children ADD FOREIGN KEY (child_id) REFERENCES public.files (id) ON DELETE RESTRICT;
-
 ALTER TABLE public.children ADD FOREIGN KEY (parent_id) REFERENCES public.files (id) ON DELETE RESTRICT;
 
-ALTER TABLE public.favourites ADD FOREIGN KEY (file_id) REFERENCES public.files (id) ON DELETE RESTRICT;
+ALTER TABLE public.children ADD FOREIGN KEY (child_id) REFERENCES public.files (id) ON DELETE RESTRICT;
+
+ALTER TABLE public.favourites ADD FOREIGN KEY (child_id) REFERENCES public.files (id) ON DELETE RESTRICT;
 
 ALTER TABLE public.files_tags ADD FOREIGN KEY (file_id) REFERENCES public.files (id) ON DELETE CASCADE;
 
@@ -103,7 +103,7 @@ CREATE INDEX ON public.files ("id", "sha256");
 
 CREATE INDEX ON public.files_tags ("file_id", "tag_id");
 
-CREATE INDEX ON public.children ("child_id", "parent_id");
+CREATE INDEX ON public.children ("parent_id","child_id");
 
 CREATE INDEX ON public.tags ("id", "name");
 

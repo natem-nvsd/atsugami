@@ -29,7 +29,6 @@
 #include <stdio.h>
 #include "import_wizard.h"
 
-PGresult *mainres;
 PGconn *conn;
 char conninfo[] = "dbname=atsugami";	/* Sets the database for dbconnect()
 					 * conn MUST be global
@@ -83,6 +82,7 @@ extern void destroy_window(gpointer user_data) {	/* this doesn't close the progr
 }
 
 int main(int argc, char *argv[]) {
+	register PGresult *mainres;
 	/* THis is in order of appearance */
 	GtkWidget *menu_bar;
 	GtkWidget *toolbar;

@@ -29,6 +29,9 @@ TODO:
 *	Tag list
 *	Tag blacklisting
 *	Locking on files being imported
+*	Add "Image" menu item
+*	Update "View" menu item
+*	Context menus
 
 Dependencies
 ------------

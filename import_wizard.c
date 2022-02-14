@@ -11,7 +11,6 @@
 #include <sys/types.h>
 #include "import_wizard.h"
 
-PGresult *wiz_res;
 GtkWidget *label0, *label1, *label2, *label3, *label4, *label5, *label6;
 //GtkEntry *entry0, *entry1, *entry2, *entry3, *entry5, *entry6;
 GtkEntry *entry0, *entry1, *entry2, *entry3, *entry5, *entry6;
@@ -70,6 +69,7 @@ static void tag_process_fail_diag(const char *title, const char *body, ...) {
 }
 
 static int import_button_cb(void) {
+	register PGresult *wiz_res;
 	/* Check if the text buffer was modified. This MUST be done before initializing text4. */
 	if (gtk_text_buffer_get_modified(tb) == TRUE) {
 		gtk_text_buffer_get_iter_at_offset(tb, &istart, 0);
@@ -171,7 +171,7 @@ static int import_button_cb(void) {
 	sprintf(text[3], "%s", text4);
 	sprintf(text[4], "%s", text5);
 
-	for (catid = 0; catid < 5; catid++) {
+	for (catid = 0; catid <= 4; catid++) {
 		char buffer[strlen(text[catid]) + 1];
 		tag_str = (char *) malloc(strlen(text[catid]));
 
@@ -205,7 +205,6 @@ static int import_button_cb(void) {
 
 					wiz_res = PQexec(conn, query);
 
-	//				strcpy(tagid, PQgetvalue(wiz_res, 0, 0));
 					sprintf(tagid, "%s", PQgetvalue(wiz_res, 0, 0));
 					PQclear(wiz_res);
 					sprintf(query, "INSERT INTO public.tags_categories (tag_id, category_id) VALUES (%s, %d);", tagid, catid);
@@ -245,7 +244,6 @@ static int import_button_cb(void) {
 				else {
 					fprintf(stderr, "%s\n", PQerrorMessage(conn));
 					gtk_notebook_detach_tab(notebook, scrolled_window);
-					//tag_process_fail_diag("Error", "%s", PQerrorMessage(conn));
 					tag_process_fail_diag("Error", "Atsugami encountered an error:\n%s", PQerrorMessage(conn));
 					PQclear(wiz_res);
 
@@ -256,21 +254,13 @@ static int import_button_cb(void) {
 				}
 			}
 
-	//		strcpy(tag_str, "");
 			free(tag_str);
 		}
 
 		strcpy(buffer, "");
 	}
 
-	/* TEMPORARY */
-	wiz_res = PQexec(conn, "ROLLBACK TRANSACTION;");
-	PQclear(wiz_res);
-	printf("SUCCESS\n");
-	return 1;
-	/* END TEMPORARY */
-
-	sprintf(query_string, "INSERT INTO public.tag_count (file_id, tag_count) VALUES (%s, %d);", file_id, wc);
+	sprintf(query_string, "UPDATE public.files SET count = %d WHERE id = %s;", wc, file_id);
 	
 	wiz_res = PQexec(conn, query_string);
 
@@ -293,53 +283,75 @@ static int import_button_cb(void) {
 	/* Create thumbnails of the image
 	 * Windows ports _may_ not like the lack of file extensions.
 	 */
-	char *cmd = NULL;		// Use malloc() on this
-	GError *thumb_write_err;
+	char *cmd = NULL;
+	int cmd_code;
 
-	size_names[0] = "gigantic";
-	size_names[1] = "huge";
+	size_names[0] = "small";
+	size_names[1] = "medium";
 	size_names[2] = "large";
-	size_names[3] = "medium";
-	size_names[4] = "small";
-	size_res[0] = 360;
-	size_res[1] = 270;
+	size_names[3] = "huge";
+	size_names[4] = "gigantic";
+	size_res[0] = 150;
+	size_res[1] = 180;
 	size_res[2] = 225;
-	size_res[3] = 180;
-	size_res[4] = 150;
-	thumb_write_err = g_error_new(1, 1, "An error occured while creating the thumbnail.");
+	size_res[3] = 270;
+	size_res[4] = 360;
 	wiz_res = PQexec(conn, "SELECT thumb_dir FROM public.settings;");
+	size_t path_size = strlen(PQgetvalue(wiz_res, 0, 0));
+	cmd = (char *) malloc(21 + path_size);
 
 	for (catid = 0; catid <= 4; catid++) {
-		//thumb_pixbuf = gdk_pixbuf_new_from_file_at_scale(import_file_path, size_res[catid], size_res[catid], TRUE, &thumb_write_err);
-		//thumb_pixbuf = gdk_pixbuf_new_from_file_at_scale(import_file_path, size_res[catid], size_res[catid], TRUE, &thumb_write_err, NULL);
 		thumb_pixbuf = gdk_pixbuf_new_from_file_at_scale(import_file_path, size_res[catid], size_res[catid], TRUE, NULL);
 
-		printf("strcpy\n");
-		sprintf(cmd, "%s/%s/%s", PQgetvalue(wiz_res, 0, 0), size_names[catid], file_sha256);	// Storage path, size, sha256
-		//gdk_pixbuf_save(thumb_pixbuf, cmd, "png", &thumb_write_err, NULL);
-	//	gdk_pixbuf_save(thumb_pixbuf, cmd, "png", &thumb_write_err);
-		gdk_pixbuf_save(thumb_pixbuf, cmd, "jpeg", &thumb_write_err, "quality", "100", NULL);
-
-	//	GNOME example: gdk_pixbuf_save(pixbuf, handle, "jpeg", &error, "quality", "100", NULL);
-
-		printf("%s\n", cmd);
+		sprintf(cmd, "%s/%s/%s.jpeg", PQgetvalue(wiz_res, 0, 0), size_names[catid], file_sha256);	// Storage path, size, sha256
+		printf("thumb path: %s\n", cmd);
+		gdk_pixbuf_save(thumb_pixbuf, cmd, "jpeg", NULL, "quality", "100", NULL);
 	}
 
+	free(cmd);
 	PQclear(wiz_res);
+	printf("\n\nDONE\n\n");
 
 	/* Move the file to the storage directory */
+	cmd = NULL;
 	wiz_res = PQexec(conn, "SELECT store_dir FROM public.settings;");
+	path_size = (strlen(PQgetvalue(wiz_res, 0, 0)) + 12);
+	cmd = realloc(cmd, (path_size));
 
-	sprintf(cmd, "mv %s /%s/%s", import_file_path, PQgetvalue(wiz_res, 0, 0), file_sha256);	// Original path, storage path, 
-	system(cmd);
+	printf("realloc 0\n");
+	sprintf(cmd, "chmod 600 %s", import_file_path);
+	printf("%s\n", cmd);
 
+	cmd_code = system(cmd);
+
+	if (cmd_code != 0)
+		fprintf(stderr, "chmod returned: %d\n", cmd_code);
+
+	free(cmd);
+
+	cmd = NULL;
+	cmd = realloc(cmd, (path_size));
+
+	printf("realloc 1\n");
+	sprintf(cmd, "mv %s /%s/%s", import_file_path, PQgetvalue(wiz_res, 0, 0), file_sha256);	// mv original_path import_path/files/file_sha256
+	printf("%s\n", cmd);
+
+	cmd_code = system(cmd);
+
+	if (cmd_code != 0) {
+		free(cmd);
+		fprintf(stderr, "mv command returned: %d\n", cmd_code);
+		return cmd_code;
+	}
+
+	free(cmd);
 	PQclear(wiz_res);
-	for (catid = 0; catid < 5; catid++)
+	for (catid = 0; catid <= 4; catid++) {
 		free(text[catid]);
+		printf("freed %d\n", catid);
+	}
 
 	file_count_update(file_label, vbox);	// Why is this an implicit declaration? file_count.h is included.
-
-	PQclear(wiz_res);
 	gtk_notebook_detach_tab(notebook, scrolled_window);
 	return 0;
 }
