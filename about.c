@@ -7,7 +7,7 @@ void about_activate(GSimpleAction *action, GVariant *parameter, gpointer user_da
 	/* Normally, I wouldn't put a function like this on multiple lines, but this is very long. */
 	gtk_show_about_dialog(GTK_WIDGET(window),
 			      "program-name", "Atsugami",
-			      "version", "0.79",
+			      "version", "0.80.0",
 			      "copyright", "© 2021-2022, Nate Morrison et al.",
 			      //"website", "https://atsugami.moe",
 			      "website", "https://github.com/natem-nvsd/atsugami",

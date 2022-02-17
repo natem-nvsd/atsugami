@@ -21,8 +21,8 @@ updated_at TIMESTAMP NOT NULL DEFAULT now()
 -- ALTER SEQUENCE public.files_id_seq OWNED BY public.files.id;
 
 CREATE TABLE public.children (
-parent_id INTEGER NOT NULL
-child_id INTEGER NOT NULL,
+parent_id INTEGER NOT NULL,
+child_id INTEGER NOT NULL
 );
 
 CREATE TABLE public.favourites (
@@ -52,14 +52,14 @@ updated_at TIMESTAMP NOT NULL DEFAULT now()
 
 -- ALTER SEQUENCE public.tags_id_seq OWNED BY public.tags.id;
 
-CREATE TABLE public.tags_categories (
-tag_id INTEGER NOT NULL,
-category_id INTEGER NOT NULL
-);
-
 CREATE TABLE public.categories (
 id INTEGER PRIMARY KEY,
 name TEXT UNIQUE NOT NULL
+);
+
+CREATE TABLE public.tags_categories (
+tag_id INTEGER NOT NULL,
+category_id INTEGER
 );
 
 CREATE TABLE public.blacklists (
@@ -85,15 +85,15 @@ ALTER TABLE public.children ADD FOREIGN KEY (parent_id) REFERENCES public.files 
 
 ALTER TABLE public.children ADD FOREIGN KEY (child_id) REFERENCES public.files (id) ON DELETE RESTRICT;
 
-ALTER TABLE public.favourites ADD FOREIGN KEY (child_id) REFERENCES public.files (id) ON DELETE RESTRICT;
+ALTER TABLE public.favourites ADD FOREIGN KEY (file_id) REFERENCES public.files (id) ON DELETE RESTRICT;
 
 ALTER TABLE public.files_tags ADD FOREIGN KEY (file_id) REFERENCES public.files (id) ON DELETE CASCADE;
 
 ALTER TABLE public.files_tags ADD FOREIGN KEY (tag_id) REFERENCES public.tags (id) ON DELETE RESTRICT;
 
-ALTER TABLE public.tags_categories ADD FOREIGN KEY (tag_id) REFERENCES public.tags (id) ON DELETE RESTRICT;
+ALTER TABLE public.tags_categories ADD FOREIGN KEY (tag_id) REFERENCES public.tags (id) ON DELETE CASCADE;
 
-ALTER TABLE public.tags_categories ADD FOREIGN KEY (category_id) REFERENCES public.categories (id) ON DELETE CASCADE;
+ALTER TABLE public.tags_categories ADD FOREIGN KEY (category_id) REFERENCES public.categories (id) ON DELETE RESTRICT;
 
 ALTER TABLE public.blacklists ADD FOREIGN KEY (tag_id) REFERENCES public.tags (id) ON DELETE RESTRICT;
 
@@ -118,12 +118,12 @@ CREATE INDEX ON public.wikis ("body_text");
 -- Compatitbility with Danbooru should be done in Atsugami; NOT THE DATABASE.
 --
 
-INSERT INTO public.categories (id, name) VALUES (1, 'artist');		-- Danbooru: 1
+INSERT INTO public.categories (id, name) VALUES (0, 'artist');		-- Danbooru: 1
 
-INSERT INTO public.categories (id, name) VALUES (2, 'copyright');	-- Danbooru: 3
+INSERT INTO public.categories (id, name) VALUES (1, 'copyright');	-- Danbooru: 3
 
-INSERT INTO public.categories (id, name) VALUES (3, 'character');	-- Danbooru: 4
+INSERT INTO public.categories (id, name) VALUES (2, 'character');	-- Danbooru: 4
 
-INSERT INTO public.categories (id, name) VALUES (4, 'general');		-- Danbooru: 0
+INSERT INTO public.categories (id, name) VALUES (3, 'general');		-- Danbooru: 0
 
-INSERT INTO public.categories (id, name) VALUES (5, 'meta');		-- Danbooru: 5
+INSERT INTO public.categories (id, name) VALUES (4, 'meta');		-- Danbooru: 5

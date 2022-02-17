@@ -32,6 +32,9 @@ TODO:
 *	Add "Image" menu item
 *	Update "View" menu item
 *	Context menus
+*	Tag colours
+*	Parent-child border colours in GTK icon view
+*	Add "Parent" field to `import_wizard.c`
 
 Dependencies
 ------------

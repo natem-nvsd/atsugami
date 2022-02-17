@@ -57,6 +57,7 @@ static void incomplete_diag(const char *label) {
 }
 
 static void tag_process_fail_diag(const char *title, const char *body, ...) {
+//static void tag_process_fail_diag(char *__restrict __format, char *__restrict __format, ...) {
 	GtkWidget *diag;
 	GtkDialogFlags diag_flags;
 
@@ -81,7 +82,6 @@ static int import_button_cb(void) {
 		return 1;
 	}
 
-	char *tag_arr[6];
 	int wc = 0;
 	const size_t text0_size = (strlen(gtk_entry_get_text(entry0) + 1));
 	const size_t text1_size = (strlen(gtk_entry_get_text(entry1) + 1));
@@ -152,12 +152,11 @@ static int import_button_cb(void) {
 
 	/* Create and apply tags
 	 * Move everything before the for loop closer to the start of the function */
-	char *tag_str;	// Tags are copied here for string for processing.
+	//char *tag_str;	// Tags are copied here for string for processing.
 	int catid;	// Category id
-	int charid;
+	int charid;	// Current charcter
 	char *text[5];
 
-	//tag_str = (char *) malloc(text1_size + text2_size + text3_size + text4_size + text5_size);			// NOT FREED
 			// quick and dirty way to allocate enough memory for tag_str
 	text[0] = (char *) malloc(text1_size);		// FREED
 	text[1] = (char *) malloc(text2_size);		// FREED
@@ -171,43 +170,51 @@ static int import_button_cb(void) {
 	sprintf(text[3], "%s", text4);
 	sprintf(text[4], "%s", text5);
 
-	for (catid = 0; catid <= 4; catid++) {
-		char buffer[strlen(text[catid]) + 1];
-		tag_str = (char *) malloc(strlen(text[catid]));
+	for (catid = 0; catid < 5; catid++) {
+		char buffer[strlen(text[catid])];
+		char tag_str[strlen(text[catid])];
+		int bufid;
 
-		printf("\ncategory id: %d\n", (catid + 1));
 		sprintf(buffer, "%s", text[catid]);
+		printf("\ncategory id: %d\n", (catid + 1));
 		printf("buffer: '%s'\n", buffer);
 
-		// start with -1 to get the entire string
-		for (charid = (0 - 1); charid < strlen(tag_arr[catid]); charid++) {
-			printf("Current character: %c\n", buffer[charid]);
+		for (charid = 0, bufid = 0; charid < strlen(buffer); charid++, bufid++) {
+			if (isspace(buffer[charid]) == 0) {
+				printf("Current character: '%c'\n", buffer[charid]);
 
-			if (isspace(buffer[charid]) == 0)
-				sprintf(tag_str, "%c", buffer[charid]);
+				sprintf(&tag_str[bufid], "%c", buffer[charid]);		// tag_str is cleared by this.
+				//tag_str[bufid] = buffer[charid];
+
+				printf("character '%c' %d copied from buffer.\n", buffer[charid], charid);
+				printf("tag string: '%s'\n\n", tag_str);
+			}
 			else {
 				char query[strlen(tag_str) + 72];
 				char tagid[sizeof(unsigned long)];
 
+				bufid = 0;
+
 				/* Create the tag */
-				printf("tag string: %s\n", tag_str);
-				sprintf(tag_str, "%c", ' ');	// doesn't work with meta tags
-				printf("\'%s\'\n", tag_str);
+				printf("tag string: '%s'\n", tag_str);
 				++wc;
 				sprintf(query, "INSERT INTO public.tags (name) VALUES ('%s') ON CONFLICT DO NOTHING;", tag_str);
+				printf("%s\n", query);
 
 				wiz_res = PQexec(conn, query);
 
 				if (PQresultStatus(wiz_res) == PGRES_COMMAND_OK) {
 					/* Create the category-tag bridge */
 					PQclear(wiz_res);
-					sprintf(query, "SELECT id FROM public.tags WHERE name = '%s');", tag_str);
+					sprintf(query, "SELECT id FROM public.tags WHERE name = '%s';", tag_str);
+					printf("%s\n", query);
 
 					wiz_res = PQexec(conn, query);
 
 					sprintf(tagid, "%s", PQgetvalue(wiz_res, 0, 0));
 					PQclear(wiz_res);
 					sprintf(query, "INSERT INTO public.tags_categories (tag_id, category_id) VALUES (%s, %d);", tagid, catid);
+					printf("%s\n", query);
 
 					wiz_res = PQexec(conn, query);
 
@@ -225,10 +232,9 @@ static int import_button_cb(void) {
 
 					/* Create the tag-file bridge */
 					sprintf(query, "INSERT INTO public.files_tags (file_id, category_id) VALUES (%s, %d);", file_id, catid);
+					printf("%s\n", query);
 
 					if (PQresultStatus(wiz_res) != PGRES_COMMAND_OK) {
-						char err[strlen(PQerrorMessage(conn))];
-
 						fprintf(stderr, "%s\n", PQerrorMessage(conn));
 						gtk_notebook_detach_tab(notebook, scrolled_window);
 						tag_process_fail_diag("Error", "Atsugami encountered an error:\n%s", PQerrorMessage(conn));
@@ -254,10 +260,10 @@ static int import_button_cb(void) {
 				}
 			}
 
-			free(tag_str);
 		}
 
 		strcpy(buffer, "");
+		strcpy(tag_str, "");
 	}
 
 	sprintf(query_string, "UPDATE public.files SET count = %d WHERE id = %s;", wc, file_id);
@@ -327,6 +333,7 @@ static int import_button_cb(void) {
 	if (cmd_code != 0)
 		fprintf(stderr, "chmod returned: %d\n", cmd_code);
 
+	// clear memory and reallocate
 	free(cmd);
 
 	cmd = NULL;
@@ -346,7 +353,8 @@ static int import_button_cb(void) {
 
 	free(cmd);
 	PQclear(wiz_res);
-	for (catid = 0; catid <= 4; catid++) {
+	//for (catid = 0; catid <= 4; catid++) {
+	for (catid = 0; catid < 4; catid++) {
 		free(text[catid]);
 		printf("freed %d\n", catid);
 	}
