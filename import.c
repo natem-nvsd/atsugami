@@ -1,8 +1,9 @@
 ﻿/* import.c */
-#include "import.h"
-#include <gtk-3.0/gtk/gtk.h>
 #include "main.h"
+#include "import.h"
 #include "import_wizard.h"
+
+#include <gtk-3.0/gtk/gtk.h>
 #include <libpq-fe.h>
 #include <sha256.h>
 #include <string.h>
@@ -12,28 +13,33 @@ char file_sha256[65];
 
 /* The "Import" function */
 static void open_response_cb(GtkNativeDialog *dialog, gint response_id, gpointer user_data) {
-	//PGresult *import_res;
+	PGresult *import_res;
 	GtkFileChooserNative *native = user_data;
 	char *file_path;
-	//char *query;
+	char query[134];
 
 	if (response_id == GTK_RESPONSE_ACCEPT) {
 		/* Get the path of the file selected when the user presses "Import" */
-		// Create a lock on the file here lock_function(gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(native)));
 		file_path = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(native));
 
-		//strcpy(query, "UPDATE public.settings SET last_dir = '");
-		//strcat(query, file_path);
-		//strcat(query, "';");
+		//sprintf(query, "UPDATE public.settings SET last_dir = '%s';", file_path);
 
 		//import_res = PQexec(conn, query);
 		
 		/* Copy the path into `import_file_path`, since `file_path` is cleared when the dialog is destroyed. */
 		strcpy(import_file_path, file_path);
 		SHA256_File(import_file_path, file_sha256);
+		sprintf(query, "SELECT EXISTS (SELECT sha256 FROM public.files WHERE sha256 = '%s');", file_sha256);
 
-		/* Run the wizard; the file chooser window is destroyed before the wizard opens. */
-		import_wizard();
+		import_res = PQexec(conn, query);
+
+		if (strcmp(PQgetvalue(import_res, 0, 0), "f") == 0) {
+			/* Run the wizard; the file chooser window is destroyed before the wizard opens. */
+			import_wizard();
+		}
+		else {
+			fprintf(stderr, "File has already been imported.\n");
+		}
 	}
 
 	gtk_native_dialog_destroy(GTK_NATIVE_DIALOG(native));
