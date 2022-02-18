@@ -6,6 +6,7 @@ Images not included.
 TODO:
 -----
 
+*	Prevent SQL injection
 *	Wiki pages
 *	Page titles with Pango
 *	Reload iconview function

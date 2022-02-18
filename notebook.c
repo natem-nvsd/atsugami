@@ -18,42 +18,31 @@ GtkTreeIter *iter;
 GtkWidget *icon_view;
 
 static void pixbuf_loader_and_store_filler(GtkListStore *list_store) {
-	note_res = PQexec(conn, "SELECT store_dir FROM public.settings;");
+	note_res = PQexec(conn, "SELECT thumb_dir, thumb_siz FROM public.settings;");
 
-	int x;		// Number of rows returned by the query
-	int i;		// Current row
+	int row_count;		// Number of rows returned by the query
+	int row_now;		// Current row
 	size_t size = strlen(PQgetvalue(note_res, 0, 0));
-	char *sha256, *tmp_path;
-	const char path[65 + size];
-	const char file_path[65 + size];
+	char path[3 + size];
+	char file_path[72 + size];
 	GtkTreeIter tree_iter;
 
-	/* The user MUST set this, or the program will crash. */
-	tmp_path = PQgetvalue(note_res, 0, 0);
-
-	strcpy(path, tmp_path);
-	strcat(path, "/");
-	PQclear(note_res);
-	strcpy(tmp_path, "");
-		// ASC and DESC are reversed, since they are inserted one by one into list_store
-
+	/* Initial path; [thumb_dir]/[size]/ */
+	sprintf(path, "%s/%s/", PQgetvalue(note_res, 0, 0), PQgetvalue(note_res, 0, 1));
+	PQclear(note_res); 	// ASC and DESC are reversed, since they are inserted one by one into list_store
 	gtk_list_store_clear(list_store);	// clear the list store
 
 	note_res = PQexec(conn, "SELECT sha256 FROM public.files ORDER BY created_at DESC;");
-	x = PQntuples(note_res);	// get the number of rows returned by the query
+	row_count = PQntuples(note_res);	// get the number of rows returned by the query
 
-	if (x != 0) {
-		for (i = 0; i < x; i++) {		// multithreading would make this much faster
-			sha256 = PQgetvalue(note_res, i, 0);
-			strcpy(file_path, path);
-			strcat(file_path, sha256);
+	if (row_count != 0) {
+		for (row_now = 0; row_now < row_count; row_now++) {
+			sprintf(file_path, "%s%s.png", path, PQgetvalue(note_res, row_now, 0));	// [thumb_dir]/[size]/[sha256]
 
-			thumb = gdk_pixbuf_new_from_file_at_scale(file_path, 180, 180, TRUE, NULL);
+			thumb = gdk_pixbuf_new_from_file(file_path, NULL);
 
 			gtk_list_store_append(list_store, &tree_iter);
 			gtk_list_store_set(list_store, &tree_iter, COL_PATH, file_path, COL_PIXBUF, thumb, -1);
-
-			sha256 = "";
 		}
 	}
 

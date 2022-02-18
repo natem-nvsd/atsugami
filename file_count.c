@@ -6,14 +6,13 @@
 PGresult *count_res;
 
 extern void file_count(GtkWidget *label, GtkWidget *box) {
-	size_t label_int;                                                                                                                                
-	char label_str[26];
+	char label_str[25];	// use malloc later
 	
 	count_res = PQexec(conn, "SELECT count(*) FROM public.files;");
-	strcpy(label_str, PQgetvalue(count_res, 0, 0));
-	label_int = strlen(label_str);
-	strcat(label_str, " files");
-	 if (label_int == '1')
+
+	sprintf(label_str, "%s files", PQgetvalue(count_res, 0, 0));
+
+	 if (strcmp(PQgetvalue(count_res, 0, 0), "1") == 0)
 		label = gtk_label_new("1 file");
 	else
 		label = gtk_label_new(label_str);
@@ -24,16 +23,13 @@ extern void file_count(GtkWidget *label, GtkWidget *box) {
 }
 
 extern void file_count_update(GtkWidget *label, GtkWidget *box) {
-	size_t label_int;                                                                                                                                
-	char label_str[10];
+	char label_str[25];	// use malloc later
 	
 	count_res = PQexec(conn, "SELECT count(*) FROM public.files;");
-	strcpy(label_str, PQgetvalue(count_res, 0, 0));
-	label_int = strlen(label_str);
-	strcat(label_str, " files");
-	 if (label_int == 1)
+
+	sprintf(label_str, "%s files", PQgetvalue(count_res, 0, 0));
+	if (strcmp(PQgetvalue(count_res, 0, 0), "1") == 0)
 		gtk_label_set_text(label, "1 file");
 	else
 		gtk_label_set_text(label, label_str);
-	PQclear(count_res);
 }

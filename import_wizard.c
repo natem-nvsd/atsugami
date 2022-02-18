@@ -44,9 +44,9 @@ static void incomplete_diag(const char *label) {
 	gtk_style_context_add_class(contxt1, "error");
 	gtk_style_context_add_class(contxt2, "error");
 
-	gtk_label_set_markup(label1, "Artist(s)						<b>* This field is required.</b>");
-	gtk_label_set_markup(label4, "General						<b>* This field is required.</b>");
-	gtk_label_set_markup(label6, "Rating						<b>* This field is required.</b>");
+	gtk_label_set_markup(label1, "Artist(s)\t\t\t\t\t<b>* This field is required.</b>");
+	gtk_label_set_markup(label4, "General\t\t\t\t\t<b>* This field is required.</b>");
+	gtk_label_set_markup(label6, "Rating\t\t\t\t\t<b>* This field is required.</b>");
 
 	diag = gtk_message_dialog_new(window, diag_flags, GTK_MESSAGE_ERROR, GTK_BUTTONS_OK, "Form Error");
 
@@ -71,7 +71,7 @@ static void tag_process_fail_diag(const char *title, const char *body, ...) {
 
 static int import_button_cb(void) {
 	register PGresult *wiz_res;
-	/* Check if the text buffer was modified. This MUST be done before initializing text4. */
+	/* Check if the text buffer was modified. This MUST be done before initializing text4, or there will be a segmentation fault. */
 	if (gtk_text_buffer_get_modified(tb) == TRUE) {
 		gtk_text_buffer_get_iter_at_offset(tb, &istart, 0);
 		gtk_text_buffer_get_iter_at_offset(tb, &iend, -1);
@@ -96,32 +96,43 @@ static int import_button_cb(void) {
 		return 1;
 	}
 
-	char text0[text0_size];
-	char text1[text1_size];
-	char text2[text2_size];
-	char text3[text3_size];
-	char text4[text4_size];
-	char text5[text5_size];
-	char text6[2];
-
-	// Whitespace is needed at the end to ensure the processing algorithm works properely.
-	sprintf(text0, "%s", gtk_entry_get_text(entry0));				// Source
-	sprintf(text1, "%s ", gtk_entry_get_text(entry1));				// Artist
-	sprintf(text2, "%s ", gtk_entry_get_text(entry2));				// Copyrights 
-	sprintf(text3, "%s ", gtk_entry_get_text(entry3));				// Characters
-	sprintf(text4, "%s ", gtk_text_buffer_get_text(tb, &istart, &iend, FALSE));	// General
-	sprintf(text5, "%s ", gtk_entry_get_text(entry5));				// Meta
-	sprintf(text6, "%s", gtk_entry_get_text(entry6));				// Rating
-
 	char query_string[160 + text0_size];
 	char file_id[sizeof(long)];
 	char *size_names[5];
 	int size_res[5];
+	char *text[5];
+	char text6[2];
+
+			// allocate enough memory for tag strings
+	text[0] = (char *) malloc(text1_size);		// FREED
+	text[1] = (char *) malloc(text2_size);		// FREED
+	text[2] = (char *) malloc(text3_size);		// FREED
+	text[3] = (char *) malloc(text4_size);		// FREED
+	text[4] = (char *) malloc(text5_size);		// FREED
+	size_names[0] = "small";
+	size_names[1] = "medium";
+	size_names[2] = "large";
+	size_names[3] = "huge";
+	size_names[4] = "gigantic";
+	size_res[0] = 150;
+	size_res[1] = 180;
+	size_res[2] = 225;
+	size_res[3] = 270;
+	size_res[4] = 360;
+
+	// Whitespace is needed at the end to ensure the tag processing algorithm works properely.
+	sprintf(text[0], "%s ", gtk_entry_get_text(entry1));				// Artist
+	sprintf(text[1], "%s ", gtk_entry_get_text(entry2));				// Copyrights
+	sprintf(text[2], "%s ", gtk_entry_get_text(entry3));				// Characters
+	sprintf(text[3], "%s ", gtk_text_buffer_get_text(tb, &istart, &iend, FALSE));	// General
+	sprintf(text[4], "%s ",  gtk_entry_get_text(entry5));				// Meta
+	sprintf(text6, "%s", gtk_entry_get_text(entry6));				// Rating
 
 	wiz_res = PQexec(conn, "BEGIN TRANSACTION");
 	PQclear(wiz_res);
 
-	sprintf(query_string, "INSERT INTO public.files (sha256, rating, source) VALUES (\'%s\', \'%s\', \'%s\') ON CONFLICT DO NOTHING;", file_sha256, text6, text0);
+	sprintf(query_string, "INSERT INTO public.files (sha256, rating, source) VALUES (\'%s\', \'%s\', \'%s\') ON CONFLICT DO NOTHING;", file_sha256, text6, gtk_entry_get_text(entry0));
+	printf("%s\n", query_string);
 
 	wiz_res = PQexec(conn, query_string);
 	strcpy(query_string, "");
@@ -130,14 +141,14 @@ static int import_button_cb(void) {
 		PQclear(wiz_res);
 
 		sprintf(query_string, "SELECT id FROM public.files WHERE sha256 = '%s';", file_sha256);
+		printf("%s\n\n", query_string);
 
 		/* If the file _was_ inserted into the database, then file_id is guaranteed to be non-null */
 		wiz_res = PQexec(conn, query_string);
 		strcpy(query_string, "");
-		strcpy(file_id, PQgetvalue(wiz_res, 0, 0));	/* This appears to cause a segmentation fault. */
+		strcpy(file_id, PQgetvalue(wiz_res, 0, 0));
 		PQclear(wiz_res);
 	}
-
 	else {
 		PQclear(wiz_res);
 
@@ -145,7 +156,7 @@ static int import_button_cb(void) {
 
 		gtk_notebook_detach_tab(notebook, scrolled_window);
 		fprintf(stderr, "%s", PQerrorMessage(conn));
-		tag_process_fail_diag("Error", "Atsugami encountered an error:\n%s", PQerrorMessage(conn));
+		tag_process_fail_diag("Error", "Atsugami encountered an error:\n%s", PQerrorMessage(conn));	// This doesn't work; printf "%s" instead of PQerrorMessage's value
 		PQclear(wiz_res);
 		return 1;
 	}
@@ -155,21 +166,8 @@ static int import_button_cb(void) {
 	//char *tag_str;	// Tags are copied here for string for processing.
 	int catid;	// Category id
 	int charid;	// Current charcter
-	char *text[5];
 
-			// quick and dirty way to allocate enough memory for tag_str
-	text[0] = (char *) malloc(text1_size);		// FREED
-	text[1] = (char *) malloc(text2_size);		// FREED
-	text[2] = (char *) malloc(text3_size);		// FREED
-	text[3] = (char *) malloc(text4_size);		// FREED
-	text[4] = (char *) malloc(text5_size);		// FREED
-
-	sprintf(text[0], "%s", text1);
-	sprintf(text[1], "%s", text2);
-	sprintf(text[2], "%s", text3);
-	sprintf(text[3], "%s", text4);
-	sprintf(text[4], "%s", text5);
-
+	/* Create tags and apply them to the file being imported */
 	for (catid = 0; catid < 5; catid++) {
 		char buffer[strlen(text[catid])];
 		char tag_str[strlen(text[catid])];
@@ -179,15 +177,11 @@ static int import_button_cb(void) {
 		printf("\ncategory id: %d\n", (catid + 1));
 		printf("buffer: '%s'\n", buffer);
 
-		for (charid = 0, bufid = 0; charid < strlen(buffer); charid++, bufid++) {
+		for (charid = 0, bufid = 0; charid < strlen(buffer); charid++) {
+			/* "--", "'", and """ must be prevented from insertion to prevent SQL injection and errors. */
 			if (isspace(buffer[charid]) == 0) {
-				printf("Current character: '%c'\n", buffer[charid]);
-
-				sprintf(&tag_str[bufid], "%c", buffer[charid]);		// tag_str is cleared by this.
-				//tag_str[bufid] = buffer[charid];
-
-				printf("character '%c' %d copied from buffer.\n", buffer[charid], charid);
-				printf("tag string: '%s'\n\n", tag_str);
+				sprintf(&tag_str[bufid], "%c", buffer[charid]);
+				++bufid;
 			}
 			else {
 				char query[strlen(tag_str) + 72];
@@ -195,16 +189,16 @@ static int import_button_cb(void) {
 
 				bufid = 0;
 
-				/* Create the tag */
-				printf("tag string: '%s'\n", tag_str);
 				++wc;
+				/* Check if the tag exists, then create it if it doesn't */
+				//sprintf(query, "SELECT EXISTS (SELECT id FROM public.tags WHERE name = '%s');", tag_str);
 				sprintf(query, "INSERT INTO public.tags (name) VALUES ('%s') ON CONFLICT DO NOTHING;", tag_str);
 				printf("%s\n", query);
 
 				wiz_res = PQexec(conn, query);
 
 				if (PQresultStatus(wiz_res) == PGRES_COMMAND_OK) {
-					/* Create the category-tag bridge */
+					/* Create the tag-category bridge */
 					PQclear(wiz_res);
 					sprintf(query, "SELECT id FROM public.tags WHERE name = '%s';", tag_str);
 					printf("%s\n", query);
@@ -230,9 +224,11 @@ static int import_button_cb(void) {
 						return 1;
 					}
 
-					/* Create the tag-file bridge */
-					sprintf(query, "INSERT INTO public.files_tags (file_id, category_id) VALUES (%s, %d);", file_id, catid);
-					printf("%s\n", query);
+					/* Create the file-tag bridge */
+					sprintf(query, "INSERT INTO public.files_tags (file_id, tag_id) VALUES (%s, %s);", file_id, tagid);
+					printf("%s\n\n", query);
+
+					wiz_res = PQexec(conn, query);	// I can't believe I forgot to execute the query until _now_
 
 					if (PQresultStatus(wiz_res) != PGRES_COMMAND_OK) {
 						fprintf(stderr, "%s\n", PQerrorMessage(conn));
@@ -266,7 +262,7 @@ static int import_button_cb(void) {
 		strcpy(tag_str, "");
 	}
 
-	sprintf(query_string, "UPDATE public.files SET count = %d WHERE id = %s;", wc, file_id);
+	sprintf(query_string, "UPDATE public.files SET count = %d WHERE id = %s;", (wc - 1), file_id);
 	
 	wiz_res = PQexec(conn, query_string);
 
@@ -292,16 +288,6 @@ static int import_button_cb(void) {
 	char *cmd = NULL;
 	int cmd_code;
 
-	size_names[0] = "small";
-	size_names[1] = "medium";
-	size_names[2] = "large";
-	size_names[3] = "huge";
-	size_names[4] = "gigantic";
-	size_res[0] = 150;
-	size_res[1] = 180;
-	size_res[2] = 225;
-	size_res[3] = 270;
-	size_res[4] = 360;
 	wiz_res = PQexec(conn, "SELECT thumb_dir FROM public.settings;");
 	size_t path_size = strlen(PQgetvalue(wiz_res, 0, 0));
 	cmd = (char *) malloc(21 + path_size);
@@ -309,22 +295,23 @@ static int import_button_cb(void) {
 	for (catid = 0; catid <= 4; catid++) {
 		thumb_pixbuf = gdk_pixbuf_new_from_file_at_scale(import_file_path, size_res[catid], size_res[catid], TRUE, NULL);
 
-		sprintf(cmd, "%s/%s/%s.jpeg", PQgetvalue(wiz_res, 0, 0), size_names[catid], file_sha256);	// Storage path, size, sha256
+		sprintf(cmd, "%s/%s/%s.png", PQgetvalue(wiz_res, 0, 0), size_names[catid], file_sha256);	// Storage path, size, sha256
 		printf("thumb path: %s\n", cmd);
-		gdk_pixbuf_save(thumb_pixbuf, cmd, "jpeg", NULL, "quality", "100", NULL);
+	//	gdk_pixbuf_save(thumb_pixbuf, cmd, "png", NULL, "100", NULL);	// PNG so that transparent images look right
+		gdk_pixbuf_save(thumb_pixbuf, cmd, "png", NULL);
 	}
 
-	free(cmd);
+	cmd = NULL;
+
+	free(cmd);		// segfault?
 	PQclear(wiz_res);
-	printf("\n\nDONE\n\n");
+	//printf("\n\nDONE\n\n");
 
 	/* Move the file to the storage directory */
-	cmd = NULL;
 	wiz_res = PQexec(conn, "SELECT store_dir FROM public.settings;");
 	path_size = (strlen(PQgetvalue(wiz_res, 0, 0)) + 12);
 	cmd = realloc(cmd, (path_size));
 
-	printf("realloc 0\n");
 	sprintf(cmd, "chmod 600 %s", import_file_path);
 	printf("%s\n", cmd);
 
@@ -333,34 +320,34 @@ static int import_button_cb(void) {
 	if (cmd_code != 0)
 		fprintf(stderr, "chmod returned: %d\n", cmd_code);
 
-	// clear memory and reallocate
+	/* clear memory and reallocate */
 	free(cmd);
 
 	cmd = NULL;
 	cmd = realloc(cmd, (path_size));
 
-	printf("realloc 1\n");
 	sprintf(cmd, "mv %s /%s/%s", import_file_path, PQgetvalue(wiz_res, 0, 0), file_sha256);	// mv original_path import_path/files/file_sha256
 	printf("%s\n", cmd);
 
 	cmd_code = system(cmd);
 
 	if (cmd_code != 0) {
-		free(cmd);
 		fprintf(stderr, "mv command returned: %d\n", cmd_code);
 		return cmd_code;
 	}
 
 	free(cmd);
 	PQclear(wiz_res);
-	//for (catid = 0; catid <= 4; catid++) {
-	for (catid = 0; catid < 4; catid++) {
+	for (catid = 0; catid < 5; catid++) {
 		free(text[catid]);
 		printf("freed %d\n", catid);
 	}
 
+	printf("memory freed\n");
 	file_count_update(file_label, vbox);	// Why is this an implicit declaration? file_count.h is included.
+	printf("count updated\n");
 	gtk_notebook_detach_tab(notebook, scrolled_window);
+	printf("Finished\n");
 	return 0;
 }
 
