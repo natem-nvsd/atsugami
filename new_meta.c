@@ -1,55 +1,24 @@
-﻿//#include "error_dialogs.h"
+﻿/* new_meta.c */
+#include "main.h"
+#include "callbacks.h"
+#include "import.h"
 #include <glib/gstdio.h>
 #include <gtk/gtk.h>
-#include "import.h"
 #include <libpq-fe.h>
-#include "main.h"
-#include "new.h"
 #include <stdio.h>
 
 PGresult *metares;
 GtkWidget *meta_dialog, *meta_entry, *meta_vbox;
 
 static int on_meta_apply(GtkWidget *widget, gpointer data) {
-	const gchar *tmp_text = gtk_entry_get_text(GTK_ENTRY(meta_entry));
-	const char text[sizeof(tmp_text)];
-	char meta_query[80 + sizeof(text)];
-	const gchar *id = NULL;
+	size_t txt_size = strlen(gtk_entry_get_text(GTK_ENTRY(meta_entry)));
+	char text[txt_size];
+	char meta_query[80 + txt_size];
 
-	strcpy(text, tmp_text);
 	metares = PQexec(conn, "BEGIN TRANSACTION;");
-	PQclear(metares);
-
-	strcpy(meta_query, "INSERT INTO public.tags (name) VALUES ('");
-	strcat(meta_query, text);
-	strcat(meta_query, "') ON CONFLICT DO NOTHING;");
-
-	metares = PQexec(conn, meta_query);
-	strcpy(meta_query, "");	// clear the query string
-
-	//if (PQresultStatus(metares) != PGRES_TUPLES_OK) {
-	if (PQresultStatus(metares) != PGRES_COMMAND_OK) {
-		PQclear(metares);
-
-		metares = PQexec(conn, "ROLLBACK TRANSACTION;");
-		PQclear(metares);
-		gtk_notebook_detach_tab(notebook, meta_vbox);
-		return 1;
-	}
-
-	strcpy(meta_query, "SELECT id FROM public.tags WHERE name LIKE '");
-	strcat(meta_query, text);
-	strcat(meta_query, "';");
-
-	metares = PQexec(conn, meta_query);
-	id = PQgetvalue(metares, 0, 0);
 
 	PQclear(metares);
-	strcpy(meta_query, "");	// clear the query string
-
-	strcpy(meta_query, "INSERT INTO public.tags_categories (tag_id, category_id) VALUES (");
-	strcat(meta_query, id);
-	strcat(meta_query, ", 1);");
+	sprintf(meta_query, "INSERT INTO public.tags (name) VALUES ('%s') ON CONFLICT DO NOTHING;", text);
 
 	metares = PQexec(conn, meta_query);
 
@@ -58,16 +27,33 @@ static int on_meta_apply(GtkWidget *widget, gpointer data) {
 
 		metares = PQexec(conn, "ROLLBACK TRANSACTION;");
 		PQclear(metares);
-		gtk_notebook_detach_tab(notebook, meta_vbox);
+		gtk_notebook_detach_tab(GTK_NOTEBOOK(notebook), meta_vbox);
 		return 1;
 	}
 
-	if (PQresultStatus(metares) == PGRES_COMMAND_OK) {
+	sprintf(meta_query, "SELECT id FROM public.tags WHERE name LIKE '%s';", text);
+
+	metares = PQexec(conn, meta_query);
+
+	sprintf(meta_query, "INSERT INTO public.tags_categories (tag_id, category_id) VALUES (%s, 4);", PQgetvalue(metares, 0, 0));
+	PQclear(metares);
+
+	metares = PQexec(conn, meta_query);
+
+	if (PQresultStatus(metares) != PGRES_COMMAND_OK) {
+		PQclear(metares);
+
+		metares = PQexec(conn, "ROLLBACK TRANSACTION;");
+		PQclear(metares);
+		gtk_notebook_detach_tab(GTK_NOTEBOOK(notebook), meta_vbox);
+		return 1;
+	}
+	else {
 		PQclear(metares);
 
 		metares = PQexec(conn, "COMMIT TRANSACTION;");
 		PQclear(metares);
-		gtk_notebook_detach_tab(notebook, meta_vbox);
+		gtk_notebook_detach_tab(GTK_NOTEBOOK(notebook), meta_vbox);
 	}
 	return 0;
 }
@@ -75,12 +61,12 @@ static int on_meta_apply(GtkWidget *widget, gpointer data) {
 static void on_meta_cancel(GtkWidget *widget, gpointer data) {
 	metares = PQexec(conn, "ROLLBACK TRANSACTION;");
 	PQclear(metares);
-	gtk_notebook_detach_tab(notebook, meta_vbox);
+	gtk_notebook_detach_tab(GTK_NOTEBOOK(notebook), meta_vbox);
 }
 
 extern void new_meta_tag_activate(void) {
 	GtkWidget *label, *button0, *button1, *bbox;
-	gint page_count = gtk_notebook_get_n_pages(notebook);
+	gint page_count = gtk_notebook_get_n_pages(GTK_NOTEBOOK(notebook));
 	
 	meta_vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 10);
 	gtk_container_set_border_width(GTK_CONTAINER(meta_vbox), 10);
@@ -116,7 +102,7 @@ extern void new_meta_tag_activate(void) {
 	
 	gtk_widget_show_all(meta_vbox);
 	gtk_container_add(GTK_CONTAINER(notebook), meta_vbox);
-	gtk_notebook_set_tab_label_text(notebook, meta_vbox, "New meta");
-	gtk_notebook_set_current_page(notebook, page_count);
-	gtk_notebook_set_tab_reorderable(notebook, meta_vbox, TRUE);
+	gtk_notebook_set_tab_label_text(GTK_NOTEBOOK(notebook), meta_vbox, "New meta");
+	gtk_notebook_set_current_page(GTK_NOTEBOOK(notebook), page_count);
+	gtk_notebook_set_tab_reorderable(GTK_NOTEBOOK(notebook), meta_vbox, TRUE);
 }

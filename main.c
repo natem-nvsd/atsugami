@@ -1,94 +1,29 @@
-﻿/***************************************************************\
-* main.c: location of main() in Atsugami.			*
-*								*
-* TODO:								*
-* - Re-write UI in C | rewrite About dialog			*
-* - Create new error banner when uuid-ossp is ENOENT		*
-* - Add EXIF support						*
-* - Fix incompatible pointers					*
-* - Add searching						*
-* - Add icon view and/or widget factory to main window		*
-* - Resize the image in the wizard so the window fits on screen	*
-* - prevent SQL injection					*
-* - Create a file format for exported files			*
-*								*
-* Glade is not a suitable replacement for hand-written code.	*
-\***************************************************************/
-
-#include "about.h"
+﻿/* main.c (c) 2021-2022 by Nate Morrison */
+#include "callbacks.h"
+#include "main.h"
 #include <ctype.h>
 #include <errno.h>
-#include "file_count.h"
 #include <glib/gstdio.h>
 #include <gtk/gtk.h>
-#include "import.h"
 #include <libpq-fe.h>
-#include "main.h"
-#include "new.h"
-#include "notebook.h"
 #include <stdio.h>
-#include "import_wizard.h"
 
 PGconn *conn;
-char conninfo[] = "dbname=atsugami";	/* Sets the database for dbconnect()
-					 * conn MUST be global
-					 */
-char main_psql_error[2048];
-GtkNotebook *notebook;
-GtkWidget *vbox;
-GtkWidget *file_label;
-GtkWidget *window;
+char conninfo[] = "dbname=atsugami";	/* Sets the database for dbconnect(); conn MUST be global */
+GtkWidget *notebook, *vbox, *file_label, *window;
 
 /* Quit function */
-static void quit_activate(gpointer user_data) {
-	/* This causes a seg fault when used as a callback */
-	GtkWidget *window = user_data;
-
+extern void quit_activate(void) {
 	PQfinish(conn);
-	gtk_widget_destroy(window);
-}
-
-static void new_artist_trigger(void) {	// this is here because of gtk or clang idiocy
-	new_artist_activate();
-}
-
-static void new_copyright_trigger(void) {
-	new_copyright_activate();
-}
-
-static void new_character_trigger(void) {
-	new_character_activate();
-}
-
-static void new_tag_trigger(void) {
-	new_tag_activate();
-}
-
-static void new_meta_tag_trigger(void) {
-	new_meta_tag_activate();
-}
-
-static void home_trigger(GtkWidget *box) {
-	notebook = gtk_notebook_new();
-
-	gtk_notebook_set_scrollable(GTK_NOTEBOOK(notebook), TRUE);
-	gtk_container_add(GTK_CONTAINER(vbox), GTK_NOTEBOOK(notebook));
-	home_page();
-}
-
-extern void destroy_window(gpointer user_data) {	/* this doesn't close the program, only destroys a window */
-	GtkWidget *window = user_data;
-	gtk_widget_destroy(window);
+	printf("\nEXITING\n");
+	exit(0);
 }
 
 int main(int argc, char *argv[]) {
 	register PGresult *mainres;
-	/* THis is in order of appearance */
-	GtkWidget *menu_bar;
-	GtkWidget *toolbar;
-
+	GtkWidget *menu_bar, *toolbar;
 	GActionGroup *actions;
-	GtkAccelGroup *accel_group;
+	//GtkAccelGroup *accel_group;
 
 	gtk_init(&argc, &argv); /* Initialize GTK */
 
@@ -103,11 +38,11 @@ int main(int argc, char *argv[]) {
 		GtkWidget *diag;
 		GtkDialogFlags diag_flags = GTK_RESPONSE_ACCEPT;
 
-		diag = gtk_message_dialog_new(window, diag_flags, GTK_MESSAGE_ERROR, GTK_BUTTONS_OK, "Database error");
+		diag = gtk_message_dialog_new(GTK_WINDOW(window), diag_flags, GTK_MESSAGE_ERROR, GTK_BUTTONS_OK, "Database error");
 
-		gtk_message_dialog_format_secondary_text(diag, "Atsugami encountered a non-recoverable error with the database.\nAre you sure PostreSQL is installed or the database has been setup?");
-		gtk_window_set_position(GTK_DIALOG(diag), GTK_WIN_POS_CENTER_ALWAYS);
-		gtk_window_set_resizable(GTK_DIALOG(diag), FALSE);
+		gtk_message_dialog_format_secondary_text(GTK_MESSAGE_DIALOG(diag), "Atsugami encountered a non-recoverable error with the database.\nAre you sure PostreSQL is installed or the database has been setup?");
+		gtk_window_set_position(GTK_WINDOW(diag), GTK_WIN_POS_CENTER_ALWAYS);
+		gtk_window_set_resizable(GTK_WINDOW(diag), FALSE);
 		gtk_dialog_run(GTK_DIALOG(diag));
 		gtk_widget_destroy(diag);
 		PQfinish(conn);
@@ -120,11 +55,11 @@ int main(int argc, char *argv[]) {
 		GtkWidget *diag;
 		GtkDialogFlags diag_flags = GTK_RESPONSE_ACCEPT;
 
-		diag = gtk_message_dialog_new(window, diag_flags, GTK_MESSAGE_ERROR, GTK_BUTTONS_OK, "Configuration error");
+		diag = gtk_message_dialog_new(GTK_WINDOW(window), diag_flags, GTK_MESSAGE_ERROR, GTK_BUTTONS_OK, "Configuration error");
 
-		gtk_message_dialog_format_secondary_text(diag, "Atsugami could not retrive configuration settings from the database.\nBacktrace:\n\tStorage directory: %s\n\tThumbnail directory: %s\n\tLast directory: %s\n\tThumbnail size: %s", PQgetvalue(mainres, 0, 0), PQgetvalue(mainres, 0, 1), PQgetvalue(mainres, 0, 2), PQgetvalue(mainres, 0, 3));
-		gtk_window_set_position(GTK_DIALOG(diag), GTK_WIN_POS_CENTER_ALWAYS);
-		gtk_window_set_resizable(GTK_DIALOG(diag), FALSE);
+		gtk_message_dialog_format_secondary_text(GTK_MESSAGE_DIALOG(diag), "Atsugami could not retrive configuration settings from the database.\nBacktrace:\n\tStorage directory: %s\n\tThumbnail directory: %s\n\tLast directory: %s\n\tThumbnail size: %s", PQgetvalue(mainres, 0, 0), PQgetvalue(mainres, 0, 1), PQgetvalue(mainres, 0, 2), PQgetvalue(mainres, 0, 3));
+		gtk_window_set_position(GTK_WINDOW(diag), GTK_WIN_POS_CENTER_ALWAYS);
+		gtk_window_set_resizable(GTK_WINDOW(diag), FALSE);
 		gtk_dialog_run(GTK_DIALOG(diag));
 		gtk_widget_destroy(diag);
 		PQclear(mainres);
@@ -132,8 +67,9 @@ int main(int argc, char *argv[]) {
 
 		return 1;
 	}
+	/* End error checking */
 
-	g_signal_connect(window, "destroy", G_CALLBACK(gtk_main_quit), NULL);
+	g_signal_connect(window, "destroy", G_CALLBACK(quit_activate), NULL);
 	//g_action_map_add_action_entries(G_ACTION_MAP(actions), app_entries, G_N_ELEMENTS(app_entries), window);
 	gtk_widget_insert_action_group(window, "app", actions);
 
@@ -142,79 +78,46 @@ int main(int argc, char *argv[]) {
 	gtk_container_add(GTK_CONTAINER(window), vbox);
 
 	/* keyboard shortcuts */
-	accel_group = gtk_accel_group_new();
+	//accel_group = gtk_accel_group_new();
 
 	/* Actions */
 	/*
 	GAction *import;
-	GAction *quit;
 	GAction *new_artist;
 	GAction *new_copyright;
 	import = gtk_action_new("import", "Import", "Import an image", NULL);
-	quit = gtk_action_new("quit", "Quit", "Quit the program", NULL);
 	new_artist = gtk_action_new("artist", "New artist", "Add a new artist to Atsugami", NULL);
 	new_copyright = gtk_action_new("copyright", "New copyright", "Add a new copyright to Atsugami", NULL);
 	*/
 
 	/* Menus (e.g. File) */
-	GtkWidget *file_menu;
-	GtkWidget *edit_menu;
-	GtkWidget *tags_menu;
-	GtkWidget *wiki_menu;
-	GtkWidget *view_menu;
-	GtkWidget *help_menu;
+	GtkWidget *file_menu, *edit_menu, *tags_menu, *wiki_menu, *view_menu, *help_menu;
 
 	/* Menu items (e.g. Quit) */
-	GtkWidget *file_menu_item;
-	GtkWidget *import_menu_item;
-	GtkWidget *bulk_import_menu_item;
-	GtkWidget *export_menu_item;
-	GtkWidget *delete_menu_item;
-	GtkWidget *quit_menu_item;
+	// Column 0
+	GtkWidget *file_menu_item, *import_menu_item, *bulk_import_menu_item, *export_menu_item, *delete_menu_item, *quit_menu_item;
 
-	GtkWidget *edit_menu_item;
-	GtkWidget *edit_file_menu_item;
-	GtkWidget *bulk_edit_menu_item;
-	GtkWidget *settings_menu_item;
+	// Column 1
+	GtkWidget *edit_menu_item, *edit_file_menu_item, *bulk_edit_menu_item, *settings_menu_item;
 
-	GtkWidget *tags_menu_item;
-	GtkWidget *new_artist_mi;
-	GtkWidget *new_copyright_mi;
-	GtkWidget *new_character_mi;
-	GtkWidget *new_tag_mi;
-	GtkWidget *new_meta_tag_mi;
+	// Column 2
+	GtkWidget *tags_menu_item, *new_artist_menu_item, *new_copyright_menu_item, *new_character_menu_item, *new_tag_menu_item, *new_meta_tag_menu_item;
 
+	// Column 3
 	GtkWidget *wiki_menu_item;
 
-	GtkWidget *view_menu_item;
-	GtkWidget *view_extern_menu_item;
-	GtkWidget *view_intern_menu_item;
+	// Column 4
+	GtkWidget *view_menu_item, *view_extern_menu_item, *view_intern_menu_item;
 
-	GtkWidget *help_menu_item;
-	GtkWidget *help_menu_button;
-	GtkWidget *about_menu_item;
+	// Column 5
+	GtkWidget *help_menu_item, *help_menu_button, *console_menu_item, *about_menu_item;
 
-	// Toolbar
-	GtkWidget *import_button;
-	GtkWidget *bulk_import_button;
-	GtkWidget *edit_button;
-	GtkWidget *favourite_button;
-	GtkWidget *view_button;
-	GtkWidget *wiki_button;
-	GtkWidget *home_button; 
-	GtkWidget *he_will_not_divide_us;
-	GtkWidget *search_by_tag;
-	GtkWidget *search_wiki;
-	GtkWidget *search_tag_wrapper;
-	GtkWidget *search_wiki_wrapper;
+	/* Toolbar */
+	GtkToolItem *import_button, *bulk_import_button, *edit_button, *favourite_button, *view_button, *wiki_button, *home_button, *he_will_not_divide_us, *search_tag_wrapper, *search_wiki_wrapper;
+	GtkWidget *search_by_tag, *search_wiki;
 
-	GtkImage *import_image;
-	GtkImage *bulk_import_image;
-	GtkImage *edit_image;
-	GtkImage *favourite_image;
-	GtkImage *view_image;
-	GtkImage *wiki_image;
-	GtkImage *home_image;
+	/* Toolbar images */
+	GtkWidget *import_image, *bulk_import_image, *edit_image, *favourite_image, *view_image, *wiki_image, *home_image;
 
 	/* Create the menu bar */
 	menu_bar = gtk_menu_bar_new();
@@ -228,6 +131,7 @@ int main(int argc, char *argv[]) {
 	help_menu = gtk_menu_new();
 
 	/* Create menu items */
+	// File
 	file_menu_item = gtk_menu_item_new_with_label("File");
 	import_menu_item = gtk_menu_item_new_with_label("Import");
 	bulk_import_menu_item = gtk_menu_item_new_with_label("Bulk import");
@@ -235,26 +139,32 @@ int main(int argc, char *argv[]) {
 	delete_menu_item = gtk_menu_item_new_with_label("Delete");
 	quit_menu_item = gtk_menu_item_new_with_label("Quit");
 
+	// Edit
 	edit_menu_item = gtk_menu_item_new_with_label("Edit");
 	edit_file_menu_item = gtk_menu_item_new_with_label("Edit");
 	bulk_edit_menu_item = gtk_menu_item_new_with_label("Bulk edit ");
 	settings_menu_item = gtk_menu_item_new_with_label("Preferences");
 
+	// Tags
 	tags_menu_item = gtk_menu_item_new_with_label("Tags");
-	new_artist_mi = gtk_menu_item_new_with_label("New artist");
-	new_copyright_mi = gtk_menu_item_new_with_label("New copyright");
-	new_character_mi = gtk_menu_item_new_with_label("New character");
-	new_tag_mi = gtk_menu_item_new_with_label("New tag");
-	new_meta_tag_mi = gtk_menu_item_new_with_label("New meta tag");
+	new_artist_menu_item = gtk_menu_item_new_with_label("New artist");
+	new_copyright_menu_item = gtk_menu_item_new_with_label("New copyright");
+	new_character_menu_item = gtk_menu_item_new_with_label("New character");
+	new_tag_menu_item = gtk_menu_item_new_with_label("New tag");
+	new_meta_tag_menu_item = gtk_menu_item_new_with_label("New meta tag");
 
+	// Wikis
 	wiki_menu_item = gtk_menu_item_new_with_label("Wiki");
 
+	// View
 	view_menu_item = gtk_menu_item_new_with_label("View");
 	view_extern_menu_item = gtk_menu_item_new_with_label("Open in external viewer");
 	view_intern_menu_item = gtk_menu_item_new_with_label("Open in internal viewer");
 
+	// Help
 	help_menu_item = gtk_menu_item_new_with_label("Help");
 	help_menu_button = gtk_menu_item_new_with_label("Help");
+	console_menu_item = gtk_menu_item_new_with_label("Console");
 	about_menu_item = gtk_menu_item_new_with_label("About");
 
 	/* File menu */
@@ -266,6 +176,9 @@ int main(int argc, char *argv[]) {
 	gtk_menu_shell_append(GTK_MENU_SHELL(file_menu), delete_menu_item);
 	gtk_menu_shell_append(GTK_MENU_SHELL(file_menu), quit_menu_item);
 
+	g_signal_connect(import_menu_item, "activate", G_CALLBACK(import_activate), NULL);
+	g_signal_connect(quit_menu_item, "activate", G_CALLBACK(quit_activate), NULL);
+
 	/* Edit menu */
 	gtk_menu_item_set_submenu(GTK_MENU_ITEM(edit_menu_item), edit_menu);
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu_bar), edit_menu_item);
@@ -276,11 +189,17 @@ int main(int argc, char *argv[]) {
 	/* Tags menu */
 	gtk_menu_item_set_submenu(GTK_MENU_ITEM(tags_menu_item), tags_menu);
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu_bar), tags_menu_item);
-	gtk_menu_shell_append(GTK_MENU_SHELL(tags_menu), new_artist_mi);
-	gtk_menu_shell_append(GTK_MENU_SHELL(tags_menu), new_copyright_mi);
-	gtk_menu_shell_append(GTK_MENU_SHELL(tags_menu), new_character_mi);
-	gtk_menu_shell_append(GTK_MENU_SHELL(tags_menu), new_tag_mi);
-	gtk_menu_shell_append(GTK_MENU_SHELL(tags_menu), new_meta_tag_mi);
+	gtk_menu_shell_append(GTK_MENU_SHELL(tags_menu), new_artist_menu_item);
+	gtk_menu_shell_append(GTK_MENU_SHELL(tags_menu), new_copyright_menu_item);
+	gtk_menu_shell_append(GTK_MENU_SHELL(tags_menu), new_character_menu_item);
+	gtk_menu_shell_append(GTK_MENU_SHELL(tags_menu), new_tag_menu_item);
+	gtk_menu_shell_append(GTK_MENU_SHELL(tags_menu), new_meta_tag_menu_item);
+
+	g_signal_connect(new_artist_menu_item, "activate", G_CALLBACK(new_artist_activate), NULL);
+	g_signal_connect(new_copyright_menu_item, "activate", G_CALLBACK(new_copyright_activate), NULL);
+	g_signal_connect(new_character_menu_item, "activate", G_CALLBACK(new_character_activate), NULL);
+	g_signal_connect(new_tag_menu_item, "activate", G_CALLBACK(new_tag_activate), NULL);
+	g_signal_connect(new_meta_tag_menu_item, "activate", G_CALLBACK(new_meta_tag_activate), NULL);
 
 	/* Wiki menu */
 	gtk_menu_item_set_submenu(GTK_MENU_ITEM(wiki_menu_item), wiki_menu);
@@ -296,31 +215,26 @@ int main(int argc, char *argv[]) {
 	gtk_menu_item_set_submenu(GTK_MENU_ITEM(help_menu_item), help_menu);
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu_bar), help_menu_item);
 	gtk_menu_shell_append(GTK_MENU_SHELL(help_menu), help_menu_button);
+	gtk_menu_shell_append(GTK_MENU_SHELL(help_menu), console_menu_item);
 	gtk_menu_shell_append(GTK_MENU_SHELL(help_menu), about_menu_item);
 	gtk_box_pack_start(GTK_BOX(vbox), menu_bar, FALSE, FALSE, 0);
 
-	/* Menu bar callbacks */
-	g_signal_connect(import_menu_item, "activate", G_CALLBACK(import_activate), NULL);
-	g_signal_connect(quit_menu_item,   "activate", G_CALLBACK(gtk_main_quit), NULL);	/* segfault when quit_activate */
+	g_signal_connect(console_menu_item, "activate", G_CALLBACK(console), NULL);
 	g_signal_connect(about_menu_item, "activate", G_CALLBACK(about_activate), NULL);
-	g_signal_connect(new_artist_mi, "activate", G_CALLBACK(new_artist_trigger), NULL);
-	g_signal_connect(new_copyright_mi, "activate", G_CALLBACK(new_copyright_trigger), NULL);
-	g_signal_connect(new_character_mi, "activate", G_CALLBACK(new_character_trigger), NULL);
-	g_signal_connect(new_tag_mi, "activate", G_CALLBACK(new_tag_trigger), NULL);
-	g_signal_connect(new_meta_tag_mi, "activate", G_CALLBACK(new_meta_tag_trigger), NULL);
 
 	/* Toolbar */
 	toolbar = gtk_toolbar_new();
-	gtk_toolbar_set_style(toolbar, GTK_TOOLBAR_BOTH_HORIZ);
+
+	gtk_toolbar_set_style(GTK_TOOLBAR(toolbar), GTK_TOOLBAR_BOTH_HORIZ);
 	gtk_box_pack_start(GTK_BOX(vbox), toolbar, FALSE, FALSE, 0);
 
 	/* Icons */
-	import_image = gtk_image_new_from_stock("gtk-open", GTK_ICON_SIZE_LARGE_TOOLBAR);
-	bulk_import_image = gtk_image_new_from_stock("gtk-dnd-multiple", GTK_ICON_SIZE_LARGE_TOOLBAR);
+	import_image = gtk_image_new_from_icon_name("gtk-open", GTK_ICON_SIZE_LARGE_TOOLBAR);
+	bulk_import_image = gtk_image_new_from_icon_name("gtk-dnd-multiple", GTK_ICON_SIZE_LARGE_TOOLBAR);
 	edit_image = gtk_image_new_from_icon_name("gtk-edit", GTK_ICON_SIZE_LARGE_TOOLBAR);
 	view_image = gtk_image_new_from_icon_name("image-x-generic", GTK_ICON_SIZE_LARGE_TOOLBAR);
 	favourite_image = gtk_image_new_from_icon_name("emblem-favorite", GTK_ICON_SIZE_LARGE_TOOLBAR);
-	wiki_image = gtk_image_new_from_stock("gtk-file", GTK_ICON_SIZE_LARGE_TOOLBAR);
+	wiki_image = gtk_image_new_from_icon_name("gtk-file", GTK_ICON_SIZE_LARGE_TOOLBAR);
 	home_image = gtk_image_new_from_icon_name("go-home", GTK_ICON_SIZE_LARGE_TOOLBAR);
 
 	/* Widgets */
@@ -334,13 +248,13 @@ int main(int argc, char *argv[]) {
 	he_will_not_divide_us = gtk_separator_tool_item_new();		/* the icon view and/or icon factory must be done first */
 
 	/* Tooltips */
-	gtk_widget_set_tooltip_text(import_button, "Import an image to Atsugami");
-	gtk_widget_set_tooltip_text(bulk_import_button, "Import multiple images to Atsugami");
-	gtk_widget_set_tooltip_text(edit_button, "Edit the tags of the selected image");
-	gtk_widget_set_tooltip_text(favourite_button, "Add the selected image to your favourites");
-	gtk_widget_set_tooltip_text(view_button, "Open the selected image(s) in an external viewer");
-	gtk_widget_set_tooltip_text(wiki_button, "Open the wiki");
-	gtk_widget_set_tooltip_text(home_button, "Go home");
+	gtk_widget_set_tooltip_text(GTK_WIDGET(import_button), "Import an image to Atsugami");
+	gtk_widget_set_tooltip_text(GTK_WIDGET(bulk_import_button), "Import multiple images to Atsugami");
+	gtk_widget_set_tooltip_text(GTK_WIDGET(edit_button), "Edit the tags of the selected image");
+	gtk_widget_set_tooltip_text(GTK_WIDGET(favourite_button), "Add the selected image to your favourites");
+	gtk_widget_set_tooltip_text(GTK_WIDGET(view_button), "Open the selected image(s) in an external viewer");
+	gtk_widget_set_tooltip_text(GTK_WIDGET(wiki_button), "Open the wiki");
+	gtk_widget_set_tooltip_text(GTK_WIDGET(home_button), "Go home");
 
 	/* Search bars */
 	search_by_tag = gtk_search_entry_new();
@@ -348,25 +262,25 @@ int main(int argc, char *argv[]) {
 	search_tag_wrapper = gtk_tool_item_new();
 	search_wiki_wrapper = gtk_tool_item_new();
 
-	gtk_entry_set_placeholder_text(search_by_tag, "Search for images");
-	gtk_entry_set_placeholder_text(search_wiki, "Search the wiki");
+	gtk_entry_set_placeholder_text(GTK_ENTRY(search_by_tag), "Search for images");
+	gtk_entry_set_placeholder_text(GTK_ENTRY(search_wiki), "Search the wiki");
 	gtk_container_add(GTK_CONTAINER(search_tag_wrapper), GTK_WIDGET(search_by_tag));
 	gtk_container_add(GTK_CONTAINER(search_wiki_wrapper), GTK_WIDGET(search_wiki));
 
-	gtk_search_entry_handle_event(search_by_tag, quit_activate);
+	//gtk_search_entry_handle_event(search_by_tag, quit_activate);
 	//gtk_search_entry_handle_event(search_wiki, );
 
 	/* Add widgets to the toolbar */
-	gtk_toolbar_insert(GTK_TOOLBAR(toolbar), import_button, 0);
-	gtk_toolbar_insert(toolbar, bulk_import_button, 1);
-	gtk_toolbar_insert(toolbar, edit_button, 2);
-	gtk_toolbar_insert(toolbar, favourite_button, 3);
-	gtk_toolbar_insert(toolbar, view_button, 4);
-	gtk_toolbar_insert(toolbar, wiki_button, 5);
-	gtk_toolbar_insert(toolbar, home_button, 6);
-	gtk_toolbar_insert(toolbar, he_will_not_divide_us, 7);
-	gtk_toolbar_insert(toolbar, search_tag_wrapper, 8);
-	gtk_toolbar_insert(toolbar, search_wiki_wrapper, 9);
+	gtk_toolbar_insert(GTK_TOOLBAR(toolbar), GTK_TOOL_ITEM(import_button), 0);
+	gtk_toolbar_insert(GTK_TOOLBAR(toolbar), GTK_TOOL_ITEM(bulk_import_button), 1);
+	gtk_toolbar_insert(GTK_TOOLBAR(toolbar), GTK_TOOL_ITEM(edit_button), 2);
+	gtk_toolbar_insert(GTK_TOOLBAR(toolbar), GTK_TOOL_ITEM(favourite_button), 3);
+	gtk_toolbar_insert(GTK_TOOLBAR(toolbar), GTK_TOOL_ITEM(view_button), 4);
+	gtk_toolbar_insert(GTK_TOOLBAR(toolbar), GTK_TOOL_ITEM(wiki_button), 5);
+	gtk_toolbar_insert(GTK_TOOLBAR(toolbar), GTK_TOOL_ITEM(home_button), 6);
+	gtk_toolbar_insert(GTK_TOOLBAR(toolbar), GTK_TOOL_ITEM(he_will_not_divide_us), 7);
+	gtk_toolbar_insert(GTK_TOOLBAR(toolbar), GTK_TOOL_ITEM(search_tag_wrapper), 8);
+	gtk_toolbar_insert(GTK_TOOLBAR(toolbar), GTK_TOOL_ITEM(search_wiki_wrapper), 9);
 
 	/* Toolbar callbacks */
 	g_signal_connect(import_button, "clicked", G_CALLBACK(import_activate), NULL);
@@ -375,55 +289,55 @@ int main(int argc, char *argv[]) {
 //	g_signal_connect(favourite_button, "clicked", G_CALLBACK(NULL), NULL);
 //	g_signal_connect(view_button, "clicked", G_CALLBACK(NULL), NULL);
 //	g_signal_connect(wiki_button, "clicked", G_CALLBACK(NULL), NULL);
-//	g_signal_connect(home_button, "clicked", home_trigger(vbox), NULL);
+	//g_signal_connect(home_button, "clicked", G_CALLBACK(home_activate), NULL);
 	
 	/* Warning info bar */
-	GtkWidget *warn_widget, *warn_label, *warn_area;
-	GtkInfoBar *warn_bar;
-	GtkImage *warn_image;
+	GtkWidget *warn_widget, *warn_label, *warn_area, *warn_bar, *warn_image;
 
-	warn_image = gtk_image_new_from_stock("gtk-dialog-warning", GTK_ICON_SIZE_DND);
+	warn_image = gtk_image_new_from_icon_name("gtk-dialog-warning", GTK_ICON_SIZE_DND);
 	warn_widget = gtk_info_bar_new();
-	warn_bar = GTK_INFO_BAR(warn_widget);
+	warn_bar = warn_widget;
 
 	gtk_widget_set_no_show_all(warn_widget, FALSE);
+
 	warn_label = gtk_label_new("");
-	warn_area = gtk_info_bar_get_content_area(warn_bar);
+	warn_area = gtk_info_bar_get_content_area(GTK_INFO_BAR(warn_bar));
+
 	gtk_container_add(GTK_CONTAINER(warn_area), warn_image);
 	gtk_container_add(GTK_CONTAINER(warn_area), warn_label);
-	gtk_info_bar_set_revealed(warn_bar, FALSE);
+	gtk_info_bar_set_revealed(GTK_INFO_BAR(warn_bar), FALSE);
 	
 	/* Add warn_bar to vbox */
-	gtk_info_bar_set_message_type(warn_bar, GTK_MESSAGE_WARNING);
+	gtk_info_bar_set_message_type(GTK_INFO_BAR(warn_bar), GTK_MESSAGE_WARNING);
 	gtk_widget_show(warn_bar);
 	gtk_box_pack_start(GTK_BOX(vbox), warn_bar, FALSE, FALSE, 0);
 
 	/* Error info bar */
-	GtkWidget *error_widget, *error_label, *error_area;
-	GtkInfoBar *error_bar;
-	GtkImage *error_image;
+	GtkWidget *error_widget, *error_label, *error_area, *error_bar, *error_image;
 
-	error_image = gtk_image_new_from_stock("gtk-dialog-error", GTK_ICON_SIZE_DND);
+	error_image = gtk_image_new_from_icon_name("gtk-dialog-error", GTK_ICON_SIZE_DND);
 
 	/* Create the infobar */
 	error_widget = gtk_info_bar_new();
-	error_bar = GTK_INFO_BAR(error_widget);
+	error_bar = error_widget;
 
 	gtk_widget_set_no_show_all(error_widget, FALSE);
+
 	error_label = gtk_label_new("");
-	error_area = gtk_info_bar_get_content_area(error_bar);
-	gtk_container_add(GTK_CONTAINER(error_area), error_image);
+	error_area = gtk_info_bar_get_content_area(GTK_INFO_BAR(error_bar));
+
+	gtk_container_add(GTK_CONTAINER(error_area), GTK_WIDGET(error_image));
 	gtk_container_add(GTK_CONTAINER(error_area), error_label);
-	gtk_info_bar_set_revealed(error_bar, FALSE);
+	gtk_info_bar_set_revealed(GTK_INFO_BAR(error_bar), FALSE);
 
 	/* Add error_bar to vbox */
-	gtk_info_bar_set_message_type(error_bar, GTK_MESSAGE_ERROR);
+	gtk_info_bar_set_message_type(GTK_INFO_BAR(error_bar), GTK_MESSAGE_ERROR);
 
 	/* Show error info bar if the connection fails */
 	if (PQstatus(conn) != CONNECTION_OK) {
 		char *errMsg = NULL;
 
-		gtk_info_bar_set_revealed(error_bar, TRUE);
+		gtk_info_bar_set_revealed(GTK_INFO_BAR(error_bar), TRUE);
 		sprintf(errMsg, "\n%s", PQerrorMessage(conn));
 		fprintf(stderr, "Atsugami: %s", PQerrorMessage(conn));
 		gtk_label_set_text(GTK_LABEL(error_label), errMsg);
@@ -433,11 +347,12 @@ int main(int argc, char *argv[]) {
 	notebook = gtk_notebook_new();
 
 	gtk_notebook_set_scrollable(GTK_NOTEBOOK(notebook), TRUE);
-	gtk_container_add(GTK_CONTAINER(vbox), GTK_NOTEBOOK(notebook));
+	gtk_container_add(GTK_CONTAINER(vbox), GTK_WIDGET(notebook));
 	home_page();
 
 	/* File count */
 	file_label = gtk_label_new(NULL);
+
 	file_count(file_label, vbox);
 
 	/* Show window and vbox */

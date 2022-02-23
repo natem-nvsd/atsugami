@@ -1,9 +1,6 @@
 /* main.h */
 #define EOL -1
-#pragma clang diagnostic ignored "-Wdeprecated-declarations"
-#pragma clang diagnostic ignored "-Wsometimes-uninitialized"
-#pragma clang diagnostic ignored "-Wincompatible-pointer-types"
-#pragma clang diagnostic ignored "-Wimplicit-function-declaration"
+#define __VERSION "0.81.0"
 
 typedef _Bool bool;
 
@@ -16,7 +13,7 @@ typedef _Bool bool;
 extern PGconn *conn;
 extern char conninfo[];
 extern void destroy_window(gpointer user_data);
-extern GtkNotebook *notebook;
+extern GtkWidget *notebook;
 extern GtkWidget *file_label, *vbox;
 extern GtkWidget *window;
 

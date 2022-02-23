@@ -1,34 +1,28 @@
+/* import_wizard.c (c) 2021-2022 by Nate Morrison */
+#include "main.h"
+#include "callbacks.h"
+#include "import.h"
 #include <ctype.h>
 #include <gtk/gtk.h>
-#include "import.h"
 #include <libpq-fe.h>
-#include "main.h"
-#include "notebook.h"
-#include "file_count.h"
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>
-#include "import_wizard.h"
 
-GtkWidget *label0, *label1, *label2, *label3, *label4, *label5, *label6;
-GtkWidget *entry0, *entry1, *entry2, *entry3, *entry5, *entry6;
-//GtkTextView *tv;
-GtkWidget *tv;
+GtkWidget *label0, *label1, *label2, *label3, *label4, *label5, *label6, *entry0, *entry1, *entry2, *entry3, *entry5, *entry6, *tv, *import_thumb, *cbox, *can_button, *imp_button, *header_box, *scrolled_window;
 GtkTextBuffer *tb;
 GtkTextIter istart, iend;
-GtkWidget *import_thumb, *cbox, *can_button, *imp_button;
 GdkPixbuf *import_thumb_pixbuf, *thumb_pixbuf;
 GtkImage *diag_ico;
 gint page_count = 0;
 gboolean parent_bool = FALSE;
 gboolean child_bool = FALSE;
 gboolean has_children = FALSE;
-GtkWidget *header_box, *scrolled_window;
 GtkStyleContext *contxt0, *contxt1, *contxt2;
 
 static void cancel_button_cb(void) {
-	gtk_notebook_detach_tab(notebook, scrolled_window);
+	gtk_notebook_detach_tab(GTK_NOTEBOOK(notebook), scrolled_window);
 }
 
 static void incomplete_diag(const char *label) {
@@ -83,12 +77,12 @@ static int import_button_cb(void) {
 	}
 
 	int wc = 0;
-	const size_t text0_size = (strlen(gtk_entry_get_text(GTK_ENTRY(entry0)) + 1));
-	const size_t text1_size = (strlen(gtk_entry_get_text(GTK_ENTRY(entry1)) + 1));
-	const size_t text2_size = (strlen(gtk_entry_get_text(GTK_ENTRY(entry2)) + 1));
-	const size_t text3_size = (strlen(gtk_entry_get_text(GTK_ENTRY(entry3)) + 1));
-	const size_t text4_size = (strlen(gtk_text_buffer_get_text(tb, &istart, &iend, FALSE) + 1));
-	const size_t text5_size = (strlen(gtk_entry_get_text(GTK_ENTRY(entry5))));
+	const size_t text0_size = (strlen(gtk_entry_get_text(GTK_ENTRY(entry0)) + 1));			// Source
+	const size_t text1_size = (strlen(gtk_entry_get_text(GTK_ENTRY(entry1)) + 1));			// Artist
+	const size_t text2_size = (strlen(gtk_entry_get_text(GTK_ENTRY(entry2)) + 1));			// Copyrights
+	const size_t text3_size = (strlen(gtk_entry_get_text(GTK_ENTRY(entry3)) + 1));			// Characters
+	const size_t text4_size = (strlen(gtk_text_buffer_get_text(tb, &istart, &iend, FALSE) + 1));	// General
+	const size_t text5_size = (strlen(gtk_entry_get_text(GTK_ENTRY(entry5))));			// Meta
 
 	/* Check if text fields are empty. */
 	if (text1_size == 0 || strlen(gtk_entry_get_text(GTK_ENTRY(entry6))) == 0) {
@@ -101,37 +95,103 @@ static int import_button_cb(void) {
 	char *size_names[5];
 	int size_res[5];
 	char *text[5];
-	char text6[2];
+	int catid;	// Category id
 
-			// allocate enough memory for tag strings
-	text[0] = (char *) malloc(text1_size);		// FREED
-	text[1] = (char *) malloc(text2_size);		// FREED
-	text[2] = (char *) malloc(text3_size);		// FREED
-	text[3] = (char *) malloc(text4_size);		// FREED
-	text[4] = (char *) malloc(text5_size);		// FREED
-	size_names[0] = "small";
-	size_names[1] = "medium";
-	size_names[2] = "large";
-	size_names[3] = "huge";
-	size_names[4] = "gigantic";
-	size_res[0] = 150;
-	size_res[1] = 180;
-	size_res[2] = 225;
-	size_res[3] = 270;
-	size_res[4] = 360;
+	/* allocate memory for tag strings */
+	text[0] = (char *) malloc(text1_size);		// Artist	FREED
+	text[1] = (char *) malloc(text2_size);		// Copyrights	FREED
+	text[2] = (char *) malloc(text3_size);		// Characters	FREED
+	text[3] = (char *) malloc(text4_size);		// General	FREED
+	text[4] = (char *) malloc(text5_size);		// Meta		FREED
 
-	// Whitespace is needed at the end to ensure the tag processing algorithm works properely.
-	sprintf(text[0], "%s ", gtk_entry_get_text(GTK_ENTRY(entry1)));				// Artist
-	sprintf(text[1], "%s ", gtk_entry_get_text(GTK_ENTRY(entry2)));				// Copyrights
-	sprintf(text[2], "%s ", gtk_entry_get_text(GTK_ENTRY(entry3)));				// Characters
-	sprintf(text[3], "%s ", gtk_text_buffer_get_text(tb, &istart, &iend, FALSE));	// General
-	sprintf(text[4], "%s ", gtk_entry_get_text(GTK_ENTRY(entry5)));				// Meta
-	sprintf(text6,	 "%s",  gtk_entry_get_text(GTK_ENTRY(entry6)));				// Rating
+	size_res[0] = text1_size;	// Artist
+	size_res[1] = text2_size;	// Copyrights
+	size_res[2] = text3_size;	// Characters
+	size_res[3] = text4_size;	// General
+	size_res[4] = text5_size;	// Meta
+
+	/* Whitespace is needed at the end to ensure the tag processing algorithm works properely.
+	 * If the last character of a string is " ", the last tag of a string will be looped; this seems
+	 * to cause the tagid to become the first letter of the last tag. Because files_tags.tag_id is of
+	 * type INTEGER, the transaction is rolled back when tagid is a `char`. If user input contains a
+	 * " " at the end, the " " must be removed or ignored.
+	 */
+	
+	for (catid = 0; catid < 5; catid++) {
+		printf("%d\n", catid);
+		switch (catid) {
+			/* Artists */
+			case 0: {
+				size_t text_size = size_res[catid];
+				const char *buffer = gtk_entry_get_text(GTK_ENTRY(entry1));
+
+				printf("'%s'\n", buffer);
+				if (buffer[text_size] == ' ')
+					sprintf(text[catid], "%s", buffer);
+				else
+					sprintf(text[catid], "%s ", buffer);
+				break;
+			}
+			/* Copyrights */
+			case 1: {
+				size_t text_size = size_res[catid];
+				const char *buffer = gtk_entry_get_text(GTK_ENTRY(entry2));
+
+				printf("'%s'\n", buffer);
+				if (buffer[text_size] == ' ')
+					sprintf(text[catid], "%s", buffer);
+				else
+					sprintf(text[catid], "%s ", buffer);
+				break;
+			}
+			/* Characters */
+			case 2: {
+				size_t text_size = size_res[catid];
+				const char *buffer = gtk_entry_get_text(GTK_ENTRY(entry3));
+
+				printf("'%s'\n", buffer);
+				if (buffer[text_size] == ' ')
+					sprintf(text[catid], "%s", buffer);
+				else
+					sprintf(text[catid], "%s ", buffer);
+				break;
+			}
+			/* General */
+			case 3: {
+				size_t text_size = size_res[catid];
+				const char *buffer = gtk_text_buffer_get_text(tb, &istart, &iend, FALSE);
+
+				printf("'%s'\n", buffer);
+				if (buffer[text_size] == ' ')
+					sprintf(text[catid], "%s", buffer);
+				else
+					sprintf(text[catid], "%s ", buffer);
+				break;
+			}
+
+			/* Meta */
+			case 4: {
+				size_t text_size = size_res[catid];
+				const char *buffer = gtk_entry_get_text(GTK_ENTRY(entry5));
+
+				printf("'%s'\n", buffer);
+				if (buffer[text_size] == ' ') {
+					printf("norm\n");
+					sprintf(text[catid], "%s", buffer);
+				}
+				else {
+					printf("else\n");
+					sprintf(text[catid], "%s ", buffer);
+				}
+				break;
+			}
+		}
+	}
 
 	wiz_res = PQexec(conn, "BEGIN TRANSACTION");
 	PQclear(wiz_res);
 
-	sprintf(query_string, "INSERT INTO public.files (sha256, rating, source) VALUES (\'%s\', \'%s\', \'%s\') ON CONFLICT DO NOTHING;", file_sha256, text6, gtk_entry_get_text(GTK_ENTRY(entry0)));
+	sprintf(query_string, "INSERT INTO public.files (sha256, rating, source) VALUES (\'%s\', \'%s\', \'%s\') ON CONFLICT DO NOTHING;", file_sha256, gtk_entry_get_text(GTK_ENTRY(entry6)), gtk_entry_get_text(GTK_ENTRY(entry0)));
 	printf("%s\n", query_string);
 
 	wiz_res = PQexec(conn, query_string);
@@ -154,7 +214,7 @@ static int import_button_cb(void) {
 
 		wiz_res = PQexec(conn, "ROLLBACK TRANSACTION;");
 
-		gtk_notebook_detach_tab(notebook, scrolled_window);
+		gtk_notebook_detach_tab(GTK_NOTEBOOK(notebook), scrolled_window);
 		fprintf(stderr, "%s", PQerrorMessage(conn));
 		tag_process_fail_diag("Error", "Atsugami encountered an error:\n%s", PQerrorMessage(conn));	// This doesn't work; printf "%s" instead of PQerrorMessage's value
 		PQclear(wiz_res);
@@ -163,7 +223,6 @@ static int import_button_cb(void) {
 
 	/* Create and apply tags
 	 * Move everything before the for loop closer to the start of the function */
-	int catid;	// Category id
 	int charid;	// Current charcter
 
 	/* Create tags and apply them to the file being imported */
@@ -174,7 +233,7 @@ static int import_button_cb(void) {
 		int bufid;
 
 		sprintf(buffer, "%s", text[catid]);
-		printf("\ncategory id: %d\n", (catid + 1));
+		printf("\ncategory id: %d\n", catid);
 		printf("buffer: '%s'\n", buffer);
 
 		for (charid = 0, bufid = 0; charid < strlen(buffer); charid++) {
@@ -185,6 +244,8 @@ static int import_button_cb(void) {
 				++bufid;
 			}
 			else {
+				printf("'%s'\n", tag_str);
+
 				char query[strlen(tag_str) + 72];
 				char tagid[sizeof(unsigned long)];
 
@@ -193,21 +254,79 @@ static int import_button_cb(void) {
 				++wc;
 				/* Check if the tag exists, then create it if it doesn't */
 				sprintf(query, "SELECT EXISTS (SELECT id FROM public.tags WHERE name = '%s');", tag_str);
+				printf("%s\n", query);
 
 				wiz_res = PQexec(conn, query);
 
-				switch (strcmp(PQgetvalue(wiz_res, 0, 0), "t")) {
-					case 0:		// The tag already exists (wiz_res == "t")
-						printf("This tag already exists.\n");
+				if (strcmp(PQgetvalue(wiz_res, 0, 0), "t") == 0) {
+					// The tag already exists (wiz_res == "t")
+					printf("Tag '%s' already exists.\n", tag_str);
+					/* Create the file-tag bridge */
+					sprintf(query, "INSERT INTO public.files_tags (file_id, tag_id) VALUES (%s, %s);", file_id, PQgetvalue(wiz_res, 0, 0));
+					printf("%s\n\n", query);
+					PQclear(wiz_res);
+
+					wiz_res = PQexec(conn, query);	// I can't believe I forgot to execute the query until _now_
+
+					if (PQresultStatus(wiz_res) != PGRES_COMMAND_OK) {
+						/* It _shouldn't_ be possible for this to be reached, but just in case. */
+						fprintf(stderr, "%s\n", PQerrorMessage(conn));
+						gtk_notebook_detach_tab(GTK_NOTEBOOK(notebook), scrolled_window);
+						tag_process_fail_diag("Error", "Atsugami encountered an error:\n%s", PQerrorMessage(conn));
+						PQclear(wiz_res);
+
+						wiz_res = PQexec(conn, "ROLLBACK TRANSACTION;");
+						
+						PQclear(wiz_res);
+						return 1;
+					}
+
+					PQclear(wiz_res);
+				}
+				else {
+					// The tag does not exist (wiz_res == "f")
+					PQclear(wiz_res);
+					sprintf(query, "INSERT INTO public.tags (name) VALUES ('%s') ON CONFLICT DO NOTHING;", tag_str);
+					printf("%s\n", query);
+
+					wiz_res = PQexec(conn, query);
+
+					if (PQresultStatus(wiz_res) == PGRES_COMMAND_OK) {
+						/* Create the tag-category bridge */
+						PQclear(wiz_res);
+						sprintf(query, "SELECT id FROM public.tags WHERE name = '%s';", tag_str);
+						printf("%s\n", query);
+
+						wiz_res = PQexec(conn, query);
+
+						sprintf(tagid, "%s", PQgetvalue(wiz_res, 0, 0));
+						PQclear(wiz_res);
+						sprintf(query, "INSERT INTO public.tags_categories (tag_id, category_id) VALUES (%s, %d);", tagid, catid);
+						printf("%s\n", query);
+
+						wiz_res = PQexec(conn, query);
+
+						if (PQresultStatus(wiz_res) != PGRES_COMMAND_OK) {
+							fprintf(stderr, "%s\n", PQerrorMessage(conn));
+							gtk_notebook_detach_tab(GTK_NOTEBOOK(notebook), scrolled_window);
+							tag_process_fail_diag("Error", "Atsugami encountered an error:\n%s", PQerrorMessage(conn));
+							PQclear(wiz_res);
+
+							wiz_res = PQexec(conn, "ROLLBACK TRANSACTION;");
+							
+							PQclear(wiz_res);
+							return 1;
+						}
+
 						/* Create the file-tag bridge */
-						sprintf(query, "INSERT INTO public.files_tags (file_id, tag_id) VALUES (%s, %s);", file_id, PQgetvalue(wiz_res, 0, 0));
+						sprintf(query, "INSERT INTO public.files_tags (file_id, tag_id) VALUES (%s, %s);", file_id, tagid);
 						printf("%s\n\n", query);
 
 						wiz_res = PQexec(conn, query);	// I can't believe I forgot to execute the query until _now_
 
 						if (PQresultStatus(wiz_res) != PGRES_COMMAND_OK) {
 							fprintf(stderr, "%s\n", PQerrorMessage(conn));
-							gtk_notebook_detach_tab(notebook, scrolled_window);
+							gtk_notebook_detach_tab(GTK_NOTEBOOK(notebook), scrolled_window);
 							tag_process_fail_diag("Error", "Atsugami encountered an error:\n%s", PQerrorMessage(conn));
 							PQclear(wiz_res);
 
@@ -216,84 +335,27 @@ static int import_button_cb(void) {
 							PQclear(wiz_res);
 							return 1;
 						}
-
+					}
+					else {
+						fprintf(stderr, "%s\n", PQerrorMessage(conn));
+						gtk_notebook_detach_tab(GTK_NOTEBOOK(notebook), scrolled_window);
+						tag_process_fail_diag("Error", "Atsugami encountered an error:\n%s", PQerrorMessage(conn));
 						PQclear(wiz_res);
-						break;
-					case 1:		// The tag does not exist (wiz_res == "f")
+
+						wiz_res = PQexec(conn, "ROLLBACK TRANSACTION;");
+						
 						PQclear(wiz_res);
-						sprintf(query, "INSERT INTO public.tags (name) VALUES ('%s') ON CONFLICT DO NOTHING;", tag_str);
-						printf("%s\n", query);
-
-						wiz_res = PQexec(conn, query);
-
-						if (PQresultStatus(wiz_res) == PGRES_COMMAND_OK) {
-							/* Create the tag-category bridge */
-							PQclear(wiz_res);
-							sprintf(query, "SELECT id FROM public.tags WHERE name = '%s';", tag_str);
-							printf("%s\n", query);
-
-							wiz_res = PQexec(conn, query);
-
-							sprintf(tagid, "%s", PQgetvalue(wiz_res, 0, 0));
-							PQclear(wiz_res);
-							sprintf(query, "INSERT INTO public.tags_categories (tag_id, category_id) VALUES (%s, %d);", tagid, catid);
-							printf("%s\n", query);
-
-							wiz_res = PQexec(conn, query);
-
-							if (PQresultStatus(wiz_res) != PGRES_COMMAND_OK) {
-								fprintf(stderr, "%s\n", PQerrorMessage(conn));
-								gtk_notebook_detach_tab(notebook, scrolled_window);
-								tag_process_fail_diag("Error", "Atsugami encountered an error:\n%s", PQerrorMessage(conn));
-								PQclear(wiz_res);
-
-								wiz_res = PQexec(conn, "ROLLBACK TRANSACTION;");
-								
-								PQclear(wiz_res);
-								return 1;
-							}
-
-							/* Create the file-tag bridge */
-							sprintf(query, "INSERT INTO public.files_tags (file_id, tag_id) VALUES (%s, %s);", file_id, tagid);
-							printf("%s\n\n", query);
-
-							wiz_res = PQexec(conn, query);	// I can't believe I forgot to execute the query until _now_
-
-							if (PQresultStatus(wiz_res) != PGRES_COMMAND_OK) {
-								fprintf(stderr, "%s\n", PQerrorMessage(conn));
-								gtk_notebook_detach_tab(notebook, scrolled_window);
-								tag_process_fail_diag("Error", "Atsugami encountered an error:\n%s", PQerrorMessage(conn));
-								PQclear(wiz_res);
-
-								wiz_res = PQexec(conn, "ROLLBACK TRANSACTION;");
-								
-								PQclear(wiz_res);
-								return 1;
-							}
-						}
-						else {
-							fprintf(stderr, "%s\n", PQerrorMessage(conn));
-							gtk_notebook_detach_tab(notebook, scrolled_window);
-							tag_process_fail_diag("Error", "Atsugami encountered an error:\n%s", PQerrorMessage(conn));
-							PQclear(wiz_res);
-
-							wiz_res = PQexec(conn, "ROLLBACK TRANSACTION;");
-							
-							PQclear(wiz_res);
-							return 1;
-						}
-
-						break;
+						return 1;
+					}
 				}
 			}
-
 		}
 
 		strcpy(buffer, "");
 		strcpy(tag_str, "");
 	}
 
-	sprintf(query_string, "UPDATE public.files SET count = %d WHERE id = %s;", (wc - 1), file_id);
+	sprintf(query_string, "UPDATE public.files SET count = %d WHERE id = %s;", wc, file_id);
 	
 	wiz_res = PQexec(conn, query_string);
 
@@ -305,7 +367,7 @@ static int import_button_cb(void) {
 
 		wiz_res = PQexec(conn, "ROLLBACK TRANSACTION;");
 
-		gtk_notebook_detach_tab(notebook, scrolled_window);
+		gtk_notebook_detach_tab(GTK_NOTEBOOK(notebook), scrolled_window);
 		tag_process_fail_diag("Error", "%s", PQerrorMessage(conn));
 		PQclear(wiz_res);
 		return 1;
@@ -319,23 +381,34 @@ static int import_button_cb(void) {
 	char *cmd = NULL;
 	int cmd_code;
 
+	size_names[0] = "small";
+	size_names[1] = "medium";
+	size_names[2] = "large";
+	size_names[3] = "huge";
+	size_names[4] = "gigantic";
+	size_res[0] = 150;
+	size_res[1] = 180;
+	size_res[2] = 225;
+	size_res[3] = 270;
+	size_res[4] = 360;
+
 	wiz_res = PQexec(conn, "SELECT thumb_dir FROM public.settings;");
 	size_t path_size = strlen(PQgetvalue(wiz_res, 0, 0));
 	cmd = (char *) malloc(21 + path_size);
 
+	/* Create thumbnails */
 	for (catid = 0; catid <= 4; catid++) {
 		thumb_pixbuf = gdk_pixbuf_new_from_file_at_scale(import_file_path, size_res[catid], size_res[catid], TRUE, NULL);
 
 		sprintf(cmd, "%s/%s/%s.png", PQgetvalue(wiz_res, 0, 0), size_names[catid], file_sha256);	// Storage path, size, sha256
 		printf("thumb path: %s\n", cmd);
-		gdk_pixbuf_save(thumb_pixbuf, cmd, "png", NULL);
+		gdk_pixbuf_save(thumb_pixbuf, cmd, "png", NULL, NULL);
 	}
 
 	cmd = NULL;
 
-	free(cmd);		// segfault?
+	free(cmd);
 	PQclear(wiz_res);
-	//printf("\n\nDONE\n\n");
 
 	/* Move the file to the storage directory */
 	wiz_res = PQexec(conn, "SELECT store_dir FROM public.settings;");
@@ -374,9 +447,10 @@ static int import_button_cb(void) {
 	}
 
 	printf("memory freed\n");
-	file_count_update(file_label, vbox);	// Why is this an implicit declaration? file_count.h is included.
+	file_count_update(file_label, vbox);
 	printf("count updated\n");
-	gtk_notebook_detach_tab(notebook, scrolled_window);
+	gtk_widget_destroy(scrolled_window);
+	//gtk_notebook_detach_tab(GTK_NOTEBOOK(notebook), scrolled_window);	// Segmentation fault here.
 	printf("Finished\n");
 	return 0;
 }
@@ -386,7 +460,7 @@ extern void import_wizard(void) {
 
 	import_page = gtk_box_new(GTK_ORIENTATION_VERTICAL, 10);
 	header_box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 10);
-	page_count = gtk_notebook_get_n_pages(notebook);
+	page_count = gtk_notebook_get_n_pages(GTK_NOTEBOOK(notebook));
 	scrolled_window = gtk_scrolled_window_new(NULL, NULL);
 
 	gtk_container_set_border_width(GTK_CONTAINER(import_page), 10);
@@ -498,7 +572,7 @@ extern void import_wizard(void) {
 	gtk_widget_show_all(scrolled_window);
 	gtk_container_add(GTK_CONTAINER(notebook), scrolled_window);
 	gtk_scrolled_window_set_propagate_natural_height(GTK_SCROLLED_WINDOW(scrolled_window), TRUE);
-	gtk_notebook_set_tab_label_text(notebook, scrolled_window, "Import");
-	gtk_notebook_set_current_page(notebook, page_count);
-	gtk_notebook_set_tab_reorderable(notebook, scrolled_window, TRUE);
+	gtk_notebook_set_tab_label_text(GTK_NOTEBOOK(notebook), scrolled_window, "Import");
+	gtk_notebook_set_current_page(GTK_NOTEBOOK(notebook), page_count);
+	gtk_notebook_set_tab_reorderable(GTK_NOTEBOOK(notebook), scrolled_window, TRUE);
 }

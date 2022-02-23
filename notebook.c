@@ -1,7 +1,7 @@
 /* notebook.c */
-#include <gtk/gtk.h>
 #include "main.h"
-#include "notebook.h"
+#include "callbacks.h"
+#include <gtk/gtk.h>
 #include <libpq-fe.h>
 #include <stdio.h>
 
@@ -67,9 +67,9 @@ extern void home_page(void) {
 	icon_view = gtk_icon_view_new_with_model(GTK_TREE_MODEL(list_store));
 	iv_scrolled_window = gtk_scrolled_window_new(NULL, NULL);
 
-	gtk_scrolled_window_add_with_viewport(GTK_SCROLLED_WINDOW(iv_scrolled_window), icon_view);
+	gtk_container_add(GTK_CONTAINER(iv_scrolled_window), icon_view);
 	gtk_icon_view_set_selection_mode(GTK_ICON_VIEW(icon_view), GTK_SELECTION_MULTIPLE);
-	gtk_icon_view_set_columns(icon_view, -1);
+	gtk_icon_view_set_columns(GTK_ICON_VIEW(icon_view), -1);
 	g_object_unref(list_store);
 
 	gtk_scrolled_window_set_propagate_natural_height(GTK_SCROLLED_WINDOW(iv_scrolled_window), TRUE);
@@ -80,6 +80,6 @@ extern void home_page(void) {
 	gtk_widget_show_all(iv_scrolled_window);
 	gtk_widget_set_vexpand(iv_scrolled_window, TRUE);
 	gtk_container_add(GTK_CONTAINER(notebook), iv_scrolled_window);
-	gtk_notebook_set_tab_label_text(notebook, iv_scrolled_window, "Home");
-	gtk_notebook_set_tab_reorderable(notebook, iv_scrolled_window, TRUE);
+	gtk_notebook_set_tab_label_text(GTK_NOTEBOOK(notebook), iv_scrolled_window, "Home");
+	gtk_notebook_set_tab_reorderable(GTK_NOTEBOOK(notebook), iv_scrolled_window, TRUE);
 }

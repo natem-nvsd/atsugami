@@ -1,78 +1,98 @@
 ﻿/* import.c */
 #include "main.h"
+#include "callbacks.h"
 #include "import.h"
-#include "import_wizard.h"
-
 #include <gtk-3.0/gtk/gtk.h>
 #include <libpq-fe.h>
 #include <sha256.h>
 #include <string.h>
 
-gchar import_file_path[10240];
+PGresult *import_res;
+char import_file_path[10240];	// This is a terrible way of doing this. There will be a buffer overflow with large paths
 char file_sha256[65];
+int response;
 
 /* The "Import" function */
-static void open_response_cb(GtkNativeDialog *dialog, gint response_id, gpointer user_data) {
-	PGresult *import_res;
-	GtkFileChooserNative *native = user_data;
-	char *file_path;
-	char query[134];
+static void open_response_cb(gpointer user_data) {
+	GtkWidget *fc = user_data;
+	char *file_path, *dir;
 
-	if (response_id == GTK_RESPONSE_ACCEPT) {
-		/* Get the path of the file selected when the user presses "Import" */
-		file_path = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(native));
+	switch (response) {
+		case GTK_RESPONSE_ACCEPT: {
+			printf("ACCEPT\n");
+			file_path = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(fc));
+			dir = gtk_file_chooser_get_current_folder_uri(GTK_FILE_CHOOSER(fc));
 
-		//sprintf(query, "UPDATE public.settings SET last_dir = '%s';", file_path);
+			char query[69 + strlen(file_path)];
 
-		//import_res = PQexec(conn, query);
-		
-		/* Copy the path into `import_file_path`, since `file_path` is cleared when the dialog is destroyed. */
-		strcpy(import_file_path, file_path);
-		SHA256_File(import_file_path, file_sha256);
-		sprintf(query, "SELECT EXISTS (SELECT sha256 FROM public.files WHERE sha256 = '%s');", file_sha256);
+			sprintf(query, "UPDATE public.settings SET last_dir = '%s';", dir);
 
-		import_res = PQexec(conn, query);
+			import_res = PQexec(conn, query);
+			
+			/* Copy the path into `import_file_path`, since `file_path` is cleared when the dialog is destroyed. */
+			if (strlen(file_path) > 10239) {
+				fprintf(stderr, "Path too long.\n");
+				exit(1);
+			}
 
-		if (strcmp(PQgetvalue(import_res, 0, 0), "f") == 0) {
-			/* Run the wizard; the file chooser window is destroyed before the wizard opens. */
-			import_wizard();
+			strcpy(import_file_path, file_path);
+			SHA256_File(import_file_path, file_sha256);
+			sprintf(query, "SELECT EXISTS (SELECT sha256 FROM public.files WHERE sha256 = '%s');", file_sha256);
+
+			import_res = PQexec(conn, query);
+
+			if (strcmp(PQgetvalue(import_res, 0, 0), "f") == 0) {
+				/* Run the wizard; the file chooser window is destroyed before the wizard opens. */
+				import_wizard();
+			}
+
+			gtk_widget_destroy(fc);
+			//g_object_unref(fc);
+			break;
 		}
-		else {
-			fprintf(stderr, "File has already been imported.\n");
+
+		case GTK_RESPONSE_CANCEL: {
+			printf("CANCEL\n");
+			gtk_widget_destroy(fc);
+			break;
 		}
 	}
-
-	gtk_native_dialog_destroy(GTK_NATIVE_DIALOG(native));
-	g_object_unref(native);
 }
 
 /* The import window itself */
-extern void import_activate(gpointer user_data) {
-	GApplication *app = user_data;
-	GtkFileChooserNative *native;
-	GtkFileFilter *filter0;
-	GtkFileFilter *filter1;
+extern void import_activate(void) {
+	GtkFileChooserAction open_action = GTK_FILE_CHOOSER_ACTION_OPEN;
+	static char *query = "SELECT last_dir FROM public.settings;";
+	GtkWidget *file_chooser;
+	GtkFileFilter *filter0, *filter1;
 
-	native = gtk_file_chooser_native_new("Import File", NULL, GTK_FILE_CHOOSER_ACTION_OPEN, "_Import", "_Cancel");
+	import_res = PQexec(conn, query);
+	file_chooser = gtk_file_chooser_dialog_new("Import an Image", NULL, open_action, "_Cancel", GTK_RESPONSE_CANCEL, "_Import", GTK_RESPONSE_ACCEPT, NULL);
 
+	/* Filter 0 */
 	filter0 = gtk_file_filter_new();
+
 	gtk_file_filter_add_pattern(filter0, "*.gif");
 	gtk_file_filter_add_pattern(filter0, "*.jfif");
 	gtk_file_filter_add_pattern(filter0, "*.jpg");
 	gtk_file_filter_add_pattern(filter0, "*.jpeg");
 	gtk_file_filter_add_pattern(filter0, "*.png");
 	gtk_file_filter_add_pattern(filter0, "*.svg");
+	//gtk_file_filter_add_pattern(filter0, "*.webp");		// Uncomment when support for webp has been added
 	gtk_file_filter_set_name(filter0, "Image files");
-	gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(native), filter0);
+	gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(file_chooser), filter0);
 
+	/* Filter 1 */
 	filter1 = gtk_file_filter_new();
+
 	gtk_file_filter_add_pattern(filter1, "*");
 	gtk_file_filter_set_name(filter1, "All files");
-	gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(native), filter1);
 
+	/* show the dialog */
+	gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(file_chooser), filter1);
+	g_signal_connect(file_chooser, "response", G_CALLBACK(open_response_cb), file_chooser);
+	gtk_file_chooser_set_current_folder_uri(GTK_FILE_CHOOSER(file_chooser), PQgetvalue(import_res, 0, 0));
+	PQclear(import_res);
 
-	g_object_set_data_full(G_OBJECT(native), "app", g_object_ref(app), g_object_unref);
-	g_signal_connect(native, "response", G_CALLBACK(open_response_cb), native);
-
-	gtk_native_dialog_show(GTK_NATIVE_DIALOG(native));
+	response = gtk_dialog_run(GTK_DIALOG(file_chooser));
 }

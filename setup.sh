@@ -24,4 +24,4 @@ sudo su -c "psql -c 'CREATE DATABASE $USER;'" postgres
 # Create an atsugami database for the user running the script
 psql -c "CREATE DATABASE atsugami_$USER;"
 psql atsugami_$USER < atsugami.sql
-psql atsugami_$USER -c "INSERT INTO public.settings (store_dir, thumb_dir, last_dir, thumb_siz) VALUES ('$ATSUDIR/files', '$ATSUDIR/thumbs', '$HOME', 'medium');"
+psql atsugami_$USER -c "INSERT INTO public.settings (conf_dir, store_dir, thumb_dir, last_dir, thumb_siz) VALUES ('$ATSUDIR', '$ATSUDIR/files', '$ATSUDIR/thumbs', 'file://$HOME', 'medium');"

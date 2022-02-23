@@ -18,8 +18,6 @@ created_at TIMESTAMP NOT NULL DEFAULT now(),
 updated_at TIMESTAMP NOT NULL DEFAULT now()
 );
 
--- ALTER SEQUENCE public.files_id_seq OWNED BY public.files.id;
-
 CREATE TABLE public.children (
 parent_id INTEGER NOT NULL,
 child_id INTEGER NOT NULL
@@ -50,8 +48,6 @@ created_at TIMESTAMP NOT NULL DEFAULT now(),
 updated_at TIMESTAMP NOT NULL DEFAULT now()
 );
 
--- ALTER SEQUENCE public.tags_id_seq OWNED BY public.tags.id;
-
 CREATE TABLE public.categories (
 id INTEGER PRIMARY KEY,
 name TEXT UNIQUE NOT NULL
@@ -75,6 +71,7 @@ updated_at TIMESTAMP NOT NULL DEFAULT now()
 );
 
 CREATE TABLE public.settings (
+conf_dir TEXT UNIQUE NOT NULL,
 store_dir TEXT UNIQUE NOT NULL,
 thumb_dir TEXT UNIQUE NOT NULL,
 last_dir TEXT NOT NULL,
@@ -98,6 +95,10 @@ ALTER TABLE public.tags_categories ADD FOREIGN KEY (category_id) REFERENCES publ
 ALTER TABLE public.blacklists ADD FOREIGN KEY (tag_id) REFERENCES public.tags (id) ON DELETE RESTRICT;
 
 ALTER TABLE public.wikis ADD FOREIGN KEY (tag_id) REFERENCES public.tags (id) ON DELETE RESTRICT;
+
+ALTER SEQUENCE public.files_id_seq AS BIGINT;
+
+ALTER SEQUENCE public.tags_id_seq AS BIGINT;
 
 CREATE INDEX ON public.files ("id", "sha256");
 
