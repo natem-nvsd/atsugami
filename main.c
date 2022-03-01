@@ -72,8 +72,9 @@ int main(int argc, char *argv[]) {
 	g_signal_connect(window, "destroy", G_CALLBACK(quit_activate), NULL);
 	//g_action_map_add_action_entries(G_ACTION_MAP(actions), app_entries, G_N_ELEMENTS(app_entries), window);
 	gtk_widget_insert_action_group(window, "app", actions);
+	gtk_window_set_default_size(GTK_WINDOW(window), -1, -1);
 
-	/* Create the virtical box */
+	/* Create vbox */
 	gtk_container_set_border_width(GTK_CONTAINER(vbox), 0);
 	gtk_container_add(GTK_CONTAINER(window), vbox);
 
@@ -113,8 +114,7 @@ int main(int argc, char *argv[]) {
 	GtkWidget *help_menu_item, *help_menu_button, *console_menu_item, *about_menu_item;
 
 	/* Toolbar */
-	GtkToolItem *import_button, *bulk_import_button, *edit_button, *favourite_button, *view_button, *wiki_button, *home_button, *he_will_not_divide_us, *search_tag_wrapper, *search_wiki_wrapper;
-	GtkWidget *search_by_tag, *search_wiki;
+	GtkToolItem *import_button, *bulk_import_button, *edit_button, *favourite_button, *view_button, *wiki_button, *home_button;
 
 	/* Toolbar images */
 	GtkWidget *import_image, *bulk_import_image, *edit_image, *favourite_image, *view_image, *wiki_image, *home_image;
@@ -245,7 +245,6 @@ int main(int argc, char *argv[]) {
 	view_button = gtk_tool_button_new(view_image, NULL);
 	wiki_button = gtk_tool_button_new(wiki_image, NULL);
 	home_button = gtk_tool_button_new(home_image, NULL);		/* replace this with a toggle button for safe mode; */
-	he_will_not_divide_us = gtk_separator_tool_item_new();		/* the icon view and/or icon factory must be done first */
 
 	/* Tooltips */
 	gtk_widget_set_tooltip_text(GTK_WIDGET(import_button), "Import an image to Atsugami");
@@ -256,20 +255,6 @@ int main(int argc, char *argv[]) {
 	gtk_widget_set_tooltip_text(GTK_WIDGET(wiki_button), "Open the wiki");
 	gtk_widget_set_tooltip_text(GTK_WIDGET(home_button), "Go home");
 
-	/* Search bars */
-	search_by_tag = gtk_search_entry_new();
-	search_wiki = gtk_search_entry_new();
-	search_tag_wrapper = gtk_tool_item_new();
-	search_wiki_wrapper = gtk_tool_item_new();
-
-	gtk_entry_set_placeholder_text(GTK_ENTRY(search_by_tag), "Search for images");
-	gtk_entry_set_placeholder_text(GTK_ENTRY(search_wiki), "Search the wiki");
-	gtk_container_add(GTK_CONTAINER(search_tag_wrapper), GTK_WIDGET(search_by_tag));
-	gtk_container_add(GTK_CONTAINER(search_wiki_wrapper), GTK_WIDGET(search_wiki));
-
-	//gtk_search_entry_handle_event(search_by_tag, quit_activate);
-	//gtk_search_entry_handle_event(search_wiki, );
-
 	/* Add widgets to the toolbar */
 	gtk_toolbar_insert(GTK_TOOLBAR(toolbar), GTK_TOOL_ITEM(import_button), 0);
 	gtk_toolbar_insert(GTK_TOOLBAR(toolbar), GTK_TOOL_ITEM(bulk_import_button), 1);
@@ -278,12 +263,11 @@ int main(int argc, char *argv[]) {
 	gtk_toolbar_insert(GTK_TOOLBAR(toolbar), GTK_TOOL_ITEM(view_button), 4);
 	gtk_toolbar_insert(GTK_TOOLBAR(toolbar), GTK_TOOL_ITEM(wiki_button), 5);
 	gtk_toolbar_insert(GTK_TOOLBAR(toolbar), GTK_TOOL_ITEM(home_button), 6);
-	gtk_toolbar_insert(GTK_TOOLBAR(toolbar), GTK_TOOL_ITEM(he_will_not_divide_us), 7);
-	gtk_toolbar_insert(GTK_TOOLBAR(toolbar), GTK_TOOL_ITEM(search_tag_wrapper), 8);
-	gtk_toolbar_insert(GTK_TOOLBAR(toolbar), GTK_TOOL_ITEM(search_wiki_wrapper), 9);
+	//gtk_toolbar_insert(GTK_TOOLBAR(toolbar), GTK_TOOL_ITEM(he_will_not_divide_us), 7);
 
 	/* Toolbar callbacks */
 	g_signal_connect(import_button, "clicked", G_CALLBACK(import_activate), NULL);
+	g_signal_connect(bulk_import_button, "clicked", G_CALLBACK(tab), NULL);
 //	g_signal_connect(bulk_import_button, "clicked", G_CALLBACK(import_activate), NULL);
 //	g_signal_connect(edit_button, "clicked", G_CALLBACK(NULL), NULL);
 //	g_signal_connect(favourite_button, "clicked", G_CALLBACK(NULL), NULL);
@@ -348,12 +332,12 @@ int main(int argc, char *argv[]) {
 
 	gtk_notebook_set_scrollable(GTK_NOTEBOOK(notebook), TRUE);
 	gtk_container_add(GTK_CONTAINER(vbox), GTK_WIDGET(notebook));
-	home_page();
+	tab();
 
 	/* File count */
 	file_label = gtk_label_new(NULL);
 
-	file_count(file_label, vbox);
+	file_count();
 
 	/* Show window and vbox */
 	gtk_window_set_title(GTK_WINDOW(window), "Atsugami");

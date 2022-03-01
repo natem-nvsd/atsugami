@@ -16,21 +16,21 @@
 
 GtkTextBuffer *console_buffer;
 GtkWidget *console_entry, *console_view;
+PGresult *console_res;
 
 static void console_cb(void) {
-	PGresult *con_res;
 	PQprintOpt options = {0};
 	FILE *cachefile;
 	char *cachepath, *buf;
 	size_t bufsize, write_size;
 
-	con_res = PQexec(conn, "SELECT conf_dir FROM public.settings;");
-	cachepath = (char *) malloc(strlen(PQgetvalue(con_res, 0, 0)) + 15);
+	console_res = PQexec(conn, "SELECT conf_dir FROM public.settings;");
+	cachepath = (char *) malloc(strlen(PQgetvalue(console_res, 0, 0)) + 15);
 
-	sprintf(cachepath, "%s/console_cache", PQgetvalue(con_res, 0, 0));
-	PQclear(con_res);
+	sprintf(cachepath, "%s/console_cache", PQgetvalue(console_res, 0, 0));
+	PQclear(console_res);
 
-	con_res = PQexec(conn, gtk_entry_get_text(GTK_ENTRY(console_entry)));
+	console_res = PQexec(conn, gtk_entry_get_text(GTK_ENTRY(console_entry)));
 	cachefile = fopen(cachepath, "ab+");
 
 	options.header		= 1;	/* Printoutput field headings and row count */
@@ -46,8 +46,8 @@ static void console_cb(void) {
 	/* Print the query result to a cache file */
 	//fseek(cachefile, 0, SEEK_END);
 	fseek(cachefile, 0, SEEK_SET);
-	PQprint(cachefile, con_res, &options);
-	PQclear(con_res);
+	PQprint(cachefile, console_res, &options);
+	PQclear(console_res);
 
 	bufsize = ftell(cachefile);
 	buf = (char *) malloc(bufsize);
@@ -64,18 +64,24 @@ static void console_cb(void) {
 extern void console(void) {
 	int page_count;
 	GtkWidget *console_page, *console_scrolled;
-	/*
 	FILE *cachefile;
-	char *cachepath, *buf;
+	char *cachepath;
 	size_t bufsize, write_size;
-	*/
 
+	console_res = PQexec(conn, "SELECT conf_dir FROM public.settings;");
+	cachepath = (char *) malloc(strlen(PQgetvalue(console_res, 0, 0)) + 15);
+	sprintf(cachepath, "%s/console_cache", PQgetvalue(console_res, 0, 0));
+	cachefile = fopen(cachepath, "w");
 	console_view = gtk_text_view_new();
 	console_buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(console_view));
 	console_page = gtk_box_new(GTK_ORIENTATION_VERTICAL, 10);
 	console_entry = gtk_entry_new();
 	console_scrolled = gtk_scrolled_window_new(NULL, NULL);
 	page_count = gtk_notebook_get_n_pages(GTK_NOTEBOOK(notebook));
+
+	PQclear(console_res);
+	/* Cache file */
+	fprintf(cachefile, " ");
 
 	/* Scrolled window */
 	gtk_container_add(GTK_CONTAINER(console_scrolled), console_view);
@@ -106,4 +112,6 @@ extern void console(void) {
 	gtk_notebook_set_current_page(GTK_NOTEBOOK(notebook), page_count);
 	gtk_notebook_set_tab_reorderable(GTK_NOTEBOOK(notebook), console_page, TRUE);
 	g_signal_connect(console_entry, "activate", G_CALLBACK(console_cb), NULL);
+	fclose(cachefile);
+	free(cachepath);
 }

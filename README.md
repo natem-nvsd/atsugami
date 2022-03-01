@@ -61,15 +61,3 @@ sudo bmake install
 # Windows:
 Good luck
 ```  
-
-Colours (will be implemented later)
------------------------------------
-
-```
-### Colours:
-ff8a8b: Artist  
-c797ff: Copyright  
-35c64a: Character  
-009be6: Generic tag  
-ead084: Meta    
-```

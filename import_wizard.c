@@ -10,7 +10,7 @@
 #include <stdlib.h>
 #include <sys/types.h>
 
-GtkWidget *label0, *label1, *label2, *label3, *label4, *label5, *label6, *entry0, *entry1, *entry2, *entry3, *entry5, *entry6, *tv, *import_thumb, *cbox, *can_button, *imp_button, *header_box, *scrolled_window;
+GtkWidget *source_label, *artist_label, *copyright_label, *character_label, *general_label, *meta_label, *rating_label, *source_entry, *artist_label, *copyright_entry, *character_entry, *meta_entry, *rating_entry, *tv, *import_thumb, *cbox, *can_button, *imp_button, *header_box, *scrolled_window;
 GtkTextBuffer *tb;
 GtkTextIter istart, iend;
 GdkPixbuf *import_thumb_pixbuf, *thumb_pixbuf;
@@ -30,17 +30,17 @@ static void incomplete_diag(const char *label) {
 	GtkDialogFlags diag_flags = GTK_RESPONSE_ACCEPT;
 
 	/* Set the labels of required text fields to STYLE_CLASS_ERROR */
-	contxt0 = gtk_widget_get_style_context(label1);
-	contxt1 = gtk_widget_get_style_context(label4);
-	contxt2 = gtk_widget_get_style_context(label6);
+	contxt0 = gtk_widget_get_style_context(artist_label);
+	contxt1 = gtk_widget_get_style_context(general_label);
+	contxt2 = gtk_widget_get_style_context(rating_label);
 
 	gtk_style_context_add_class(contxt0, "error");
 	gtk_style_context_add_class(contxt1, "error");
 	gtk_style_context_add_class(contxt2, "error");
 
-	gtk_label_set_markup(GTK_LABEL(label1), "Artist(s)\t\t\t\t\t<b>* This field is required.</b>");
-	gtk_label_set_markup(GTK_LABEL(label4), "General\t\t\t\t\t<b>* This field is required.</b>");
-	gtk_label_set_markup(GTK_LABEL(label6), "Rating\t\t\t\t\t<b>* This field is required.</b>");
+	gtk_label_set_markup(GTK_LABEL(artist_label), "Artist(s)\t\t\t\t\t<b>* This field is required.</b>");
+	gtk_label_set_markup(GTK_LABEL(general_label), "General\t\t\t\t\t<b>* This field is required.</b>");
+	gtk_label_set_markup(GTK_LABEL(rating_label), "Rating\t\t\t\t\t<b>* This field is required.</b>");
 
 	diag = gtk_message_dialog_new(GTK_WINDOW(window), diag_flags, GTK_MESSAGE_ERROR, GTK_BUTTONS_OK, "Form Error");
 
@@ -64,7 +64,7 @@ static void tag_process_fail_diag(const char *title, const char *body, ...) {
 }
 
 static int import_button_cb(void) {
-	register PGresult *wiz_res;
+	PGresult *wiz_res;
 	/* Check if the text buffer was modified. This MUST be done before initializing text4, or there will be a segmentation fault. */
 	if (gtk_text_buffer_get_modified(tb) == TRUE) {
 		gtk_text_buffer_get_iter_at_offset(tb, &istart, 0);
@@ -76,127 +76,75 @@ static int import_button_cb(void) {
 		return 1;
 	}
 
-	int wc = 0;
-	const size_t text0_size = (strlen(gtk_entry_get_text(GTK_ENTRY(entry0)) + 1));			// Source
-	const size_t text1_size = (strlen(gtk_entry_get_text(GTK_ENTRY(entry1)) + 1));			// Artist
-	const size_t text2_size = (strlen(gtk_entry_get_text(GTK_ENTRY(entry2)) + 1));			// Copyrights
-	const size_t text3_size = (strlen(gtk_entry_get_text(GTK_ENTRY(entry3)) + 1));			// Characters
-	const size_t text4_size = (strlen(gtk_text_buffer_get_text(tb, &istart, &iend, FALSE) + 1));	// General
-	const size_t text5_size = (strlen(gtk_entry_get_text(GTK_ENTRY(entry5))));			// Meta
+	size_t src_size = 0, size_res[5];
+	char file_id[sizeof(unsigned long)], *size_names[5], *tags[5], *tag_buf[5], *src, *rating;
+	int catid, wc = 0, iter, charid;	// Category id, tag count
+
+	/* allocate memory for tag strings */
+	src = (char *) gtk_entry_get_text(GTK_ENTRY(source_entry));			// Source
+	tag_buf[0] = (char *) gtk_entry_get_text(GTK_ENTRY(artist_label));		// Artists
+	tag_buf[1] = (char *) gtk_entry_get_text(GTK_ENTRY(copyright_entry));		// Copyrights
+	tag_buf[2] = (char *) gtk_entry_get_text(GTK_ENTRY(character_entry));		// Characters
+	tag_buf[3] = (char *) gtk_text_buffer_get_text(tb, &istart, &iend, FALSE);	// General
+	tag_buf[4] = (char *) gtk_entry_get_text(GTK_ENTRY(meta_entry));		// Meta
+	rating = (char *) gtk_entry_get_text(GTK_ENTRY(rating_entry));			// Rating
+	src_size = strlen(src);								// Source size
+
+	char query_string[161 + src_size];
 
 	/* Check if text fields are empty. */
-	if (text1_size == 0 || strlen(gtk_entry_get_text(GTK_ENTRY(entry6))) == 0) {
+	if (strlen(tag_buf[2]) == 0 || strlen(rating) == 0) {
 		incomplete_diag("One or more fields were not filled.\nPlease complete them and try again.");
 		return 1;
 	}
 
-	char query_string[160 + text0_size];
-	char file_id[sizeof(long)];
-	char *size_names[5];
-	int size_res[5];
-	char *text[5];
-	int catid;	// Category id
-
-	/* allocate memory for tag strings */
-	text[0] = (char *) malloc(text1_size);		// Artist	FREED
-	text[1] = (char *) malloc(text2_size);		// Copyrights	FREED
-	text[2] = (char *) malloc(text3_size);		// Characters	FREED
-	text[3] = (char *) malloc(text4_size);		// General	FREED
-	text[4] = (char *) malloc(text5_size);		// Meta		FREED
-
-	size_res[0] = text1_size;	// Artist
-	size_res[1] = text2_size;	// Copyrights
-	size_res[2] = text3_size;	// Characters
-	size_res[3] = text4_size;	// General
-	size_res[4] = text5_size;	// Meta
-
 	/* Whitespace is needed at the end to ensure the tag processing algorithm works properely.
-	 * If the last character of a string is " ", the last tag of a string will be looped; this seems
-	 * to cause the tagid to become the first letter of the last tag. Because files_tags.tag_id is of
-	 * type INTEGER, the transaction is rolled back when tagid is a `char`. If user input contains a
-	 * " " at the end, the " " must be removed or ignored.
+	 * If the last character of a string is " ", the last tag of a string will be looped.
+	 *
+	 * Remove all spaces from the end of tag strings
+	 *
+	 * iter represents tag string iteration
+	 * catid represents tag buffer string (tex_buf[])
 	 */
-	
-	for (catid = 0; catid < 5; catid++) {
-		printf("%d\n", catid);
-		switch (catid) {
-			/* Artists */
-			case 0: {
-				size_t text_size = size_res[catid];
-				const char *buffer = gtk_entry_get_text(GTK_ENTRY(entry1));
+	for (iter = 0; iter < 5; iter++) {
+		char *buffer = tag_buf[iter];
+		size_t buf_size = strlen(buffer);	// temp
+		int i;
 
-				printf("'%s'\n", buffer);
-				if (buffer[text_size] == ' ')
-					sprintf(text[catid], "%s", buffer);
-				else
-					sprintf(text[catid], "%s ", buffer);
-				break;
-			}
-			/* Copyrights */
-			case 1: {
-				size_t text_size = size_res[catid];
-				const char *buffer = gtk_entry_get_text(GTK_ENTRY(entry2));
+		printf("%d, '%s'\n", iter, tag_buf[iter]);
+		for (i = (buf_size - 1); buffer[buf_size] != ' ' && buf_size > 0; i--) {
+			//printf("i = %d\n", i);
+			//printf("'%c' ", buffer[i]);
 
-				printf("'%s'\n", buffer);
-				if (buffer[text_size] == ' ')
-					sprintf(text[catid], "%s", buffer);
-				else
-					sprintf(text[catid], "%s ", buffer);
-				break;
-			}
-			/* Characters */
-			case 2: {
-				size_t text_size = size_res[catid];
-				const char *buffer = gtk_entry_get_text(GTK_ENTRY(entry3));
+			if (buffer[i] != ' ') {
+				//printf("not space\n");
+				//printf("'%c'\n", buffer[i]);
+				size_res[iter] = (i + 1);
 
-				printf("'%s'\n", buffer);
-				if (buffer[text_size] == ' ')
-					sprintf(text[catid], "%s", buffer);
-				else
-					sprintf(text[catid], "%s ", buffer);
-				break;
-			}
-			/* General */
-			case 3: {
-				size_t text_size = size_res[catid];
-				const char *buffer = gtk_text_buffer_get_text(tb, &istart, &iend, FALSE);
+				tags[iter] = (char *) malloc(iter + 1);
+				snprintf(tags[iter], (i + 3), "%s ", buffer);
+				printf("'%s'\n\n", tags[iter]);
 
-				printf("'%s'\n", buffer);
-				if (buffer[text_size] == ' ')
-					sprintf(text[catid], "%s", buffer);
-				else
-					sprintf(text[catid], "%s ", buffer);
-				break;
-			}
-
-			/* Meta */
-			case 4: {
-				size_t text_size = size_res[catid];
-				const char *buffer = gtk_entry_get_text(GTK_ENTRY(entry5));
-
-				printf("'%s'\n", buffer);
-				if (buffer[text_size] == ' ') {
-					printf("norm\n");
-					sprintf(text[catid], "%s", buffer);
-				}
-				else {
-					printf("else\n");
-					sprintf(text[catid], "%s ", buffer);
-				}
 				break;
 			}
 		}
 	}
 
+	/* Clear tag_buf */
+	for (iter = 0; iter < 5; iter++)
+		strcpy(tag_buf[iter], "");
+
+	printf("END\n");
 	wiz_res = PQexec(conn, "BEGIN TRANSACTION");
 	PQclear(wiz_res);
 
-	sprintf(query_string, "INSERT INTO public.files (sha256, rating, source) VALUES (\'%s\', \'%s\', \'%s\') ON CONFLICT DO NOTHING;", file_sha256, gtk_entry_get_text(GTK_ENTRY(entry6)), gtk_entry_get_text(GTK_ENTRY(entry0)));
+	sprintf(query_string, "INSERT INTO public.files (sha256, rating, source) VALUES (\'%s\', \'%s\', \'%s\') ON CONFLICT DO NOTHING;", file_sha256, rating, src);
 	printf("%s\n", query_string);
 
 	wiz_res = PQexec(conn, query_string);
 	strcpy(query_string, "");
 
+	/* Check command status */
 	if (PQresultStatus(wiz_res) == PGRES_COMMAND_OK) {
 		PQclear(wiz_res);
 
@@ -222,50 +170,50 @@ static int import_button_cb(void) {
 	}
 
 	/* Create and apply tags
-	 * Move everything before the for loop closer to the start of the function */
-	int charid;	// Current charcter
-
-	/* Create tags and apply them to the file being imported */
+	 * Move everything before the for loop closer to the start of the function 
+	 *
+	 * Create tags and apply them to the file being imported */
 	for (catid = 0; catid < 5; catid++) {
-		size_t text_size = strlen(text[catid]);
-		char buffer[text_size];
-		char tag_str[text_size];	// Tags are copied here for string for processing.
 		int bufid;
+		size_t text_size = strlen(tags[catid]);
+		char buffer[text_size], tag_str[text_size];
 
-		sprintf(buffer, "%s", text[catid]);
+		sprintf(buffer, "%s", tags[catid]);
 		printf("\ncategory id: %d\n", catid);
 		printf("buffer: '%s'\n", buffer);
-
 		for (charid = 0, bufid = 0; charid < strlen(buffer); charid++) {
-			/* "--", "'", and """ must be prevented from insertion to prevent SQL injection and errors.
-			 * Input should be sanitized _before_ it *EVER* gets into a query. */
+			/* TODO: sanitize input
+			 * Use PQexecParams() to insert data into the database without treating it as SQL syntax.
+			 * See https://www.postgresql.org/docs/14/libpq-exec.html#LIBPQ-PQEXECPARAMS for more details. */
 			if (isspace(buffer[charid]) == 0) {
 				sprintf(&tag_str[bufid], "%c", buffer[charid]);
 				++bufid;
 			}
 			else {
+				char query[strlen(tag_str) + 72], tagid[sizeof(unsigned long)], tmp_tagid[sizeof(unsigned long)];
+
 				printf("'%s'\n", tag_str);
-
-				char query[strlen(tag_str) + 72];
-				char tagid[sizeof(unsigned long)];
-
 				bufid = 0;
-
 				++wc;
+
 				/* Check if the tag exists, then create it if it doesn't */
 				sprintf(query, "SELECT EXISTS (SELECT id FROM public.tags WHERE name = '%s');", tag_str);
 				printf("%s\n", query);
-
 				wiz_res = PQexec(conn, query);
 
 				if (strcmp(PQgetvalue(wiz_res, 0, 0), "t") == 0) {
 					// The tag already exists (wiz_res == "t")
-					printf("Tag '%s' already exists.\n", tag_str);
-					/* Create the file-tag bridge */
-					sprintf(query, "INSERT INTO public.files_tags (file_id, tag_id) VALUES (%s, %s);", file_id, PQgetvalue(wiz_res, 0, 0));
-					printf("%s\n\n", query);
 					PQclear(wiz_res);
+					printf("Tag '%s' already exists.\n", tag_str);
 
+					sprintf(query, "SELECT id FROM public.tags WHERE name = '%s';", tag_str);
+					printf("%s\n", query);
+					wiz_res = PQexec(conn, query);
+					sprintf(tmp_tagid, "%s", PQgetvalue(wiz_res, 0, 0));
+
+					/* Create the file-tag bridge */
+					sprintf(query, "INSERT INTO public.files_tags (file_id, tag_id) VALUES (%s, %s);", file_id, tmp_tagid);
+					printf("%s\n\n", query);
 					wiz_res = PQexec(conn, query);	// I can't believe I forgot to execute the query until _now_
 
 					if (PQresultStatus(wiz_res) != PGRES_COMMAND_OK) {
@@ -274,7 +222,6 @@ static int import_button_cb(void) {
 						gtk_notebook_detach_tab(GTK_NOTEBOOK(notebook), scrolled_window);
 						tag_process_fail_diag("Error", "Atsugami encountered an error:\n%s", PQerrorMessage(conn));
 						PQclear(wiz_res);
-
 						wiz_res = PQexec(conn, "ROLLBACK TRANSACTION;");
 						
 						PQclear(wiz_res);
@@ -288,7 +235,6 @@ static int import_button_cb(void) {
 					PQclear(wiz_res);
 					sprintf(query, "INSERT INTO public.tags (name) VALUES ('%s') ON CONFLICT DO NOTHING;", tag_str);
 					printf("%s\n", query);
-
 					wiz_res = PQexec(conn, query);
 
 					if (PQresultStatus(wiz_res) == PGRES_COMMAND_OK) {
@@ -322,7 +268,7 @@ static int import_button_cb(void) {
 						sprintf(query, "INSERT INTO public.files_tags (file_id, tag_id) VALUES (%s, %s);", file_id, tagid);
 						printf("%s\n\n", query);
 
-						wiz_res = PQexec(conn, query);	// I can't believe I forgot to execute the query until _now_
+						wiz_res = PQexec(conn, query);
 
 						if (PQresultStatus(wiz_res) != PGRES_COMMAND_OK) {
 							fprintf(stderr, "%s\n", PQerrorMessage(conn));
@@ -355,8 +301,9 @@ static int import_button_cb(void) {
 		strcpy(tag_str, "");
 	}
 
+	gtk_notebook_detach_tab(GTK_NOTEBOOK(notebook), scrolled_window);	// Still causes a segmentation fault, which is rediculous
+	gtk_widget_destroy(scrolled_window);
 	sprintf(query_string, "UPDATE public.files SET count = %d WHERE id = %s;", wc, file_id);
-	
 	wiz_res = PQexec(conn, query_string);
 
 	if (PQresultStatus(wiz_res) == PGRES_COMMAND_OK)
@@ -372,6 +319,7 @@ static int import_button_cb(void) {
 		PQclear(wiz_res);
 		return 1;
 	}
+	
 
 	wiz_res = PQexec(conn, "COMMIT TRANSACTION;");
 
@@ -399,7 +347,6 @@ static int import_button_cb(void) {
 	/* Create thumbnails */
 	for (catid = 0; catid <= 4; catid++) {
 		thumb_pixbuf = gdk_pixbuf_new_from_file_at_scale(import_file_path, size_res[catid], size_res[catid], TRUE, NULL);
-
 		sprintf(cmd, "%s/%s/%s.png", PQgetvalue(wiz_res, 0, 0), size_names[catid], file_sha256);	// Storage path, size, sha256
 		printf("thumb path: %s\n", cmd);
 		gdk_pixbuf_save(thumb_pixbuf, cmd, "png", NULL, NULL);
@@ -441,16 +388,10 @@ static int import_button_cb(void) {
 
 	free(cmd);
 	PQclear(wiz_res);
-	for (catid = 0; catid < 5; catid++) {
-		free(text[catid]);
-		printf("freed %d\n", catid);
-	}
 
 	printf("memory freed\n");
-	file_count_update(file_label, vbox);
+	file_count_update();		// still implicit
 	printf("count updated\n");
-	gtk_widget_destroy(scrolled_window);
-	//gtk_notebook_detach_tab(GTK_NOTEBOOK(notebook), scrolled_window);	// Segmentation fault here.
 	printf("Finished\n");
 	return 0;
 }
@@ -474,50 +415,50 @@ extern void import_wizard(void) {
 	gtk_box_pack_start(GTK_BOX(import_page), import_thumb, FALSE, FALSE, 0);
 
 	/* Source */
-	label0 = gtk_label_new("Enter source URL here:");
-	gtk_widget_set_halign(label0, GTK_ALIGN_START);
-	gtk_box_pack_start(GTK_BOX(import_page), label0, FALSE, FALSE, 0);
+	source_label = gtk_label_new("Enter source URL here:");
+	gtk_widget_set_halign(source_label, GTK_ALIGN_START);
+	gtk_box_pack_start(GTK_BOX(import_page), source_label, FALSE, FALSE, 0);
 	
-	entry0 = gtk_entry_new();
-	gtk_entry_set_activates_default(GTK_ENTRY(entry0), TRUE);
-	gtk_widget_set_valign(entry0, GTK_ALIGN_START);
-	gtk_entry_set_placeholder_text(GTK_ENTRY(entry0), "Enter the URL to import here");
-	gtk_box_pack_start(GTK_BOX(import_page), entry0, TRUE, TRUE, 0);
+	source_entry = gtk_entry_new();
+	gtk_entry_set_activates_default(GTK_ENTRY(source_entry), TRUE);
+	gtk_widget_set_valign(source_entry, GTK_ALIGN_START);
+	gtk_entry_set_placeholder_text(GTK_ENTRY(source_entry), "Enter the URL to import here");
+	gtk_box_pack_start(GTK_BOX(import_page), source_entry, TRUE, TRUE, 0);
 
 	/* Artist tag box */
-	label1 = gtk_label_new("Artist(s)");
-	gtk_widget_set_halign(label1, GTK_ALIGN_START);
-	gtk_box_pack_start(GTK_BOX(import_page), label1, FALSE, FALSE, 0);
+	artist_label = gtk_label_new("Artist(s)");
+	gtk_widget_set_halign(artist_label, GTK_ALIGN_START);
+	gtk_box_pack_start(GTK_BOX(import_page), artist_label, FALSE, FALSE, 0);
 
-	entry1 = gtk_entry_new();
-	gtk_entry_set_activates_default(GTK_ENTRY(entry1), TRUE);
-	gtk_widget_set_valign(entry1, GTK_ALIGN_START);
-	gtk_box_pack_start(GTK_BOX(import_page), entry1, TRUE, TRUE, 0);
+	artist_label = gtk_entry_new();
+	gtk_entry_set_activates_default(GTK_ENTRY(artist_label), TRUE);
+	gtk_widget_set_valign(artist_label, GTK_ALIGN_START);
+	gtk_box_pack_start(GTK_BOX(import_page), artist_label, TRUE, TRUE, 0);
 
 	/* Copyright tag box */
-	label2 = gtk_label_new("Copyrights");
-	gtk_widget_set_halign(label2, GTK_ALIGN_START);
-	gtk_box_pack_start(GTK_BOX(import_page), label2, FALSE, FALSE, 0);
+	copyright_label = gtk_label_new("Copyrights");
+	gtk_widget_set_halign(copyright_label, GTK_ALIGN_START);
+	gtk_box_pack_start(GTK_BOX(import_page), copyright_label, FALSE, FALSE, 0);
 
-	entry2 = gtk_entry_new();
-	gtk_entry_set_activates_default(GTK_ENTRY(entry2), TRUE);
-	gtk_widget_set_valign(entry2, GTK_ALIGN_START);
-	gtk_box_pack_start(GTK_BOX(import_page), entry2, TRUE, TRUE, 0);
+	copyright_entry = gtk_entry_new();
+	gtk_entry_set_activates_default(GTK_ENTRY(copyright_entry), TRUE);
+	gtk_widget_set_valign(copyright_entry, GTK_ALIGN_START);
+	gtk_box_pack_start(GTK_BOX(import_page), copyright_entry, TRUE, TRUE, 0);
 
 	/* Character tag box */
-	label3 = gtk_label_new("Characters");
-	gtk_widget_set_halign(label3, GTK_ALIGN_START);
-	gtk_box_pack_start(GTK_BOX(import_page), label3, FALSE, FALSE, 0);
+	character_label = gtk_label_new("Characters");
+	gtk_widget_set_halign(character_label, GTK_ALIGN_START);
+	gtk_box_pack_start(GTK_BOX(import_page), character_label, FALSE, FALSE, 0);
 
-	entry3 = gtk_entry_new();
-	gtk_entry_set_activates_default(GTK_ENTRY(entry3), TRUE);
-	gtk_widget_set_valign(entry3, GTK_ALIGN_START);
-	gtk_box_pack_start(GTK_BOX(import_page), entry3, TRUE, TRUE, 0);
+	character_entry = gtk_entry_new();
+	gtk_entry_set_activates_default(GTK_ENTRY(character_entry), TRUE);
+	gtk_widget_set_valign(character_entry, GTK_ALIGN_START);
+	gtk_box_pack_start(GTK_BOX(import_page), character_entry, TRUE, TRUE, 0);
 
 	/* General tag box */
-	label4 = gtk_label_new("General");
-	gtk_widget_set_halign(label4, GTK_ALIGN_START);
-	gtk_box_pack_start(GTK_BOX(import_page), label4, FALSE, FALSE, 0);
+	general_label = gtk_label_new("General");
+	gtk_widget_set_halign(general_label, GTK_ALIGN_START);
+	gtk_box_pack_start(GTK_BOX(import_page), general_label, FALSE, FALSE, 0);
 
 	tv = gtk_text_view_new();
 	tb = gtk_text_view_get_buffer(GTK_TEXT_VIEW(tv));
@@ -529,19 +470,19 @@ extern void import_wizard(void) {
 	gtk_text_buffer_get_bounds(tb, &istart, &iend);
 
 	/* Meta tag box */
-	label5 = gtk_label_new("Meta");
-	gtk_widget_set_halign(label5, GTK_ALIGN_START);
-	gtk_box_pack_start(GTK_BOX(import_page), label5, FALSE, FALSE, 0);
+	meta_label = gtk_label_new("Meta");
+	gtk_widget_set_halign(meta_label, GTK_ALIGN_START);
+	gtk_box_pack_start(GTK_BOX(import_page), meta_label, FALSE, FALSE, 0);
 
-	entry5 = gtk_entry_new();
-	gtk_entry_set_activates_default(GTK_ENTRY(entry5), TRUE);
-	gtk_widget_set_valign(entry5, GTK_ALIGN_START);
-	gtk_box_pack_start(GTK_BOX(import_page), entry5, TRUE, TRUE, 0);
+	meta_entry = gtk_entry_new();
+	gtk_entry_set_activates_default(GTK_ENTRY(meta_entry), TRUE);
+	gtk_widget_set_valign(meta_entry, GTK_ALIGN_START);
+	gtk_box_pack_start(GTK_BOX(import_page), meta_entry, TRUE, TRUE, 0);
 
 	/* Rating */
-	label6 = gtk_label_new("Rating:");
-	gtk_widget_set_halign(label6, GTK_ALIGN_START);
-	gtk_box_pack_start(GTK_BOX(import_page), label6, FALSE, FALSE, 0);
+	rating_label = gtk_label_new("Rating:");
+	gtk_widget_set_halign(rating_label, GTK_ALIGN_START);
+	gtk_box_pack_start(GTK_BOX(import_page), rating_label, FALSE, FALSE, 0);
 	
 	cbox = gtk_combo_box_text_new();
 	gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(cbox), "s", "Safe");
@@ -550,9 +491,9 @@ extern void import_wizard(void) {
 	gtk_box_pack_start(GTK_BOX(import_page), cbox, FALSE, FALSE, 0);
 
 	/* Invisible entry field */
-	entry6 = gtk_entry_new();
-	gtk_entry_set_activates_default(GTK_ENTRY(entry6), TRUE);
-	g_object_bind_property(cbox, "active-id", entry6, "text", G_BINDING_DEFAULT);
+	rating_entry = gtk_entry_new();
+	gtk_entry_set_activates_default(GTK_ENTRY(rating_entry), TRUE);
+	g_object_bind_property(cbox, "active-id", rating_entry, "text", G_BINDING_DEFAULT);
 
 	button_box = gtk_button_box_new(GTK_ORIENTATION_HORIZONTAL);
 	gtk_box_pack_start(GTK_BOX(import_page), button_box, FALSE, FALSE, 0);

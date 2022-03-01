@@ -57,7 +57,8 @@ static GtkListStore *create_list_store(void) {
 	return list_store;
 }
 
-extern void home_page(void) {
+//extern void home_page(void) {
+extern void home_page(GtkWidget *parent) {
 	GtkWidget *icon_view, *iv_scrolled_window;
 	GtkListStore *list_store;
 
@@ -79,7 +80,5 @@ extern void home_page(void) {
 	gtk_icon_view_set_pixbuf_column(GTK_ICON_VIEW(icon_view), COL_PIXBUF);
 	gtk_widget_show_all(iv_scrolled_window);
 	gtk_widget_set_vexpand(iv_scrolled_window, TRUE);
-	gtk_container_add(GTK_CONTAINER(notebook), iv_scrolled_window);
-	gtk_notebook_set_tab_label_text(GTK_NOTEBOOK(notebook), iv_scrolled_window, "Home");
-	gtk_notebook_set_tab_reorderable(GTK_NOTEBOOK(notebook), iv_scrolled_window, TRUE);
+	gtk_container_add(GTK_CONTAINER(parent), iv_scrolled_window);
 }
