@@ -78,7 +78,7 @@ ALTER TABLE public.wikis ADD FOREIGN KEY (tag_id) REFERENCES public.tags (id) ON
 
 -- ===================================================================
 -- Increase the maximum value of sequences by changing the type to
--- 
+-- BIGINT (long)
 -- ===================================================================
 ALTER SEQUENCE public.files_id_seq AS BIGINT;
 ALTER SEQUENCE public.tags_id_seq AS BIGINT;
@@ -104,3 +104,8 @@ INSERT INTO public.categories (id, name) VALUES (1, 'copyright');	-- Danbooru: 3
 INSERT INTO public.categories (id, name) VALUES (2, 'character');	-- Danbooru: 4
 INSERT INTO public.categories (id, name) VALUES (3, 'general');		-- Danbooru: 0
 INSERT INTO public.categories (id, name) VALUES (4, 'meta');		-- Danbooru: 5
+
+-- ===================================================================
+-- Create generic tag
+-- ===================================================================
+INSERT INTO public.tags (name) VALUES ('tagme');

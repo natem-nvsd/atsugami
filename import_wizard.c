@@ -138,7 +138,7 @@ static int import_button_cb(void) {
 	wiz_res = PQexec(conn, "BEGIN TRANSACTION");
 	PQclear(wiz_res);
 
-	sprintf(query_string, "INSERT INTO public.files (sha256, rating, source) VALUES (\'%s\', \'%s\', \'%s\') ON CONFLICT DO NOTHING;", file_sha256, rating, src);
+	sprintf(query_string, "INSERT INTO public.files (sha256, rating, source) VALUES ('%s', '%s', '%s') ON CONFLICT DO NOTHING;", file_sha256, rating, src);
 	printf("%s\n", query_string);
 
 	wiz_res = PQexec(conn, query_string);
@@ -147,19 +147,17 @@ static int import_button_cb(void) {
 	/* Check command status */
 	if (PQresultStatus(wiz_res) == PGRES_COMMAND_OK) {
 		PQclear(wiz_res);
-
 		sprintf(query_string, "SELECT id FROM public.files WHERE sha256 = '%s';", file_sha256);
 		printf("%s\n\n", query_string);
 
 		/* If the file _was_ inserted into the database, then file_id is guaranteed to be non-null */
 		wiz_res = PQexec(conn, query_string);
-		strcpy(query_string, "");
+		printf("'%s'\n", PQgetvalue(wiz_res, 0, 0));
 		strcpy(file_id, PQgetvalue(wiz_res, 0, 0));
 		PQclear(wiz_res);
 	}
 	else {
 		PQclear(wiz_res);
-
 		wiz_res = PQexec(conn, "ROLLBACK TRANSACTION;");
 
 		gtk_notebook_detach_tab(GTK_NOTEBOOK(notebook), scrolled_window);
@@ -242,55 +240,53 @@ static int import_button_cb(void) {
 						PQclear(wiz_res);
 						sprintf(query, "SELECT id FROM public.tags WHERE name = '%s';", tag_str);
 						printf("%s\n", query);
-
 						wiz_res = PQexec(conn, query);
 
 						sprintf(tagid, "%s", PQgetvalue(wiz_res, 0, 0));
 						PQclear(wiz_res);
 						sprintf(query, "INSERT INTO public.tags_categories (tag_id, category_id) VALUES (%s, %d);", tagid, catid);
 						printf("%s\n", query);
-
 						wiz_res = PQexec(conn, query);
 
 						if (PQresultStatus(wiz_res) != PGRES_COMMAND_OK) {
 							fprintf(stderr, "%s\n", PQerrorMessage(conn));
-							gtk_notebook_detach_tab(GTK_NOTEBOOK(notebook), scrolled_window);
 							tag_process_fail_diag("Error", "Atsugami encountered an error:\n%s", PQerrorMessage(conn));
 							PQclear(wiz_res);
-
 							wiz_res = PQexec(conn, "ROLLBACK TRANSACTION;");
 							
 							PQclear(wiz_res);
+							gtk_notebook_detach_tab(GTK_NOTEBOOK(notebook), scrolled_window);
 							return 1;
 						}
 
 						/* Create the file-tag bridge */
 						sprintf(query, "INSERT INTO public.files_tags (file_id, tag_id) VALUES (%s, %s);", file_id, tagid);
 						printf("%s\n\n", query);
-
 						wiz_res = PQexec(conn, query);
+						printf("%d\n", PQresultStatus(wiz_res));
 
-						if (PQresultStatus(wiz_res) != PGRES_COMMAND_OK) {
+						if (PQresultStatus(wiz_res) == PGRES_COMMAND_OK) {
+							PQclear(wiz_res);
+						}
+						else {
 							fprintf(stderr, "%s\n", PQerrorMessage(conn));
-							gtk_notebook_detach_tab(GTK_NOTEBOOK(notebook), scrolled_window);
 							tag_process_fail_diag("Error", "Atsugami encountered an error:\n%s", PQerrorMessage(conn));
 							PQclear(wiz_res);
-
 							wiz_res = PQexec(conn, "ROLLBACK TRANSACTION;");
 							
 							PQclear(wiz_res);
+							gtk_notebook_detach_tab(GTK_NOTEBOOK(notebook), scrolled_window);
 							return 1;
 						}
 					}
 					else {
 						fprintf(stderr, "%s\n", PQerrorMessage(conn));
-						gtk_notebook_detach_tab(GTK_NOTEBOOK(notebook), scrolled_window);
 						tag_process_fail_diag("Error", "Atsugami encountered an error:\n%s", PQerrorMessage(conn));
 						PQclear(wiz_res);
-
 						wiz_res = PQexec(conn, "ROLLBACK TRANSACTION;");
 						
 						PQclear(wiz_res);
+						gtk_notebook_detach_tab(GTK_NOTEBOOK(notebook), scrolled_window);
 						return 1;
 					}
 				}
@@ -301,31 +297,29 @@ static int import_button_cb(void) {
 		strcpy(tag_str, "");
 	}
 
-	gtk_notebook_detach_tab(GTK_NOTEBOOK(notebook), scrolled_window);	// Still causes a segmentation fault, which is rediculous
-	gtk_widget_destroy(scrolled_window);
 	sprintf(query_string, "UPDATE public.files SET count = %d WHERE id = %s;", wc, file_id);
+	printf("%s\n", query_string);
 	wiz_res = PQexec(conn, query_string);
-
-	if (PQresultStatus(wiz_res) == PGRES_COMMAND_OK)
-		PQclear(wiz_res);
-	else {
+	if (PQresultStatus(wiz_res) != PGRES_COMMAND_OK) {
 		fprintf(stderr, "%s\n", PQerrorMessage(conn));
 		PQclear(wiz_res);
 
 		wiz_res = PQexec(conn, "ROLLBACK TRANSACTION;");
+		printf("ROLLBACK\n");
 
 		gtk_notebook_detach_tab(GTK_NOTEBOOK(notebook), scrolled_window);
 		tag_process_fail_diag("Error", "%s", PQerrorMessage(conn));
 		PQclear(wiz_res);
 		return 1;
 	}
-	
 
+	PQclear(wiz_res);
 	wiz_res = PQexec(conn, "COMMIT TRANSACTION;");
+	printf("COMMIT TRANSACTION;\n\n");
+	PQclear(wiz_res);
 
 	/* Create thumbnails of the image
-	 * Windows ports _may_ not like the lack of file extensions.
-	 */
+	 * Windows ports _may_ not like the lack of file extensions. */
 	char *cmd = NULL;
 	int cmd_code;
 
@@ -342,6 +336,7 @@ static int import_button_cb(void) {
 
 	wiz_res = PQexec(conn, "SELECT thumb_dir FROM public.settings;");
 	size_t path_size = strlen(PQgetvalue(wiz_res, 0, 0));
+	//cmd = NULL;
 	cmd = (char *) malloc(21 + path_size);
 
 	/* Create thumbnails */
@@ -353,7 +348,6 @@ static int import_button_cb(void) {
 	}
 
 	cmd = NULL;
-
 	free(cmd);
 	PQclear(wiz_res);
 
@@ -392,6 +386,7 @@ static int import_button_cb(void) {
 	printf("memory freed\n");
 	file_count_update();		// still implicit
 	printf("count updated\n");
+	gtk_widget_destroy(scrolled_window);	// `realloc(): invalid next size` ???
 	printf("Finished\n");
 	return 0;
 }

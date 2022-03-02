@@ -20,10 +20,14 @@ extern void quit_activate(void) {
 }
 
 int main(int argc, char *argv[]) {
-	register PGresult *mainres;
+	//FILE *db_file = fopen("~/.config/atsugami/dbname", "r");
+	char *dbname;
+	PGresult *mainres;
 	GtkWidget *menu_bar, *toolbar;
 	GActionGroup *actions;
 	//GtkAccelGroup *accel_group;
+
+	/* Parse the database name */
 
 	gtk_init(&argc, &argv); /* Initialize GTK */
 
@@ -267,13 +271,12 @@ int main(int argc, char *argv[]) {
 
 	/* Toolbar callbacks */
 	g_signal_connect(import_button, "clicked", G_CALLBACK(import_activate), NULL);
-	g_signal_connect(bulk_import_button, "clicked", G_CALLBACK(tab), NULL);
 //	g_signal_connect(bulk_import_button, "clicked", G_CALLBACK(import_activate), NULL);
 //	g_signal_connect(edit_button, "clicked", G_CALLBACK(NULL), NULL);
 //	g_signal_connect(favourite_button, "clicked", G_CALLBACK(NULL), NULL);
 //	g_signal_connect(view_button, "clicked", G_CALLBACK(NULL), NULL);
 //	g_signal_connect(wiki_button, "clicked", G_CALLBACK(NULL), NULL);
-	//g_signal_connect(home_button, "clicked", G_CALLBACK(home_activate), NULL);
+	g_signal_connect(home_button, "clicked", G_CALLBACK(tab), NULL);
 	
 	/* Warning info bar */
 	GtkWidget *warn_widget, *warn_label, *warn_area, *warn_bar, *warn_image;
@@ -329,14 +332,12 @@ int main(int argc, char *argv[]) {
 
 	/* Tab bar */
 	notebook = gtk_notebook_new();
-
 	gtk_notebook_set_scrollable(GTK_NOTEBOOK(notebook), TRUE);
 	gtk_container_add(GTK_CONTAINER(vbox), GTK_WIDGET(notebook));
 	tab();
 
 	/* File count */
 	file_label = gtk_label_new(NULL);
-
 	file_count();
 
 	/* Show window and vbox */
