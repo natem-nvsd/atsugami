@@ -1,6 +1,5 @@
 ﻿/* about.c */
-#include "main.h"
-#include "callbacks.h"
+#include "atsugami.h"
 #include <gtk/gtk.h>
 
 void about_activate(void) {

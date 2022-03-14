@@ -1,6 +1,5 @@
 ﻿/* new_artist.c */
-#include "main.h"
-#include "callbacks.h"
+#include "atsugami.h"
 #include <glib/gstdio.h>
 #include <gtk/gtk.h>
 #include <libpq-fe.h>

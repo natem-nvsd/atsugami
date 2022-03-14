@@ -1,6 +1,5 @@
 ﻿/* new_copyright.c */
-#include "main.h"
-#include "callbacks.h"
+#include "atsugami.h"
 #include "import.h"
 #include <glib/gstdio.h>
 #include <gtk/gtk.h>

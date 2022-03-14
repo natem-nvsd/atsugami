@@ -1,6 +1,5 @@
 /* list_tags.c */
-#include "main.h"
-#include "callbacks.h"
+#include "atsugami.h"
 #include <gtk/gtk.h>
 #include <libpq-fe.h>
 
@@ -10,7 +9,7 @@ extern void list_tags(void) {
 	GtkWidget *tags_vbox, *label, *tv;
 	int page_count;
 
-	label = gtk_label_new("Tags");
+	label = gtk_label_new("Tag list");
 	tags_vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 10);
 	tv = gtk_text_view_new();
 	page_count = gtk_notebook_get_n_pages(GTK_NOTEBOOK(notebook));

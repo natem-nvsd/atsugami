@@ -5,8 +5,7 @@
 * and xterm every time I need to make changes to the database.	*
 *								*
 \***************************************************************/
-#include "main.h"
-#include "callbacks.h"
+#include "atsugami.h"
 #include <fcntl.h>
 #include <gtk/gtk.h>
 #include <libpq-fe.h>
@@ -66,7 +65,7 @@ extern void console(void) {
 	GtkWidget *console_page, *console_scrolled;
 	FILE *cachefile;
 	char *cachepath;
-	size_t bufsize, write_size;
+	//size_t bufsize, write_size;
 
 	console_res = PQexec(conn, "SELECT conf_dir FROM public.settings;");
 	cachepath = (char *) malloc(strlen(PQgetvalue(console_res, 0, 0)) + 15);

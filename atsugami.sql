@@ -1,60 +1,63 @@
 -- ===================================================================
 -- Create tables
+-- Add status column once everything is working (in C)
+-- The status column can have: 'active', 'deleted', and 'expunged'
+--                             'a'       'd'            'e'
+-- 'active': The file will be shown in all "normal" icon views.
+-- 'deleted': The file will not be shown in "normal" icon views, but
+-- the file is still on disk.
+-- 'expunged': The file has been deleted from disk, however, records
+-- are kept in the database.
 -- ===================================================================
 CREATE TABLE public.files (
 	id SERIAL PRIMARY KEY,
 	sha256 VARCHAR(65) UNIQUE NOT NULL,
 	rating VARCHAR(1),
-	source TEXT,
+	source CITEXT,
 	count INTEGER,
 	created_at TIMESTAMP NOT NULL DEFAULT now(),
 	updated_at TIMESTAMP NOT NULL DEFAULT now()
 );
-
 CREATE TABLE public.children (
 	parent_id INTEGER NOT NULL,
 	child_id INTEGER NOT NULL
 );
-
+CREATE TABLE public.commentary (
+	file_id BIGINT NOT NULL,
+	commentary TEXT NOT NULL
+);
 CREATE TABLE public.favourites (
 	file_id INTEGER NOT NULL,
 	favourited_at TIMESTAMP NOT NULL DEFAULT now()
 );
-
 CREATE TABLE public.files_tags (
 	file_id INTEGER NOT NULL,
 	tag_id INTEGER NOT NULL
 );
-
 CREATE TABLE public.tags (
 	id SERIAL PRIMARY KEY,
-	name TEXT UNIQUE NOT NULL,
+	name CITEXT UNIQUE NOT NULL,
 	created_at TIMESTAMP NOT NULL DEFAULT now(),
 	updated_at TIMESTAMP NOT NULL DEFAULT now()
 );
-
 CREATE TABLE public.categories (
 	id INTEGER PRIMARY KEY,
-	name TEXT UNIQUE NOT NULL
+	name CITEXT UNIQUE NOT NULL
 );
-
 CREATE TABLE public.tags_categories (
 	tag_id INTEGER NOT NULL,
 	category_id INTEGER
 );
-
 CREATE TABLE public.blacklists (
 	tag_id INTEGER NOT NULL,
 	blacklisted_at TIMESTAMP NOT NULL DEFAULT now()
 );
-
 CREATE TABLE public.wikis (
 	tag_id INTEGER NOT NULL,
-	body_text TEXT NOT NULL,
+	body_text CITEXT NOT NULL,
 	created_at TIMESTAMP NOT NULL DEFAULT now(),
 	updated_at TIMESTAMP NOT NULL DEFAULT now()
 );
-
 CREATE TABLE public.settings (
 	conf_dir TEXT UNIQUE NOT NULL,
 	store_dir TEXT UNIQUE NOT NULL,

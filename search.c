@@ -1,17 +1,19 @@
 /* search.c */
-#include "main.h"
-#include "callbacks.h"
+#include "atsugami.h"
+#include "types.h"
 #include <gtk/gtk.h>
 #include <libpq-fe.h>
 #include <stdio.h>
 
 PGresult *note_res;
 
+/*
 enum {
 	COL_PATH,
 	COL_PIXBUF,
 	NUM_COLS
 };
+*/
 
 GdkPixbuf *thumb;
 GtkTreeIter *iter;
@@ -42,27 +44,18 @@ static void pixbuf_loader(GtkListStore *list_store) {
 			thumb = gdk_pixbuf_new_from_file(file_path, NULL);
 
 			gtk_list_store_append(list_store, &tree_iter);
-			gtk_list_store_set(list_store, &tree_iter, COL_PATH, file_path, COL_PIXBUF, thumb, -1);
+			gtk_list_store_set(list_store, &tree_iter, SHA256_COL, file_path, COL_PIXBUF, thumb, -1);
 		}
 	}
 
 	PQclear(note_res);
 }
 
-static GtkListStore *create_list_store(void) {
-	GtkListStore *list_store;
-
-	list_store = gtk_list_store_new(3, G_TYPE_STRING, GDK_TYPE_PIXBUF, G_TYPE_INT);
-	
-	return list_store;
-}
-
-//extern void home_page(void) {
 extern void search(GtkWidget *parent) {
 	GtkWidget *icon_view, *iv_scrolled_window;
 	GtkListStore *list_store;
 
-	list_store = create_list_store();
+	list_store = gtk_list_store_new(2, G_TYPE_STRING, GDK_TYPE_PIXBUF, G_TYPE_INT);
 	pixbuf_loader(list_store);
 
 	icon_view = gtk_icon_view_new_with_model(GTK_TREE_MODEL(list_store));

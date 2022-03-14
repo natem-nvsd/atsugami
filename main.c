@@ -1,6 +1,5 @@
 ﻿/* main.c (c) 2021-2022 by Nate Morrison */
-#include "callbacks.h"
-#include "main.h"
+#include "atsugami.h"
 #include <ctype.h>
 #include <errno.h>
 #include <glib/gstdio.h>
@@ -11,23 +10,35 @@
 PGconn *conn;
 char conninfo[] = "dbname=atsugami";	/* Sets the database for dbconnect(); conn MUST be global */
 GtkWidget *notebook, *vbox, *file_label, *window;
+GtkAccelGroup *accel;
 
 /* Quit function */
 extern void quit_activate(void) {
 	PQfinish(conn);
-	printf("\nEXITING\n");
 	exit(0);
 }
 
+static void next_tab_cb(GtkNotebook *notebook) {
+	printf("next tab\n");
+	gtk_notebook_next_page(notebook);
+}
+
+static void prev_tab_cb(GtkNotebook *notebook) {
+	printf("prev tab\n");
+	gtk_notebook_prev_page(notebook);
+}
+
 int main(int argc, char *argv[]) {
-	//FILE *db_file = fopen("~/.config/atsugami/dbname", "r");
+	FILE *db_file = fopen("~/.config/atsugami/dbname", "r");
+	FILE *logfile = fopen("~/.config/atsugami/log", "w+");
 	char *dbname;
 	PGresult *mainres;
 	GtkWidget *menu_bar, *toolbar;
 	GActionGroup *actions;
-	//GtkAccelGroup *accel_group;
 
-	/* Parse the database name */
+	/* Postgres setup */
+	// Logging
+	PQtrace(conn, logfile);
 
 	gtk_init(&argc, &argv); /* Initialize GTK */
 
@@ -36,6 +47,7 @@ int main(int argc, char *argv[]) {
 	actions = (GActionGroup*)g_simple_action_group_new();
 	conn = PQconnectdb(conninfo);	/* Connect to PostgreSQL */
 	vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
+	accel = gtk_accel_group_new();
 
 	/* Error Checking */
 	if (PQstatus(conn) != CONNECTION_OK) {
@@ -73,48 +85,42 @@ int main(int argc, char *argv[]) {
 	}
 	/* End error checking */
 
+	/* Window setup */
 	g_signal_connect(window, "destroy", G_CALLBACK(quit_activate), NULL);
 	//g_action_map_add_action_entries(G_ACTION_MAP(actions), app_entries, G_N_ELEMENTS(app_entries), window);
 	gtk_widget_insert_action_group(window, "app", actions);
-	gtk_window_set_default_size(GTK_WINDOW(window), -1, -1);
+	gtk_window_add_accel_group(GTK_WINDOW(window), accel);
+	gtk_widget_set_hexpand(window, TRUE);
+	gtk_widget_set_vexpand(window, TRUE);
 
 	/* Create vbox */
 	gtk_container_set_border_width(GTK_CONTAINER(vbox), 0);
 	gtk_container_add(GTK_CONTAINER(window), vbox);
 
-	/* keyboard shortcuts */
-	//accel_group = gtk_accel_group_new();
-
-	/* Actions */
-	/*
-	GAction *import;
-	GAction *new_artist;
-	GAction *new_copyright;
-	import = gtk_action_new("import", "Import", "Import an image", NULL);
-	new_artist = gtk_action_new("artist", "New artist", "Add a new artist to Atsugami", NULL);
-	new_copyright = gtk_action_new("copyright", "New copyright", "Add a new copyright to Atsugami", NULL);
-	*/
-
 	/* Menus (e.g. File) */
-	GtkWidget *file_menu, *edit_menu, *tags_menu, *wiki_menu, *view_menu, *help_menu;
+	GtkWidget *file_menu, *edit_menu, *image_menu, *tags_menu, *view_menu, *wiki_menu, *help_menu;
 
 	/* Menu items (e.g. Quit) */
-	// Column 0
+	// File
 	GtkWidget *file_menu_item, *import_menu_item, *bulk_import_menu_item, *export_menu_item, *delete_menu_item, *quit_menu_item;
 
-	// Column 1
+	// Edit
 	GtkWidget *edit_menu_item, *edit_file_menu_item, *bulk_edit_menu_item, *settings_menu_item;
 
-	// Column 2
+	// Image
+	GtkWidget *image_menu_item, *open_img_menu_item, *open_img_new_tab_menu_item, *open_img_extern_menu_item, *img_info_menu_item;
+
+	// Tags
 	GtkWidget *tags_menu_item, *new_artist_menu_item, *new_copyright_menu_item, *new_character_menu_item, *new_tag_menu_item, *new_meta_tag_menu_item;
 
-	// Column 3
-	GtkWidget *wiki_menu_item;
+	// Wiki
+	GtkWidget *wiki_menu_item, *open_wiki_menu_item, *open_wiki_new_tab_menu_item, *new_wiki_page;
 
-	// Column 4
-	GtkWidget *view_menu_item, *view_extern_menu_item, *view_intern_menu_item;
+	// View
+	GtkWidget *view_menu_item, *thumb_size_menu, *safe_mode_menu_item;
+	GtkWidget *thumb_size_menu_item, *small_icons_menu_item, *medium_icons_menu_item, *large_icons_menu_item, *huge_icons_menu_item, *gigantic_icons_menu_item;
 
-	// Column 5
+	// Help
 	GtkWidget *help_menu_item, *help_menu_button, *console_menu_item, *about_menu_item;
 
 	/* Toolbar */
@@ -129,49 +135,23 @@ int main(int argc, char *argv[]) {
 	/* Create menus */
 	file_menu = gtk_menu_new();
 	edit_menu = gtk_menu_new();
+	image_menu = gtk_menu_new();
 	tags_menu = gtk_menu_new();
 	wiki_menu = gtk_menu_new();
 	view_menu = gtk_menu_new();
 	help_menu = gtk_menu_new();
 
 	/* Create menu items */
-	// File
-	file_menu_item = gtk_menu_item_new_with_label("File");
-	import_menu_item = gtk_menu_item_new_with_label("Import");
-	bulk_import_menu_item = gtk_menu_item_new_with_label("Bulk import");
-	export_menu_item = gtk_menu_item_new_with_label("Export");
-	delete_menu_item = gtk_menu_item_new_with_label("Delete");
-	quit_menu_item = gtk_menu_item_new_with_label("Quit");
 
-	// Edit
-	edit_menu_item = gtk_menu_item_new_with_label("Edit");
-	edit_file_menu_item = gtk_menu_item_new_with_label("Edit");
-	bulk_edit_menu_item = gtk_menu_item_new_with_label("Bulk edit ");
-	settings_menu_item = gtk_menu_item_new_with_label("Preferences");
+	/** File **/
+	file_menu_item = gtk_menu_item_new_with_mnemonic("_File");
+	import_menu_item = gtk_menu_item_new_with_mnemonic("_Import");
+	//import_menu_item = gtk_image_menu_item_new_with_label("Import");
+	bulk_import_menu_item = gtk_menu_item_new_with_mnemonic("_Bulk import");
+	export_menu_item = gtk_menu_item_new_with_mnemonic("_Export");
+	delete_menu_item = gtk_menu_item_new_with_mnemonic("_Delete");
+	quit_menu_item = gtk_menu_item_new_with_mnemonic("_Quit");
 
-	// Tags
-	tags_menu_item = gtk_menu_item_new_with_label("Tags");
-	new_artist_menu_item = gtk_menu_item_new_with_label("New artist");
-	new_copyright_menu_item = gtk_menu_item_new_with_label("New copyright");
-	new_character_menu_item = gtk_menu_item_new_with_label("New character");
-	new_tag_menu_item = gtk_menu_item_new_with_label("New tag");
-	new_meta_tag_menu_item = gtk_menu_item_new_with_label("New meta tag");
-
-	// Wikis
-	wiki_menu_item = gtk_menu_item_new_with_label("Wiki");
-
-	// View
-	view_menu_item = gtk_menu_item_new_with_label("View");
-	view_extern_menu_item = gtk_menu_item_new_with_label("Open in external viewer");
-	view_intern_menu_item = gtk_menu_item_new_with_label("Open in internal viewer");
-
-	// Help
-	help_menu_item = gtk_menu_item_new_with_label("Help");
-	help_menu_button = gtk_menu_item_new_with_label("Help");
-	console_menu_item = gtk_menu_item_new_with_label("Console");
-	about_menu_item = gtk_menu_item_new_with_label("About");
-
-	/* File menu */
 	gtk_menu_item_set_submenu(GTK_MENU_ITEM(file_menu_item), file_menu);
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu_bar), file_menu_item);
 	gtk_menu_shell_append(GTK_MENU_SHELL(file_menu), import_menu_item);
@@ -180,17 +160,47 @@ int main(int argc, char *argv[]) {
 	gtk_menu_shell_append(GTK_MENU_SHELL(file_menu), delete_menu_item);
 	gtk_menu_shell_append(GTK_MENU_SHELL(file_menu), quit_menu_item);
 
+	gtk_widget_add_accelerator(import_menu_item, "activate", accel, GDK_KEY_i, GDK_CONTROL_MASK, GTK_ACCEL_LOCKED);
+	gtk_widget_add_accelerator(import_menu_item, "activate", accel, GDK_KEY_o, GDK_CONTROL_MASK, GTK_ACCEL_LOCKED);
+
 	g_signal_connect(import_menu_item, "activate", G_CALLBACK(import_activate), NULL);
 	g_signal_connect(quit_menu_item, "activate", G_CALLBACK(quit_activate), NULL);
 
-	/* Edit menu */
+	/** Edit **/
+	edit_menu_item = gtk_menu_item_new_with_mnemonic("_Edit");
+	edit_file_menu_item = gtk_menu_item_new_with_mnemonic("_Edit");
+	bulk_edit_menu_item = gtk_menu_item_new_with_mnemonic("_Bulk edit ");
+	settings_menu_item = gtk_menu_item_new_with_mnemonic("_Preferences");
+
 	gtk_menu_item_set_submenu(GTK_MENU_ITEM(edit_menu_item), edit_menu);
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu_bar), edit_menu_item);
 	gtk_menu_shell_append(GTK_MENU_SHELL(edit_menu), edit_file_menu_item);
 	gtk_menu_shell_append(GTK_MENU_SHELL(edit_menu), bulk_edit_menu_item);
 	gtk_menu_shell_append(GTK_MENU_SHELL(edit_menu), settings_menu_item);
 
-	/* Tags menu */
+	/** Image **/
+	image_menu_item = gtk_menu_item_new_with_mnemonic("_Image");
+	open_img_menu_item = gtk_menu_item_new_with_mnemonic("_Open image");
+	open_img_new_tab_menu_item = gtk_menu_item_new_with_mnemonic("Open _image in new tab");
+	open_img_extern_menu_item = gtk_menu_item_new_with_mnemonic("Open image in _external viewer");
+	img_info_menu_item = gtk_menu_item_new_with_mnemonic("Image _properties");
+
+	gtk_menu_item_set_submenu(GTK_MENU_ITEM(image_menu_item), image_menu);
+	gtk_menu_shell_append(GTK_MENU_SHELL(menu_bar), image_menu_item);
+	gtk_menu_shell_append(GTK_MENU_SHELL(image_menu), open_img_menu_item);
+	gtk_menu_shell_append(GTK_MENU_SHELL(image_menu), open_img_new_tab_menu_item);
+	gtk_menu_shell_append(GTK_MENU_SHELL(image_menu), open_img_extern_menu_item);
+	gtk_menu_shell_append(GTK_MENU_SHELL(image_menu), img_info_menu_item);
+
+	/** Tags **/
+	tags_menu_item = gtk_menu_item_new_with_mnemonic("_Tags");
+	//tags_menu_item = gtk_tool_button_new(NULL, "Tags");
+	new_artist_menu_item = gtk_menu_item_new_with_mnemonic("New _artist tag");
+	new_copyright_menu_item = gtk_menu_item_new_with_mnemonic("New _copyright tag");
+	new_character_menu_item = gtk_menu_item_new_with_mnemonic("New c_haracter tag");
+	new_tag_menu_item = gtk_menu_item_new_with_mnemonic("New _ general tag");
+	new_meta_tag_menu_item = gtk_menu_item_new_with_mnemonic("New _meta tag");
+
 	gtk_menu_item_set_submenu(GTK_MENU_ITEM(tags_menu_item), tags_menu);
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu_bar), tags_menu_item);
 	gtk_menu_shell_append(GTK_MENU_SHELL(tags_menu), new_artist_menu_item);
@@ -205,17 +215,49 @@ int main(int argc, char *argv[]) {
 	g_signal_connect(new_tag_menu_item, "activate", G_CALLBACK(new_tag_activate), NULL);
 	g_signal_connect(new_meta_tag_menu_item, "activate", G_CALLBACK(new_meta_tag_activate), NULL);
 
-	/* Wiki menu */
+	/** Wikis **/
+	wiki_menu_item = gtk_menu_item_new_with_mnemonic("_Wiki");
+	open_wiki_menu_item = gtk_menu_item_new_with_mnemonic("_Open wiki page");
+	open_wiki_new_tab_menu_item = gtk_menu_item_new_with_mnemonic("Open wiki in _new tab");
+	new_wiki_page = gtk_menu_item_new_with_mnemonic("_New wiki page");
+
 	gtk_menu_item_set_submenu(GTK_MENU_ITEM(wiki_menu_item), wiki_menu);
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu_bar), wiki_menu_item);
+	gtk_menu_shell_append(GTK_MENU_SHELL(wiki_menu), open_wiki_menu_item);
+	gtk_menu_shell_append(GTK_MENU_SHELL(wiki_menu), open_wiki_new_tab_menu_item);
+	gtk_menu_shell_append(GTK_MENU_SHELL(wiki_menu), new_wiki_page);
 
-	/* View menu */
+	/** View **/
+	view_menu_item = gtk_menu_item_new_with_mnemonic("_View");
+	safe_mode_menu_item = gtk_check_menu_item_new_with_mnemonic("_Safe Mode");
+
+	/* Icon size submenu */
+	thumb_size_menu = gtk_menu_new();
+	thumb_size_menu_item = gtk_menu_item_new_with_mnemonic("_Icon size");
+	small_icons_menu_item = gtk_menu_item_new_with_mnemonic("_Small");
+	medium_icons_menu_item = gtk_menu_item_new_with_mnemonic("_Medium");
+	large_icons_menu_item = gtk_menu_item_new_with_mnemonic("_Large");
+	huge_icons_menu_item = gtk_menu_item_new_with_mnemonic("_Huge");
+	gigantic_icons_menu_item = gtk_menu_item_new_with_mnemonic("_Gigantic");
+
 	gtk_menu_item_set_submenu(GTK_MENU_ITEM(view_menu_item), view_menu);
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu_bar), view_menu_item);
-	gtk_menu_shell_append(GTK_MENU_SHELL(view_menu), view_extern_menu_item);
-	gtk_menu_shell_append(GTK_MENU_SHELL(view_menu), view_intern_menu_item);
+	gtk_menu_shell_append(GTK_MENU_SHELL(view_menu), safe_mode_menu_item);
 
-	/* Help menu */
+	gtk_menu_item_set_submenu(GTK_MENU_ITEM(thumb_size_menu_item), thumb_size_menu);
+	gtk_menu_shell_append(GTK_MENU_SHELL(view_menu), thumb_size_menu_item);
+	gtk_menu_shell_append(GTK_MENU_SHELL(thumb_size_menu), small_icons_menu_item);
+	gtk_menu_shell_append(GTK_MENU_SHELL(thumb_size_menu), medium_icons_menu_item);
+	gtk_menu_shell_append(GTK_MENU_SHELL(thumb_size_menu), large_icons_menu_item);
+	gtk_menu_shell_append(GTK_MENU_SHELL(thumb_size_menu), huge_icons_menu_item);
+	gtk_menu_shell_append(GTK_MENU_SHELL(thumb_size_menu), gigantic_icons_menu_item);
+
+	/** Help **/
+	help_menu_item = gtk_menu_item_new_with_mnemonic("_Help");
+	help_menu_button = gtk_menu_item_new_with_mnemonic("_Help");
+	console_menu_item = gtk_menu_item_new_with_mnemonic("_Console");
+	about_menu_item = gtk_menu_item_new_with_mnemonic("_About");
+
 	gtk_menu_item_set_submenu(GTK_MENU_ITEM(help_menu_item), help_menu);
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu_bar), help_menu_item);
 	gtk_menu_shell_append(GTK_MENU_SHELL(help_menu), help_menu_button);
@@ -234,12 +276,12 @@ int main(int argc, char *argv[]) {
 
 	/* Icons */
 	import_image = gtk_image_new_from_icon_name("gtk-open", GTK_ICON_SIZE_LARGE_TOOLBAR);
-	bulk_import_image = gtk_image_new_from_icon_name("gtk-dnd-multiple", GTK_ICON_SIZE_LARGE_TOOLBAR);
+	bulk_import_image = gtk_image_new_from_icon_name("emblem-photos", GTK_ICON_SIZE_LARGE_TOOLBAR);
 	edit_image = gtk_image_new_from_icon_name("gtk-edit", GTK_ICON_SIZE_LARGE_TOOLBAR);
 	view_image = gtk_image_new_from_icon_name("image-x-generic", GTK_ICON_SIZE_LARGE_TOOLBAR);
 	favourite_image = gtk_image_new_from_icon_name("emblem-favorite", GTK_ICON_SIZE_LARGE_TOOLBAR);
-	wiki_image = gtk_image_new_from_icon_name("gtk-file", GTK_ICON_SIZE_LARGE_TOOLBAR);
-	home_image = gtk_image_new_from_icon_name("go-home", GTK_ICON_SIZE_LARGE_TOOLBAR);
+	wiki_image = gtk_image_new_from_icon_name("text-x-generic", GTK_ICON_SIZE_LARGE_TOOLBAR);
+	home_image = gtk_image_new_from_icon_name("tab-new", GTK_ICON_SIZE_LARGE_TOOLBAR);
 
 	/* Widgets */
 	import_button = gtk_tool_button_new(import_image, NULL);
@@ -267,7 +309,6 @@ int main(int argc, char *argv[]) {
 	gtk_toolbar_insert(GTK_TOOLBAR(toolbar), GTK_TOOL_ITEM(view_button), 4);
 	gtk_toolbar_insert(GTK_TOOLBAR(toolbar), GTK_TOOL_ITEM(wiki_button), 5);
 	gtk_toolbar_insert(GTK_TOOLBAR(toolbar), GTK_TOOL_ITEM(home_button), 6);
-	//gtk_toolbar_insert(GTK_TOOLBAR(toolbar), GTK_TOOL_ITEM(he_will_not_divide_us), 7);
 
 	/* Toolbar callbacks */
 	g_signal_connect(import_button, "clicked", G_CALLBACK(import_activate), NULL);
@@ -330,10 +371,29 @@ int main(int argc, char *argv[]) {
 		gtk_label_set_text(GTK_LABEL(error_label), errMsg);
 	}
 
-	/* Tab bar */
+	/* Run important global functions */
+	completion_bootstrap();
+
+	/* Gtk Notebook */
+	// FIXME: ctrl+tab should go to the next tab, and ctrl+shift+tab should go to the previous tab.
+	GtkWidget *prev_tab, *next_tab;
+
 	notebook = gtk_notebook_new();
+	prev_tab = gtk_button_new();
+	next_tab = gtk_button_new();
+
 	gtk_notebook_set_scrollable(GTK_NOTEBOOK(notebook), TRUE);
 	gtk_container_add(GTK_CONTAINER(vbox), GTK_WIDGET(notebook));
+	gtk_widget_set_hexpand(notebook, TRUE);
+
+	gtk_notebook_set_action_widget(GTK_NOTEBOOK(notebook), prev_tab, GTK_PACK_START);
+	gtk_notebook_set_action_widget(GTK_NOTEBOOK(notebook), next_tab, GTK_PACK_END);
+
+	gtk_widget_add_accelerator(prev_tab, "clicked", accel, GDK_KEY_Tab, GDK_CONTROL_MASK|GDK_SHIFT_MASK, GTK_ACCEL_LOCKED);
+	gtk_widget_add_accelerator(next_tab, "clicked", accel, GDK_KEY_Tab, GDK_CONTROL_MASK, GTK_ACCEL_LOCKED);
+	g_signal_connect(prev_tab, "clicked", G_CALLBACK(prev_tab_cb), GTK_NOTEBOOK(notebook));
+	g_signal_connect(next_tab, "clicked", G_CALLBACK(next_tab_cb), GTK_NOTEBOOK(notebook));
+
 	tab();
 
 	/* File count */

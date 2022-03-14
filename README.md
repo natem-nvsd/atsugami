@@ -8,11 +8,10 @@ TODO:
 
 *	Prevent SQL injection				[✘]
 *	Wiki pages					[✘]
-*	Page titles with Pango				[✘]
 *	Reload iconview function			[✘]
 *	Cached thumbnails				[✔]
 *	Settings page					[✘]
-*	Edit file tags page				[✘]
+*	Edit tags page					[✘]
 *	Delete tags function				[✘]
 *	Delete image function				[✘]
 *	Bulk import					[✘]
@@ -27,13 +26,12 @@ TODO:
 *	Open image in new tab				[✘]
 *	Safe mode					[✘]
 *	Export function					[✘]
-*	Tag list					[✘]
+*	Tag list					[✔]
 *	Tag blacklisting				[✘]
-*	Locking on files being imported			[✘]
 *	Add "Image" menu item				[✘]
 *	Update "View" menu item				[✘]
 *	Context menus					[✘]
-*	Tag colours					[✘]
+*	Tag colours					[✔]
 *	Parent-child border colours in GTK icon view	[✘]
 *	Add "Parent" field to `import_wizard.c`		[✘]
 
@@ -44,6 +42,7 @@ Dependencies
 * GTK3  
 * pkgconf (build-time ony)
 * libmd (Should be preinstalled on BSD systems)
+* C11 compatible C compiler (under tests, GCC failed)
 * [BSD make (bmake)](https://github.com/natem-nvsd/bmake) (build-time only)
 
 Building and installation

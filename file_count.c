@@ -1,6 +1,5 @@
 /* file_count.c */
-#include "main.h"
-#include "callbacks.h"
+#include "atsugami.h"
 #include <gtk/gtk.h>
 #include <libpq-fe.h>
 

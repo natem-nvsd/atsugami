@@ -1,6 +1,5 @@
 ﻿/* import.c */
-#include "main.h"
-#include "callbacks.h"
+#include "atsugami.h"
 #include "import.h"
 #include <gtk-3.0/gtk/gtk.h>
 #include <libpq-fe.h>
@@ -59,7 +58,6 @@ static void open_response_cb(gpointer user_data) {
 	}
 }
 
-/* The import window itself */
 extern void import_activate(void) {
 	GtkFileChooserAction open_action = GTK_FILE_CHOOSER_ACTION_OPEN;
 	static char *query = "SELECT last_dir FROM public.settings;";

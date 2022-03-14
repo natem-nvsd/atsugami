@@ -1,6 +1,5 @@
 /* import_wizard.c (c) 2021-2022 by Nate Morrison */
-#include "main.h"
-#include "callbacks.h"
+#include "atsugami.h"
 #include "import.h"
 #include <ctype.h>
 #include <gtk/gtk.h>
@@ -384,7 +383,7 @@ static int import_button_cb(void) {
 	PQclear(wiz_res);
 
 	printf("memory freed\n");
-	file_count_update();		// still implicit
+	file_count_update();
 	printf("count updated\n");
 	gtk_widget_destroy(scrolled_window);	// `realloc(): invalid next size` ???
 	printf("Finished\n");
