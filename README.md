@@ -5,7 +5,6 @@ Images not included.
 
 TODO:
 -----
-
 *	Prevent SQL injection				[✘]
 *	Wiki pages					[✘]
 *	Reload iconview function			[✘]
@@ -18,7 +17,7 @@ TODO:
 *	Bulk edit					[✘]
 *	Import tags from Danbooru function		[✘]
 *	Re-orderable tabs				[✔]
-*	Hotkeys						[✘]
+*	Hotkeys						[✔]
 *	Favourite image function			[✘]
 *	Search						[✘]
 *	Open image in external viewer function		[✘]
@@ -29,11 +28,14 @@ TODO:
 *	Tag list					[✔]
 *	Tag blacklisting				[✘]
 *	Add "Image" menu item				[✘]
-*	Update "View" menu item				[✘]
-*	Context menus					[✘]
+*	Update "View" menu item				[✔]
+*	Context menus					[✔]
 *	Tag colours					[✔]
 *	Parent-child border colours in GTK icon view	[✘]
 *	Add "Parent" field to `import_wizard.c`		[✘]
+*	Open at a reasonable size on desktop environments	[✘]
+*	Use different colour schemes for light and dark themes	[✘]
+*	Add icons to tabs labels			[✘]
 
 Dependencies
 ------------
@@ -42,7 +44,7 @@ Dependencies
 * GTK3  
 * pkgconf (build-time ony)
 * libmd (Should be preinstalled on BSD systems)
-* C11 compatible C compiler (under tests, GCC failed)
+* C99 compatible C compiler (under tests, GCC failed)
 * [BSD make (bmake)](https://github.com/natem-nvsd/bmake) (build-time only)
 
 Building and installation

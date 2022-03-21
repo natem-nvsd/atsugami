@@ -105,3 +105,24 @@ extern GtkTreeModel *CallBackData_get_tree_model(CallBackData *cb_data) {
 extern int CallBackData_get_test_int(CallBackData *cb_data) {
 	return cb_data->test_int;
 }
+
+/* Advanced tooltip */
+extern AdvancedTooltip AdvancedTooltip_new(GtkWidget *relative_to) {
+	AdvancedTooltip advanced_tooltip;
+	AdvancedTooltip *advanced_tooltip_ptr;
+
+	//advanced_tooltip = &(advanced_tooltip->tooltip);
+//	advanced_tooltip = AdvancedTooltip;
+	//advanced_tooltip->tooltip = gtk_popover_new(relative_to);
+	advanced_tooltip_ptr = malloc(sizeof(AdvancedTooltip));
+	advanced_tooltip_ptr = &advanced_tooltip;
+
+
+	advanced_tooltip.tooltip = gtk_popover_new(relative_to);
+
+	return advanced_tooltip;
+}
+
+extern void AdvancedTooltip_destroy(AdvancedTooltip advanced_tooltip) {
+	free(&advanced_tooltip);
+}

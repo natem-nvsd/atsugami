@@ -1,6 +1,13 @@
-/* notebook.c: Icon view */
+/***************************************************************\
+*	notebook.c (c) 2021-2022, by Nate Morrison		*
+*								*
+*	notebook.c contains functions for the primary GTK Icon	*
+*	View found in Atsugami, and its callbacks.		*
+\***************************************************************/
+
 #include "atsugami.h"
 #include "types.h"
+#include <errno.h>
 #include <gtk/gtk.h>
 #include <libpq-fe.h>
 #include <stdio.h>
@@ -24,8 +31,10 @@ static int query_tooltip(GtkWidget *widget, gint x, gint y, gboolean keyboard_mo
 	** v. Get cell_rect from icon view 		**
 	** vi. Set tooltip cell				**
 	** vii. Run tooltip function			**
+	** *. Lots of error checking			**
 	**						**
 	\************************************************/
+
 	GtkTreeModel *tree_model;
 	GtkTreePath *tree_path;
 	GtkCellRenderer *cell;
@@ -33,10 +42,9 @@ static int query_tooltip(GtkWidget *widget, gint x, gint y, gboolean keyboard_mo
 	gboolean tooltip_status;
 	char *sha256;
 
-	printf("\n\n");
 	/* Prevent execution with a null pointer */
 	if (user_data == NULL) {
-		printf("user_data is NULL\n");
+	//	dbg_info("notebook.c: user_data is NULL");
 		return 1;
 	}
 	
@@ -47,16 +55,12 @@ static int query_tooltip(GtkWidget *widget, gint x, gint y, gboolean keyboard_mo
 
 	/* tree_path is NULL when the user's cursor is not over an icon, and vice versa */
 	if (tree_path == NULL) {
-		fprintf(stderr, "path is null.\n");
+	//	dbg_info("notebook.c: path is null.");
 		return 1;
-	}
-	else {
-		printf("path is NOT null.\n");
 	}
 
 	gtk_icon_view_get_item_at_pos(GTK_ICON_VIEW(user_data), x, y, &tree_path, &cell);
 	//gtk_icon_view_get_cell_rect(GTK_ICON_VIEW(user_data), tree_path, cell, rect);	// segfault here
-	// widget=0x0000000000862290, x=367, y=191, keyboard_mode=0, tooltip=<unavailable>, user_data=0x0000000000862290
 	gtk_icon_view_set_tooltip_column(GTK_ICON_VIEW(user_data), 0);
 
 	/* Get the SHA256 checksum */
@@ -66,17 +70,18 @@ static int query_tooltip(GtkWidget *widget, gint x, gint y, gboolean keyboard_mo
 
 	/* SHow the tooltip */
 	tooltip = att(sha256, user_data, cell);	// issue?
-
-	// gtk_tooltip_set_custom(tooltip, NULL);
 	gtk_icon_view_set_tooltip_cell(GTK_ICON_VIEW(user_data), tooltip, tree_path, cell);
-	if (sha256 != NULL)
-		free(sha256);
-	else
-		printf("no need to free\n");
-	gtk_widget_trigger_tooltip_query(user_data);	// issue?
 
-	/* The tooltip widget must be destroyed once it is no longer needed. */
-	//g_object_unref(tooltip);
+	if (sha256 != NULL) {
+		dbg_info("notebook.c: free() (Only)");
+		free(sha256);
+		dbg_info("notebook.c: freed");
+	}
+	else {
+		dbg_err("notebook.c: sha256 is NULL");
+		exit(EADDRNOTAVAIL);
+	}
+
 	return 0;
 }
 

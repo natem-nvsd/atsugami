@@ -12,6 +12,22 @@ char conninfo[] = "dbname=atsugami";	/* Sets the database for dbconnect(); conn 
 GtkWidget *notebook, *vbox, *file_label, *window;
 GtkAccelGroup *accel;
 
+extern void dbg_err(const char *msg) {
+	printf("\033[1m\033[38;5;196mERROR:\033[0m %s\n", msg);
+}
+
+extern void dbg_info(const char *msg) {
+	printf("\033[1m\033[38;5;033mNOTICE:\033[0m %s\n", msg);
+}
+
+extern void dbg_print(const char *msg) {
+	printf("\033[1mDEBUGGING:\033[0m %s\n", msg);
+}
+
+extern void dbg_warn(const char *msg) {
+	printf("\033[1m\033[38;5;011mNOTICE:\033[0m %s\n", msg);
+}
+
 /* Quit function */
 extern void quit_activate(void) {
 	PQfinish(conn);

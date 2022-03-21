@@ -10,7 +10,7 @@
 #include <gtk/gtk.h>
 
 /* General-purpose callback data */
-typedef struct _CallBackData {
+typedef struct {
 	GtkListStore	*extern_list_store;
 	GtkWidget	*parent;
 	GtkWidget	*child;
@@ -49,4 +49,19 @@ extern GtkTreeIter	*CallBackData_get_tree_iter(CallBackData	*cb_data);
 extern GtkTreePath	*CallBackData_get_tree_path(CallBackData	*cb_data);
 extern GtkTreeModel	*CallBackData_get_tree_model(CallBackData	*cb_data);
 extern int		CallBackData_get_test_int(CallBackData		*cb_data);
+#endif
+
+#ifndef ADVANCED_TOOLTIP_H
+#define ADVANCED_TOOLTIP_H
+#include <gtk/gtk.h>
+
+
+// What's the point of this? `AdvancedTooltip` can be replaced with a global GtkTooltip
+
+typedef struct{
+	GtkWidget *tooltip;
+} AdvancedTooltip;
+
+extern AdvancedTooltip AdvancedTooltip_new(GtkWidget *relative_to);
+extern void AdvancedTooltip_destroy(AdvancedTooltip advanced_tooltip);
 #endif

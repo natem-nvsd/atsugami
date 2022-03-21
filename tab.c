@@ -29,11 +29,10 @@ static void select_cursor_item(GtkIconView *icon_view, GtkTreePath *tree_path, g
 	char *sha256;
 	GtkTreeIter iter;
 	
-	printf("selected\n");
+	dbg_info("Selected");
 	list_store = GTK_LIST_STORE(user_data);
 	gtk_tree_model_get_iter(GTK_TREE_MODEL(list_store), &iter, tree_path);
 	gtk_tree_model_get(GTK_TREE_MODEL(list_store), &iter, SHA256_COL, &sha256, -1);
-	printf("selected %s\n", sha256);
 }
 
 //static void item_activated(CallBackData **user_data) {
@@ -48,7 +47,8 @@ static void item_activated(gpointer user_data) {
 	printf("%d\n", x);
 	if (x != 999) {
 		/* If userdata.test_int != 999, everything else won't work. */
-		fprintf(stderr, "ERROR: user_data corruption detected.\n");
+	//	fprintf(stderr, "ERROR: user_data corruption detected.\n");
+		dbg_err("user_data corruption detected.");
 		CallBackData_destroy(user_data);
 		return;
 	}

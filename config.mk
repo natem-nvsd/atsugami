@@ -24,7 +24,8 @@ INCS = $(GTKINC) $(GDKPIXBUFINC) $(GDKINC) $(LPQINC) $(MDINC)
 LIBS = $(GTKLIB) $(GDKPIXBUFLIB) $(LPQLIB) $(LPQLIB) $(MDLIB) -lgthread-2.0
 
 # flags
-CFLAGS = -g -std=c11 -pedantic -Wall -O -D_FORTIFY_SOURCE=2 ${INCS}
+#CFLAGS = -g -std=c11 -pedantic -Wall -O -D_FORTIFY_SOURCE=2 ${INCS}
+CFLAGS = -g -std=c99 -pedantic -Wall -O -D_FORTIFY_SOURCE=2 ${INCS}
 LDFLAGS += ${LIBS}
 
 # compiler and linker

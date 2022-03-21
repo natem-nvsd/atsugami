@@ -1,8 +1,8 @@
 /* main.h */
 #define EOL -1
-#define __VERSION "0.82.0"
+#define __VERSION "0.82.1"
 
-typedef _Bool bool;
+//typedef _Bool bool;
 
 #ifndef FUNCTIONS_H_INCLUDED
 #define FUNCTIONS_H_INCLUDED
@@ -10,11 +10,22 @@ typedef _Bool bool;
 #include <gtk/gtk.h>
 #include <libpq-fe.h>
 
+/* Status macros for use once a "recycle bin" has been implemented */
+#define STATUS_ACTIVE	0	// The file shows up when 
+#define STATUS_DELETED	1	// The image is hidden from general parts of Atsugami, but the image has not been deleted from disk.
+				// Images with this status can be accessed from a "recycle bin"-like view
+#define STATUS_EXPUNGED	2	// The image has been deleted from the disk; thumbnails may be kept, and metadata remains to prevent re-importing
+
 enum {
 	SHA256_COL,
 	COL_PIXBUF,
 	NUM_COLS
 };
+
+extern void dbg_err(const char *msg);
+extern void dbg_info(const char *msg);
+extern void dbg_print(const char *msg);
+extern void dbg_warn(const char *msg);
 
 extern PGconn *conn;
 extern GtkTreeModel *completion_model;

@@ -1,3 +1,5 @@
+CREATE EXTENSION CITEXT;
+
 -- ===================================================================
 -- Create tables
 -- Add status column once everything is working (in C)

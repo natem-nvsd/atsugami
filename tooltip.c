@@ -14,38 +14,46 @@
 
 #include "atsugami.h"
 #include "colours.h"
+#include "types.h"
 #include <errno.h>
 #include <gtk/gtk.h>
 #include <libpq-fe.h>
 #include <stdio.h>
 
 extern GtkTooltip *att(char *sha256, GtkWidget *rel2, GtkCellRenderer *cell) {
-	/* FIXME
+	/* FIXME:
 	 * GLib-GObject-WARNING **: invalid cast from 'GtkPopover' to 'GtkTooltip'
 	 * Gtk-CRITICAL **: gtk_icon_view_set_tooltip_cell: assertion 'GTK_IS_TOOLTIP (tooltip)' failed
 	 *
 	 * Crashes sometimes:
 	 * free(): invalid next size (normal)
 	 * Abort (core dumped)
-	 * Possible fix: implement classes
 	 */
 	PGresult *att_res;
-	GtkWidget *advanced_tooltip_widget, *att_scrolled, *att_tv;
+	GtkWidget *att_tv;
 	GtkTextBuffer *att_tb;
 	GtkTextIter start_iter, end_iter;
 	GtkTextTag *artist_tt, *copyright_tt, *character_tt, *general_tt, *meta_tt, *tag_array[5];
 	char query[458 + sizeof(long)], *buffer = NULL;
-	int iter = 0, row_count = 0,
-		cursor[row_count][2][2];    // start, end, catid
+	int iter = 0, row_count = 0;
 	size_t res_size;
+	AdvancedTooltip advanced_tooltip;
 
 	printf("'%s'\n", sha256);	// debugging
+	if (buffer != NULL) {
+		dbg_info("tooltip.c: Freeing (First)");
+		free(buffer);		/* Crashes here sometimes, but only after many query_tooltipo cycles */
+		dbg_info("tooltip.c: Freed");
+	}
+	else {
+		dbg_err("tooltip.c: buffer is NULL (0/1)");
+		exit(EADDRNOTAVAIL);
+	}
 
 	/* Setup the tooltip widget */
-	advanced_tooltip_widget = gtk_popover_new(rel2);
+	advanced_tooltip = AdvancedTooltip_new(rel2);
 	att_tv = gtk_text_view_new();
 	att_tb = gtk_text_view_get_buffer(GTK_TEXT_VIEW(att_tv));
-	att_scrolled = gtk_scrolled_window_new(NULL, NULL);
 
 	/* Tag highlighting */
 	artist_tt = gtk_text_buffer_create_tag(att_tb, "artist", "foreground", ARTIST, NULL);
@@ -60,10 +68,9 @@ extern GtkTooltip *att(char *sha256, GtkWidget *rel2, GtkCellRenderer *cell) {
 	tag_array[4] = meta_tt;
 
 	/* Display the tooltip */
-//	gtk_container_add(GTK_CONTAINER(advanced_tooltip_widget), att_scrolled);
-//	gtk_container_add(GTK_CONTAINER(att_scrolled), att_tv);
-
-	gtk_container_add(GTK_CONTAINER(advanced_tooltip_widget), att_tv);
+	gtk_container_add(GTK_CONTAINER(advanced_tooltip.tooltip), att_tv);
+	gtk_widget_set_hexpand(att_tv, TRUE);
+	gtk_widget_set_vexpand(att_tv, TRUE);
 
 	/* Text view */
 	gtk_text_view_set_editable(GTK_TEXT_VIEW(att_tv), FALSE);
@@ -89,6 +96,7 @@ extern GtkTooltip *att(char *sha256, GtkWidget *rel2, GtkCellRenderer *cell) {
 	res_size = 0;		// if this isn't set every time, it will crash
 	att_res = PQexec(conn, query);
 	row_count = PQntuples(att_res);
+	int cursor[row_count][3];    // start; end, catid
 
 	/* Fill the text buffer */
 	for (iter = 0; iter < row_count; iter++)
@@ -101,9 +109,13 @@ extern GtkTooltip *att(char *sha256, GtkWidget *rel2, GtkCellRenderer *cell) {
 		buffer = (char *) malloc(res_size);
 		strcpy(buffer, "");	// remove all the crap in buffer
 	}
-
 	else
 		exit(ENOMEM);
+
+	if (buffer[strlen(buffer)] != '\0')
+		dbg_warn("tooltip.c: Buffer is not null-terminated.");
+	else
+		dbg_info("tooltip.c: Buffer is null-terminated.");
 
 	for (iter = 0; iter < row_count; iter++) {
 		char *tag = PQgetvalue(att_res, iter, 0);		// name
@@ -118,9 +130,9 @@ extern GtkTooltip *att(char *sha256, GtkWidget *rel2, GtkCellRenderer *cell) {
 		end   = (strlen(buffer) + strlen(tag));
 
 		sscanf(catid_char, "%d", &catid);
-		cursor[iter][0][0] = start;
-		cursor[iter][1][0] = end;
-		cursor[iter][0][1] = catid;
+		cursor[iter][0] = start;
+		cursor[iter][1] = end;
+		cursor[iter][2] = catid;
 		
 		/* set the text iters */
 		sprintf(buffer1, "%s ", tag);	// tag name
@@ -129,17 +141,23 @@ extern GtkTooltip *att(char *sha256, GtkWidget *rel2, GtkCellRenderer *cell) {
 
 	gtk_text_buffer_set_text(att_tb, buffer, -1);
 	for (iter = 0; iter < row_count; iter++) {
-		gtk_text_buffer_get_iter_at_offset(att_tb, &start_iter, cursor[iter][0][0]);
-		gtk_text_buffer_get_iter_at_offset(att_tb, &end_iter, cursor[iter][1][0]);
-		gtk_text_buffer_apply_tag(att_tb, tag_array[cursor[iter][0][1]], &start_iter, &end_iter);
+		gtk_text_buffer_get_iter_at_offset(att_tb, &start_iter, cursor[iter][0]);
+		gtk_text_buffer_get_iter_at_offset(att_tb, &end_iter, cursor[iter][1]);
+		gtk_text_buffer_apply_tag(att_tb, tag_array[cursor[iter][2]], &start_iter, &end_iter);
 	}
 
+	/* Free memory */
 	PQclear(att_res);
-	printf("Freeing\n");
-	free(buffer);	// segfault here sometimes
-	printf("Freed\n");
+	if (buffer != NULL) {
+		dbg_info("tooltip.c: Freeing (Final)");
+		free(buffer);		/* Crashes here sometimes, but only after many query_tooltipo cycles */
+		dbg_info("tooltip.c: Freed");
+	}
+	else {
+		dbg_err("tooltip.c: buffer is NULL (1/1)");
+		exit(EADDRNOTAVAIL);
+	}
 
-	gtk_widget_show_all(advanced_tooltip_widget);
-	printf("showall\n");
-	return GTK_TOOLTIP(advanced_tooltip_widget);	// segfault
+	gtk_widget_show_all(advanced_tooltip.tooltip);
+	return GTK_TOOLTIP(advanced_tooltip.tooltip);	// segfault
 }
