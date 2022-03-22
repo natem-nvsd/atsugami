@@ -1,6 +1,6 @@
 /* main.h */
 #define EOL -1
-#define __VERSION "0.82.1"
+#define __VERSION "0.82.2"
 
 //typedef _Bool bool;
 

@@ -1,18 +1,26 @@
 ﻿/* about.c */
 #include "atsugami.h"
+#include "copyright.h"
 #include <gtk/gtk.h>
 
 void about_activate(void) {
-	/* Normally, I wouldn't put a function like this on multiple lines, but this is very long. */
-	gtk_show_about_dialog(GTK_WINDOW(window),
-			      "program-name", "Atsugami",
-			      "version", __VERSION,
-			      "copyright", "© 2021-2022, Nate Morrison et al.",
-			      //"website", "https://atsugami.moe",
-			      "website", "https://github.com/natem-nvsd/atsugami",
-			      //"authors", "Nate Morrison, fredgido",
-			      "license", "Copyright (c) 2021-2022, Nate Morrison et al.\n All rights reserved.\n\n Redistribution and use in source and binary forms, with or without\n modification, are permitted provided that the following conditions are met:\n\n 1. Redistributions of source code must retain the above copyright notice, this\n list of conditions and the following disclaimer.\n 2. Redistributions in binary form must reproduce the above copyright notice,\n this list of conditions and the following disclaimer in the documentation\n and/or other materials provided with the distribution.\n\n THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS \"AS IS\" AND\n ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED\n WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE\n DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR\n ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES\n (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;\n LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND\n ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT\n (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS\n SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.\n\n",
-			      "logo-icon-name", "image-x-generic",
-			      "title", "About Atsugami",
-			      NULL);
+	GtkWidget *about_diag;
+	const gchar **contributers_ptr = NULL;
+	const char *contributers = "Nate Morrison";
+
+	//*contributers_ptr = contributers;
+	about_diag = gtk_about_dialog_new();
+
+	gtk_about_dialog_set_logo_icon_name(GTK_ABOUT_DIALOG(about_diag), "image-x-generic");
+	gtk_about_dialog_set_program_name(GTK_ABOUT_DIALOG(about_diag), "Atsugami");
+	gtk_about_dialog_set_version(GTK_ABOUT_DIALOG(about_diag), __VERSION);
+	gtk_about_dialog_set_copyright(GTK_ABOUT_DIALOG(about_diag), "© 2021-2022 by Nate Morrison et al.");
+	gtk_about_dialog_set_website(GTK_ABOUT_DIALOG(about_diag), "https://github.com/natem-nvsd/atsugami");
+	//gtk_about_dialog_set_authors(GTK_ABOUT_DIALOG(about_diag), contributers_ptr);
+	gtk_about_dialog_set_license(GTK_ABOUT_DIALOG(about_diag), LICENSE);
+	gtk_about_dialog_set_wrap_license(GTK_ABOUT_DIALOG(about_diag), TRUE);
+
+	//gtk_widget_show_all(about_diag);
+	gtk_dialog_run(GTK_DIALOG(about_diag));
+	gtk_widget_destroy(about_diag);
 }

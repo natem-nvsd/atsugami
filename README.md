@@ -42,10 +42,11 @@ Dependencies
 
 * PostgreSQL (Tested on 14 and 14.1)  
 * GTK3  
-* pkgconf (build-time ony)
 * libmd (Should be preinstalled on BSD systems)
+Build-time dependencies:  
+* pkgconf
 * C99 compatible C compiler (under tests, GCC failed)
-* [BSD make (bmake)](https://github.com/natem-nvsd/bmake) (build-time only)
+* [BSD make (bmake) (mirror)](https://github.com/natem-nvsd/bmake)
 
 Building and installation
 -------------------------
