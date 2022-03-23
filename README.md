@@ -44,15 +44,15 @@ TODO:
 
 Icons to add
 ----------------
-Import: insert-image  					DONE
-New tag: list-add  					DONE
-Console: utilities-terminal  				DONE
+Import: insert-image  					DONE  
+New tag: list-add  					DONE  
+Console: utilities-terminal  				DONE  
 Preferences: preferences-system  
-Icon view: view-list  					DONE
+Icon view: view-list  					DONE  
 Tag list: view-list  
 Recycle bin: trash/trash-full  
 Wiki: text-x-generic  
-Image viewer: image-x-generic  				DONE
+Image viewer: image-x-generic  				DONE  
 Edit tag: gtk-edit  
 Edit image: gtk-edit  
 Export: document-save-as  
