@@ -121,11 +121,6 @@ static void pixbuf_loader(GtkListStore *list_store) {
 }
 
 extern GtkWidget *home_page(void) {
-	/* TODO:
-	 * Get the advanced tooltip working
-	 * Short and thin icons have too much padding
-	 */
-
 	GtkWidget *icon_view;
 	GtkTooltip *tt;
 	char *sha256;
@@ -148,7 +143,6 @@ extern GtkWidget *home_page(void) {
 
 	/* Advanced tooltip */
 	gtk_widget_set_has_tooltip(icon_view, TRUE);
-	//g_signal_connect(GTK_ICON_VIEW(icon_view), "select-cursor-item", G_CALLBACK(iv_select_cb), icon_view);
 	g_signal_connect(icon_view, "query-tooltip", G_CALLBACK(query_tooltip), icon_view);
 
 	/* SHow the widgets */

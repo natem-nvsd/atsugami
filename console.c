@@ -14,8 +14,15 @@
 #include <string.h>
 
 GtkTextBuffer *console_buffer;
-GtkWidget *console_entry, *console_view;
+GtkWidget *console_page, *console_entry, *console_view;
 PGresult *console_res;
+
+static void close_tab(void) {
+	gtk_notebook_detach_tab(GTK_NOTEBOOK(notebook), console_page);
+
+	if (gtk_notebook_get_n_pages(GTK_NOTEBOOK(notebook)) == 0)
+		quit_activate();
+}
 
 static void console_cb(void) {
 	PQprintOpt options = {0};
@@ -62,7 +69,7 @@ static void console_cb(void) {
 
 extern void console(void) {
 	int page_count;
-	GtkWidget *console_page, *console_scrolled;
+	GtkWidget *console_scrolled, *tab_label_box, *tab_icon, *tab_label, *tab_close;
 	FILE *cachefile;
 	char *cachepath;
 	//size_t bufsize, write_size;
@@ -105,9 +112,24 @@ extern void console(void) {
 	gtk_entry_set_placeholder_text(GTK_ENTRY(console_entry), "Enter a SQL command:");
 	gtk_box_pack_start(GTK_BOX(console_page), console_entry, FALSE, FALSE, 0);
 
+	tab_label_box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 2);
+	tab_icon = gtk_image_new_from_icon_name("utilities-terminal", GTK_ICON_SIZE_MENU);
+	tab_label = gtk_label_new("Console");
+	tab_close = gtk_button_new_from_icon_name("window-close-symbolic", GTK_ICON_SIZE_MENU);
+
+	/* Tab label */
+	gtk_button_set_relief(GTK_BUTTON(tab_close), GTK_RELIEF_NONE);
+	gtk_widget_add_accelerator(tab_close, "clicked", accel, GDK_KEY_w, GDK_CONTROL_MASK, GTK_ACCEL_LOCKED);
+	g_signal_connect(GTK_BUTTON(tab_close), "clicked", G_CALLBACK(close_tab), NULL);
+
+	gtk_box_pack_start(GTK_BOX(tab_label_box), tab_icon, FALSE, FALSE, 4);
+	gtk_box_pack_start(GTK_BOX(tab_label_box), tab_label, FALSE, FALSE, 4);
+	gtk_box_pack_start(GTK_BOX(tab_label_box), tab_close, FALSE, FALSE, 4);
+
+	gtk_widget_show_all(tab_label_box);
 	gtk_widget_show_all(console_page);
 	gtk_container_add(GTK_CONTAINER(notebook), console_page);
-	gtk_notebook_set_tab_label_text(GTK_NOTEBOOK(notebook), console_page, "Console");
+	gtk_notebook_set_tab_label(GTK_NOTEBOOK(notebook), console_page, tab_label_box);
 	gtk_notebook_set_current_page(GTK_NOTEBOOK(notebook), page_count);
 	gtk_notebook_set_tab_reorderable(GTK_NOTEBOOK(notebook), console_page, TRUE);
 	g_signal_connect(console_entry, "activate", G_CALLBACK(console_cb), NULL);

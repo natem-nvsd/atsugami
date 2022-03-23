@@ -9,19 +9,15 @@
 #include <stdlib.h>
 #include <string.h>
 
-GtkWidget *search_bar, *right_scrolled;
+GtkWidget *search_bar, *right_scrolled, *pane;
 PGresult *tab_res;
 CallBackData *viewer_data;
 
-static void search_cb(GtkWidget **entry) {
-	char *query;
+static void close_tab(void) {
+	gtk_notebook_detach_tab(GTK_NOTEBOOK(notebook), pane);
 
-	query = (char *) malloc(strlen(gtk_entry_get_text(GTK_ENTRY(entry))));
-	sprintf(query, "%s", gtk_entry_get_text(GTK_ENTRY(entry)));
-	printf("query: '%s'\n", query);
-
-	//gtk_widget_destroy(tab_child);
-	//tab_child = search();
+	if (gtk_notebook_get_n_pages(GTK_NOTEBOOK(notebook)) == 0)
+		quit_activate();
 }
 
 static void select_cursor_item(GtkIconView *icon_view, GtkTreePath *tree_path, gpointer user_data) {
@@ -35,7 +31,6 @@ static void select_cursor_item(GtkIconView *icon_view, GtkTreePath *tree_path, g
 	gtk_tree_model_get(GTK_TREE_MODEL(list_store), &iter, SHA256_COL, &sha256, -1);
 }
 
-//static void item_activated(CallBackData **user_data) {
 static void item_activated(gpointer user_data) {
 	GtkTreeModel *tree_model;
  	char *sha256;
@@ -75,7 +70,7 @@ static void item_activated(gpointer user_data) {
 }
 
 extern void tab(void) {
-	GtkWidget *pane, *side_search, *side_vbox, *left_scrolled, *tag_tv, *tab_child;
+	GtkWidget *side_search, *side_vbox, *left_scrolled, *tag_tv, *tab_child, *tab_label_box, *tab_icon, *tab_label, *tab_close;
 	GtkTextBuffer *tag_tb;
 	GtkTextIter start_iter, end_iter;
 	GtkTextTag *artist_tt, *copyright_tt, *character_tt, *general_tt, *meta_tt, *tag_array[5];
@@ -96,6 +91,10 @@ extern void tab(void) {
 	search_bar = gtk_search_bar_new();
 	search_completion = gtk_entry_completion_new();
 	page_count = gtk_notebook_get_n_pages(GTK_NOTEBOOK(notebook));
+	tab_label_box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 2);
+	tab_icon = gtk_image_new_from_icon_name("view-list", GTK_ICON_SIZE_MENU);
+	tab_label = gtk_label_new("List");
+	tab_close = gtk_button_new_from_icon_name("window-close-symbolic", GTK_ICON_SIZE_MENU);
 
 	artist_tt = gtk_text_buffer_create_tag(tag_tb, "artist", "foreground", ARTIST, NULL);
 	copyright_tt = gtk_text_buffer_create_tag(tag_tb, "copyright", "foreground", COPYRIGHT, NULL);
@@ -170,7 +169,7 @@ extern void tab(void) {
 	gtk_text_view_set_top_margin(GTK_TEXT_VIEW(tag_tv), 4);
 	gtk_text_view_set_bottom_margin(GTK_TEXT_VIEW(tag_tv), 4);
 	gtk_text_view_set_left_margin(GTK_TEXT_VIEW(tag_tv), 4);
-	gtk_text_view_set_right_margin(GTK_TEXT_VIEW(tag_tv), 4);
+	gtk_text_view_set_right_margin(GTK_TEXT_VIEW(tag_tv), 12);
 
 	tab_res = PQexec(conn, "SELECT tags_categories.category_id, tags_categories.tag_id, (SELECT COUNT(tag_id) AS counter FROM public.files_tags WHERE tag_id = tags_categories.tag_id), tags.name FROM public.tags_categories tags_categories INNER JOIN public.tags tags ON tags_categories.tag_id = tags.id ORDER BY counter DESC;");
 	row_count = PQntuples(tab_res);
@@ -218,7 +217,18 @@ extern void tab(void) {
 	gtk_paned_add2(GTK_PANED(pane), GTK_WIDGET(right_scrolled));
 	gtk_container_add(GTK_CONTAINER(right_scrolled), tab_child);
 
+	/* Tab label */
+	gtk_button_set_relief(GTK_BUTTON(tab_close), GTK_RELIEF_NONE);
+	gtk_widget_add_accelerator(tab_close, "clicked", accel, GDK_KEY_w, GDK_CONTROL_MASK, GTK_ACCEL_LOCKED);
+	g_signal_connect(GTK_BUTTON(tab_close), "clicked", G_CALLBACK(close_tab), NULL);
+
+	gtk_box_pack_start(GTK_BOX(tab_label_box), tab_icon, FALSE, FALSE, 4);
+	gtk_box_pack_start(GTK_BOX(tab_label_box), tab_label, FALSE, FALSE, 4);
+	gtk_box_pack_start(GTK_BOX(tab_label_box), tab_close, FALSE, FALSE, 4);
+
 	gtk_widget_show_all(pane);
+	gtk_widget_show_all(tab_label_box);
 	gtk_container_add(GTK_CONTAINER(notebook), pane);
+	gtk_notebook_set_tab_label(GTK_NOTEBOOK(notebook), pane, tab_label_box);
 	gtk_notebook_set_current_page(GTK_NOTEBOOK(notebook), page_count);
 }

@@ -5,9 +5,18 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+GtkWidget *viewer_vbox;
+
+static void close_tab(void) {
+	gtk_notebook_detach_tab(GTK_NOTEBOOK(notebook), viewer_vbox);
+
+	if (gtk_notebook_get_n_pages(GTK_NOTEBOOK(notebook)) == 0)
+		quit_activate();
+}
+
 extern GtkWidget *viewer(GtkWidget *parent_tag_tv, GtkTextBuffer *parent_tag_tb, char *sha256[65]) {
 	PGresult *viewer_res;
-	GtkWidget *viewer_vbox, *viewer_scrolled_window, *viewer_tv, *viewer_image, *viewer_viewport;
+	GtkWidget *viewer_scrolled_window, *viewer_tv, *viewer_image, *viewer_viewport, *tab_label_box, *tab_icon, *tab_label, *tab_close;
 	GtkTextBuffer *viewer_tb;
 	GtkTextIter start_iter, end_iter;
 	GtkTextTag *title, *sub_title;
@@ -83,6 +92,24 @@ extern GtkWidget *viewer(GtkWidget *parent_tag_tv, GtkTextBuffer *parent_tag_tb,
 		gtk_text_buffer_apply_tag(viewer_tb, sub_title, &start_iter, &end_iter);
 	}
 
+	tab_label_box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 2);
+	tab_icon = gtk_image_new_from_icon_name("image-x-generic", GTK_ICON_SIZE_MENU);
+	tab_label = gtk_label_new("Viewer");
+	tab_close = gtk_button_new_from_icon_name("window-close-symbolic", GTK_ICON_SIZE_MENU);
+
+	/* Tab label */
+	gtk_button_set_relief(GTK_BUTTON(tab_close), GTK_RELIEF_NONE);
+	gtk_widget_add_accelerator(tab_close, "clicked", accel, GDK_KEY_w, GDK_CONTROL_MASK, GTK_ACCEL_LOCKED);
+	g_signal_connect(GTK_BUTTON(tab_close), "clicked", G_CALLBACK(close_tab), NULL);
+
+	gtk_box_pack_start(GTK_BOX(tab_label_box), tab_icon, FALSE, FALSE, 4);
+	gtk_box_pack_start(GTK_BOX(tab_label_box), tab_label, FALSE, FALSE, 4);
+	gtk_box_pack_start(GTK_BOX(tab_label_box), tab_close, FALSE, FALSE, 4);
+	
+	gtk_container_add(GTK_CONTAINER(notebook), viewer_vbox);
+	gtk_notebook_set_tab_label(GTK_NOTEBOOK(notebook), viewer_vbox, tab_label_box);
+
+	gtk_widget_show_all(tab_label_box);
 	gtk_widget_show_all(viewer_vbox);
 	return viewer_vbox;
 }

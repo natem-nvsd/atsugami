@@ -22,6 +22,9 @@ GtkStyleContext *contxt0, *contxt1, *contxt2;
 
 static void cancel_button_cb(void) {
 	gtk_notebook_detach_tab(GTK_NOTEBOOK(notebook), scrolled_window);
+
+	if (gtk_notebook_get_n_pages(GTK_NOTEBOOK(notebook)) == 0)
+		quit_activate();
 }
 
 static void incomplete_diag(const char *label) {
@@ -391,14 +394,14 @@ static int import_button_cb(void) {
 }
 
 extern void import_wizard(void) {
-	GtkWidget *button_box, *import_page;
+	GtkWidget *button_box, *import_page, *tab_label_box, *tab_icon, *tab_label, *tab_close;
 
 	import_page = gtk_box_new(GTK_ORIENTATION_VERTICAL, 10);
 	header_box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 10);
 	page_count = gtk_notebook_get_n_pages(GTK_NOTEBOOK(notebook));
 	scrolled_window = gtk_scrolled_window_new(NULL, NULL);
 
-	gtk_container_set_border_width(GTK_CONTAINER(import_page), 10);
+	gtk_container_set_border_width(GTK_CONTAINER(import_page), 16);
 	gtk_container_add(GTK_CONTAINER(scrolled_window), import_page);
 	gtk_scrolled_window_set_kinetic_scrolling(GTK_SCROLLED_WINDOW(scrolled_window), TRUE);
 
@@ -502,12 +505,27 @@ extern void import_wizard(void) {
 	g_signal_connect(can_button, "clicked", G_CALLBACK(cancel_button_cb), NULL);
 	g_signal_connect(imp_button, "clicked", G_CALLBACK(import_button_cb), NULL);
 
+	tab_label_box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 2);
+	tab_icon = gtk_image_new_from_icon_name("insert-image", GTK_ICON_SIZE_MENU);
+	tab_label = gtk_label_new("Import");
+	tab_close = gtk_button_new_from_icon_name("window-close-symbolic", GTK_ICON_SIZE_MENU);
+
+	/* Tab label */
+	gtk_button_set_relief(GTK_BUTTON(tab_close), GTK_RELIEF_NONE);
+	gtk_widget_add_accelerator(tab_close, "clicked", accel, GDK_KEY_w, GDK_CONTROL_MASK, GTK_ACCEL_LOCKED);
+	g_signal_connect(GTK_BUTTON(tab_close), "clicked", G_CALLBACK(cancel_button_cb), NULL);
+
+	gtk_box_pack_start(GTK_BOX(tab_label_box), tab_icon, FALSE, FALSE, 4);
+	gtk_box_pack_start(GTK_BOX(tab_label_box), tab_label, FALSE, FALSE, 4);
+	gtk_box_pack_start(GTK_BOX(tab_label_box), tab_close, FALSE, FALSE, 4);
+
 	/* init stuff */
 	gtk_widget_show_all(import_page);
+	gtk_widget_show_all(tab_label_box);
 	gtk_widget_show_all(scrolled_window);
 	gtk_container_add(GTK_CONTAINER(notebook), scrolled_window);
 	gtk_scrolled_window_set_propagate_natural_height(GTK_SCROLLED_WINDOW(scrolled_window), TRUE);
-	gtk_notebook_set_tab_label_text(GTK_NOTEBOOK(notebook), scrolled_window, "Import");
 	gtk_notebook_set_current_page(GTK_NOTEBOOK(notebook), page_count);
 	gtk_notebook_set_tab_reorderable(GTK_NOTEBOOK(notebook), scrolled_window, TRUE);
+	gtk_notebook_set_tab_label(GTK_NOTEBOOK(notebook), scrolled_window, tab_label_box);
 }

@@ -10,26 +10,29 @@ extern void file_count(void) {
 	int count;
 	
 	count_res = PQexec(conn, "SELECT count(*) FROM public.files;");
-
 	sprintf(label_str, "%s files", PQgetvalue(count_res, 0, 0));
-
 	count = (int) strtol(PQgetvalue(count_res, 0, 0), (char **) NULL, 10);
 
 	switch (count) {
-		case 0:
+		case 0: {
 			file_label = gtk_label_new("No files found.");
 			break;
-		case 1:
+		}
+
+		case 1: {
 			file_label = gtk_label_new("1 file");
 			break;
-		default:
+		}
+		default: {
 			file_label = gtk_label_new(label_str);
 			break;
+		 }
 	}
 
 	gtk_widget_set_halign(file_label, GTK_ALIGN_START);
 	gtk_widget_set_valign(file_label, GTK_ALIGN_END);
-	gtk_box_pack_start(GTK_BOX(vbox), file_label, FALSE, FALSE, 0);
+	gtk_box_pack_start(GTK_BOX(vbox), file_label, FALSE, FALSE, 2);
+	gtk_widget_set_margin_start(file_label, 4);
 	PQclear(count_res);
 }
 
@@ -39,8 +42,6 @@ extern void file_count_update(void) {
 	
 	count_res = PQexec(conn, "SELECT count(*) FROM public.files;");
 	sprintf(label_str, "%s files", PQgetvalue(count_res, 0, 0));
-	//sprintf(count, "%d", PQgetvalue(count_res, 0, 0));
-
 	count = (int) strtol(PQgetvalue(count_res, 0, 0), (char **) NULL, 10);
 
 	PQclear(count_res);
@@ -51,13 +52,11 @@ extern void file_count_update(void) {
 		}
 
 		case 1: {
-	//		label = gtk_label_new("1 file");
 			gtk_label_set_text(GTK_LABEL(file_label), "1 file");
 			break;
 		}
 
 		default: {
-	//		label = gtk_label_new(label_sfile_tr);
 			gtk_label_set_text(GTK_LABEL(file_label), label_str);
 			break;
 		}

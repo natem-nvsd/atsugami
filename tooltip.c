@@ -47,7 +47,7 @@ extern GtkTooltip *att(char *sha256, GtkWidget *rel2, GtkCellRenderer *cell) {
 	}
 	else {
 		dbg_err("tooltip.c: buffer is NULL (0/1)");
-		exit(EADDRNOTAVAIL);
+		return NULL;
 	}
 
 	/* Setup the tooltip widget */
@@ -155,7 +155,7 @@ extern GtkTooltip *att(char *sha256, GtkWidget *rel2, GtkCellRenderer *cell) {
 	}
 	else {
 		dbg_err("tooltip.c: buffer is NULL (1/1)");
-		exit(EADDRNOTAVAIL);
+		return NULL;
 	}
 
 	gtk_widget_show_all(advanced_tooltip.tooltip);

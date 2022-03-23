@@ -1,6 +1,6 @@
 /* main.h */
 #define EOL -1
-#define __VERSION "0.82.2"
+#define __VERSION "0.83.0"
 
 //typedef _Bool bool;
 
@@ -53,7 +53,12 @@ extern void new_character_activate(void);
 extern void new_copyright_activate(void);
 extern void new_tag_activate(void);
 extern void new_meta_tag_activate(void);
+extern void next_tab_cb(GtkNotebook *notebook);
 extern GtkWidget *notebook, *file_label, *vbox, *window;
+extern void prev_tab_cb(GtkNotebook *notebook);
+extern void quit_activate(void);
+extern void search_cb(GtkWidget **entry);
 extern void tab(void);
+extern void wiki(void);
 extern GtkWidget *viewer(GtkWidget *parent_tag_tv, GtkTextBuffer *parent_tag_tb, char *sha256[65]);
 #endif
