@@ -6,6 +6,7 @@
 \***************************************************************/
 
 #include "atsugami.h"
+#include "colours.h"
 #include "types.h"
 #include <errno.h>
 #include <gtk/gtk.h>
@@ -13,80 +14,155 @@
 #include <stdio.h>
 #include <stdbool.h>
 
-PGresult *note_res;
-GtkTreeIter ico_tree_iter;
-GtkTreePath *ico_tree_path;
-
-static int query_tooltip(GtkWidget *widget, gint x, gint y, gboolean keyboard_mode, GtkTooltip *tooltip, gpointer user_data) {
-	/************************************************\
-	** TOOLTIP OVERVIEW				**
-	** ================				**
-	**						**
-	** 0. user hovers over icon			**
-	** 1. callback emitted				**
-	** i. Get tree model from icon view		**
-	** ii. Get tree path from icon view		**
-	** iii. Get item at position			**
-	** iv. Get widget from bin window coords	**
-	** v. Get cell_rect from icon view 		**
-	** vi. Set tooltip cell				**
-	** vii. Run tooltip function			**
-	** *. Lots of error checking			**
-	**						**
-	\************************************************/
-
-	GtkTreeModel *tree_model;
+static void query_tooltip(GtkWidget *widget, gint x, gint y, gboolean keyboard_mode, GtkTooltip *tooltip, gpointer user_data) {
+	/* TODO: Make popover relative to the icon the cursor is over. */
+	GtkWidget *popover, *scrolled_window, *viewport;
+	GtkListStore *list_store;
 	GtkTreePath *tree_path;
-	GtkCellRenderer *cell;
-	//GdkRectangle *rect;
-	//gboolean tooltip_status;
-	char *sha256;
+	GtkTreeIter tree_iter;
+
+	GtkTextTag *artist_tt, *copyright_tt, *character_tt, *general_tt, *meta_tt, *tag_array[5];
+	GtkTextIter start_iter, end_iter;
+	GtkWidget *tag_tv;
+	GtkTextBuffer *tag_tb;
+
+	PGresult *tooltip_res;
+	char *sha256, *query;
 
 	/* Prevent execution with a null pointer */
 	if (user_data == NULL) {
-	//	dbg_info("notebook.c: user_data is NULL");
-		return 1;
+		dbg_err("notebook.c: user_data is NULL");
+		return;
 	}
 	
 	/* Prepare the tooltip */
-	keyboard_mode = FALSE;
-	tree_model = GTK_TREE_MODEL(gtk_icon_view_get_model(user_data));
+	tree_path = gtk_tree_path_new();
+	list_store = GTK_LIST_STORE(user_data);
 	tree_path = gtk_icon_view_get_path_at_pos(GTK_ICON_VIEW(widget), x, y);
+	gtk_tree_model_get_iter(GTK_TREE_MODEL(list_store), &tree_iter, tree_path);	// FIXME: Something is happening here.
 
 	/* tree_path is NULL when the user's cursor is not over an icon, and vice versa */
-	if (tree_path == NULL) {
-	//	dbg_info("notebook.c: path is null.");
-		return 1;
-	}
-
-	gtk_icon_view_get_item_at_pos(GTK_ICON_VIEW(user_data), x, y, &tree_path, &cell);
-	//gtk_icon_view_get_cell_rect(GTK_ICON_VIEW(user_data), tree_path, cell, rect);	// segfault here
-	gtk_icon_view_set_tooltip_column(GTK_ICON_VIEW(user_data), 0);
+	if (tree_path == NULL)
+		return;
 
 	/* Get the SHA256 checksum */
 	sha256 = (char *) malloc(65);
-	gtk_tree_model_get(tree_model, &ico_tree_iter, 0, &sha256, -1);
-	printf("'%s'\n", sha256);
+	gtk_tree_model_get(GTK_TREE_MODEL(list_store), &tree_iter, 0, &sha256, -1);
 
-	/* SHow the tooltip */
-	tooltip = att(sha256, user_data, cell);	// issue?
-	gtk_icon_view_set_tooltip_cell(GTK_ICON_VIEW(user_data), tooltip, tree_path, cell);
-
-	if (sha256 != NULL) {
-		dbg_info("notebook.c: free() (Only)");
-		free(sha256);
-		dbg_info("notebook.c: freed");
-	}
-	else {
-		dbg_err("notebook.c: sha256 is NULL");
-		exit(EADDRNOTAVAIL);
+	if (sha256 == NULL) {
+		dbg_err("notebook.c: sha256 is NULL\n");
+		return;
 	}
 
-	return 0;
+	/** Prepare data for the tooltip **/
+	/* Text view */
+	tag_tv = gtk_text_view_new();
+	tag_tb = gtk_text_view_get_buffer(GTK_TEXT_VIEW(tag_tv));
+
+	gtk_text_view_set_editable(GTK_TEXT_VIEW(tag_tv), FALSE);
+	gtk_text_view_set_accepts_tab(GTK_TEXT_VIEW(tag_tv), FALSE);
+	gtk_text_view_set_cursor_visible(GTK_TEXT_VIEW(tag_tv), FALSE);
+	gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(tag_tv), GTK_WRAP_WORD);
+	gtk_text_view_set_top_margin(GTK_TEXT_VIEW(tag_tv), 4);
+	gtk_text_view_set_bottom_margin(GTK_TEXT_VIEW(tag_tv), 4);
+	gtk_text_view_set_left_margin(GTK_TEXT_VIEW(tag_tv), 4);
+	gtk_text_view_set_right_margin(GTK_TEXT_VIEW(tag_tv), 4);
+
+	/* Text tags */
+	artist_tt = gtk_text_buffer_create_tag(tag_tb, "artist", "foreground", ARTIST, NULL);
+	copyright_tt = gtk_text_buffer_create_tag(tag_tb, "copyright", "foreground", COPYRIGHT, NULL);
+	character_tt = gtk_text_buffer_create_tag(tag_tb, "character", "foreground", CHARACTER, NULL);
+	general_tt = gtk_text_buffer_create_tag(tag_tb, "general", "foreground", GENERAL, NULL);
+	meta_tt = gtk_text_buffer_create_tag(tag_tb, "meta", "foreground", META, NULL);
+
+	tag_array[0] = artist_tt;
+	tag_array[1] = copyright_tt;
+	tag_array[2] = character_tt;
+	tag_array[3] = general_tt;
+	tag_array[4] = meta_tt;
+
+	/* Queries */
+	query = (char *) malloc(112);
+	sprintf(query, "SELECT id FROM public.files WHERE sha256 = '%s';", sha256);
+	tooltip_res = PQexec(conn, query);
+
+	query = (char *) malloc(389 + sizeof(int));
+	sprintf(query, "SELECT tags_cats.category_id, tags.name FROM public.tags AS tags INNER JOIN (SELECT * FROM public.files_tags WHERE file_id = %s) files_tags ON files_tags.tag_id = tags.id INNER JOIN public.files AS files ON files_tags.file_id = files.id INNER JOIN public.tags_categories AS tags_cats ON tags_cats.category_id = tags_cats.category_id WHERE tags_cats.tag_id = tags.id ORDER BY tags_cats.category_id ASC;", PQgetvalue(tooltip_res, 0, 0));
+
+	PQclear(tooltip_res);
+
+	/* Apply text tags */
+	size_t res_size;
+	char *buffer;
+	int row_count, iter;
+
+	tooltip_res = PQexec(conn, query);
+	row_count = PQntuples(tooltip_res);
+	res_size = 0;
+
+	int cursor[row_count][3];
+
+	for (iter = 0; iter < row_count; iter++)
+		res_size = res_size + (1 + strlen(PQgetvalue(tooltip_res, iter, 1)));
+
+	if (res_size > 0) {
+		buffer = (char *) malloc(res_size);
+		strcpy(buffer, "");
+	} else
+		exit(ENOMEM);
+
+	for (iter = 0; iter < row_count; iter++) {
+		char *catid_char = PQgetvalue(tooltip_res, iter, 0);	// category id
+		char *tag = PQgetvalue(tooltip_res, iter, 1);		// name
+		char buffer1[strlen(tag) + 1];				// tag and space
+		int catid, start, end;
+
+		catid	= 0;
+		start	= 0;
+		end	= 0;
+
+		if (strlen(buffer) > 0)
+			start = strlen(buffer);
+		else
+			start = 0;
+
+		end = (strlen(buffer) + strlen(tag));
+		sscanf(catid_char, "%d", &catid);
+		cursor[iter][0] = start;
+		cursor[iter][1] = end;
+		cursor[iter][2] = catid;
+
+		/* set the text iters */
+		sprintf(buffer1, "%s ", tag);	// tag name
+		strcat(buffer, buffer1);
+	}
+
+	gtk_text_buffer_set_text(tag_tb, buffer, -1);
+	for (iter = 0; iter < row_count; iter++) {
+		gtk_text_buffer_get_iter_at_offset(tag_tb, &start_iter, cursor[iter][0]);
+		gtk_text_buffer_get_iter_at_offset(tag_tb, &end_iter, cursor[iter][1]);
+		gtk_text_buffer_apply_tag(tag_tb, tag_array[cursor[iter][2]], &start_iter, &end_iter);
+	}
+
+	PQclear(tooltip_res);
+
+	/* Show the tooltip */
+	popover = gtk_popover_new(widget);
+	scrolled_window = gtk_scrolled_window_new(NULL, NULL);
+	viewport = gtk_viewport_new(NULL, NULL);
+
+	gtk_container_add(GTK_CONTAINER(popover), viewport);
+	gtk_container_add(GTK_CONTAINER(viewport), tag_tv);
+	gtk_widget_show_all(popover);
+
+	free(sha256);
 }
 
 extern void pixbuf_loader(GtkListStore *list_store) {
 	int row_count, row_now;
+	GtkTreeIter tree_iter;
+	GtkTreePath *tree_path;
+	PGresult *note_res;
 
 	gtk_list_store_clear(list_store);
 	if (safe_mode == true)
@@ -95,24 +171,22 @@ extern void pixbuf_loader(GtkListStore *list_store) {
 		note_res = PQexec(conn, "SELECT sha256 FROM public.files ORDER BY created_at DESC;");
 
 	row_count = PQntuples(note_res);	// get the number of rows returned by the query
-	ico_tree_path = gtk_tree_path_new_from_string("0");
-//	printf("row count: %d\n", row_count);
+	tree_path = gtk_tree_path_new_from_string("0");
 
 	if (row_count > 0)
 		for (row_now = 0; row_now < row_count; row_now++) {
 			GdkPixbufLoader *gdk_pixbuf_loader;
 			char *path_base = get_thumb_path();
-			char *file_path, *tree_path;
+			char *file_path, *tree_path_str;
 			size_t size = strlen(path_base), thumb_data_size = 0;
 			FILE *thumb_file;
 			long thumb_size;
 			unsigned char *thumb_data;
 
 			gdk_pixbuf_loader = gdk_pixbuf_loader_new_with_mime_type("image/png", NULL);
-			tree_path = (char *) malloc(sizeof(int) + 2);
+			tree_path_str = (char *) malloc(sizeof(int) + 2);
 			file_path = (char *) malloc(size + 4 + PQgetlength(note_res, row_now, 0));
 			sprintf(file_path, "%s%s.png", path_base, PQgetvalue(note_res, row_now, 0));	// [thumb_dir]/[size]/[sha256].png
-		//	printf("'%s' ", file_path);
 
 			/* File operations */
 			thumb_file = fopen(file_path, "r");
@@ -133,16 +207,16 @@ extern void pixbuf_loader(GtkListStore *list_store) {
 			thumb_data_size = fread(thumb_data, sizeof(char), thumb_size, thumb_file);
 
 			gdk_pixbuf_loader_write(gdk_pixbuf_loader, thumb_data, thumb_data_size, NULL);
-			gtk_list_store_append(list_store, &ico_tree_iter);
-			gtk_list_store_set(list_store, &ico_tree_iter, SHA256_COL, PQgetvalue(note_res, row_now, 0), COL_PIXBUF, gdk_pixbuf_loader_get_pixbuf(gdk_pixbuf_loader), -1);
-			sprintf(tree_path, "0:%d", row_now);
-			gtk_tree_path_append_index(ico_tree_path, row_now);
+			gtk_list_store_append(list_store, &tree_iter);
+			gtk_list_store_set(list_store, &tree_iter, SHA256_COL, PQgetvalue(note_res, row_now, 0), COL_PIXBUF, gdk_pixbuf_loader_get_pixbuf(gdk_pixbuf_loader), -1);
+			sprintf(tree_path_str, "0:%d", row_now);
+			gtk_tree_path_append_index(tree_path, row_now);
 
-			fclose(thumb_file);
 			free(thumb_data);
-			free(file_path);
-			free(tree_path);
 			error_point:
+			fclose(thumb_file);
+			free(file_path);
+			free(tree_path_str);
 			gdk_pixbuf_loader_close(gdk_pixbuf_loader, NULL);
 		}
 
@@ -150,22 +224,11 @@ extern void pixbuf_loader(GtkListStore *list_store) {
 	return;
 }
 
-static void viewer_test(GtkWidget *icon_view, GtkTreePath *tree_path, gpointer user_data) {
-	GtkListStore *list_store;
-	GtkTreeIter tree_iter;
-	char *sha256;
-
-	sha256 = (char *) malloc(65);
-	list_store = GTK_LIST_STORE(user_data);
-
-	gtk_tree_model_get_iter(GTK_TREE_MODEL(list_store), &tree_iter, tree_path);
-	gtk_tree_model_get(GTK_TREE_MODEL(list_store), &tree_iter, 0, &sha256, -1);
-	printf("\n\nPath: '%s'\n\n", sha256);
-}
-
 extern GtkWidget *home_page(void) {
 	GtkListStore *icon_list_store;
 	GtkWidget *icon_view;
+	GtkTreeIter tree_iter;
+	GtkTreePath *tree_path;
 	int icon_size;
 
 	/* Create and fill the list store */
@@ -174,9 +237,9 @@ extern GtkWidget *home_page(void) {
 	pixbuf_loader(icon_list_store);
 
 	icon_view = gtk_icon_view_new_with_model(GTK_TREE_MODEL(icon_list_store));
-	ico_tree_path = gtk_tree_model_get_path(GTK_TREE_MODEL(icon_list_store), &ico_tree_iter);
+	tree_path = gtk_tree_model_get_path(GTK_TREE_MODEL(icon_list_store), &tree_iter);
 
-	CallBackData_set_tree_path(viewer_data, ico_tree_path);
+	CallBackData_set_tree_path(viewer_data, tree_path);
 	CallBackData_set_tree_model(viewer_data, GTK_TREE_MODEL(icon_list_store));
 	CallBackData_set_list_store(viewer_data, icon_list_store);
 
@@ -186,12 +249,14 @@ extern GtkWidget *home_page(void) {
 
 	/* Advanced tooltip */
 	gtk_widget_set_has_tooltip(icon_view, TRUE);
-	g_signal_connect(icon_view, "query-tooltip", G_CALLBACK(query_tooltip), icon_view);
-	g_signal_connect(icon_view, "item-activated", G_CALLBACK(viewer_test), icon_list_store);
+	//g_signal_connect(icon_view, "query-tooltip", G_CALLBACK(query_tooltip), icon_view);
+	g_signal_connect(icon_view, "query-tooltip", G_CALLBACK(query_tooltip), icon_list_store);
+	g_signal_connect(icon_view, "item-activated", G_CALLBACK(viewer), icon_list_store);
 
 	/* Misc. */
 	gtk_icon_view_set_pixbuf_column(GTK_ICON_VIEW(icon_view), COL_PIXBUF);
 	gtk_icon_view_set_item_width(GTK_ICON_VIEW(icon_view), get_icon_size());
+	gtk_icon_view_set_item_padding(GTK_ICON_VIEW(icon_view), 0);
 
 	return icon_view;
 }

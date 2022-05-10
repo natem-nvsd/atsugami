@@ -32,41 +32,29 @@ TODO:
 *	Ability to expunge images (delete file from disk)
 *	dtext parser for wiki pages
 *	Coloured borders for parent and child files in icon views
-*	Make GtkAccelerators apply only in specific tabs
+*	Make certain GtkAccelerators apply only in specific tabs
 *	Make the "general" tag colour the same as the GTK theme's primary colour
 *	Pixiv Ugoria support via libzip and GdkPixbuf PixbufSimpleAnim
 *	Gnome Keyring support for database passwords
 
 Icons to add
 ----------------
-Import: insert-image  					DONE  
-New tag: list-add  					DONE  
-Console: utilities-terminal  				DONE  
 Preferences: preferences-system  
-Icon view: view-list  					DONE  
 Tag list: view-list  
-Recycle bin: trash/trash-full  
-Wiki: text-x-generic  					DONE  
-Image viewer: image-x-generic  				DONE  
-Edit tag: gtk-edit  
-Edit image: gtk-edit  
-Export: document-save-as  
-Bulk export: document-save-as  
-Bulk import: emblem-photos  
-Open image: image-x-generic  
-Open image in new tab: image-x-generic  
-Open image in external viewer: image-x-generic  
+Recycle bin: user-trash/user-trash-full  
+Edit tag: document-edit-symbolic  
+Edit image: document-edit-symbolic  
 New wiki page: document-new  
-Edit wiki page: document-page-setup  
-Safe mode: preferences-system-privacy-symbolic  
+Edit wiki page: document-edit-symbolic  
+Image Viewer: image-x-generic
 
 Dependencies
 ------------
-
 * PostgreSQL (Tested on 14 and 14.1)  
-* GTK3  
-* libmd (Should be preinstalled on BSD systems)
-Build-time dependencies:  
+* GTK 3  
+* libmd (Should be preinstalled on BSD systems)  
+<!--* libdiff (Should be preinstalled on BSD systems)  -->
+<!--* gtkimageviewer 2.0 -->
 * pkgconf
 * C99 compatible C compiler
 * [BSD make (bmake) (mirror)](https://github.com/natem-nvsd/bmake)
@@ -75,7 +63,7 @@ Building and installation
 -------------------------
 
 ```
-# FreeBSD:
+# (Free)BSD:
 ./setup.sh
 make
 sudo make install

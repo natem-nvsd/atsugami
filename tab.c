@@ -72,7 +72,7 @@ static void item_activated(gpointer user_data) {
 	//CallBackData_destroy(*user_data);
 
 	gtk_widget_destroy(CallBackData_get_child(user_data));
-	CallBackData_set_child(user_data, viewer(CallBackData_get_text_view(user_data), CallBackData_get_text_buffer(user_data), &sha256));
+	//CallBackData_set_child(user_data, viewer(CallBackData_get_text_view(user_data), CallBackData_get_text_buffer(user_data), &sha256));
 	gtk_container_add(GTK_CONTAINER(CallBackData_get_parent(user_data)), CallBackData_get_child(user_data));
 	CallBackData_destroy(user_data);
 }

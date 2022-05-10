@@ -18,6 +18,7 @@
 enum {
 	SHA256_COL,
 	COL_PIXBUF,
+	TOOLTIP_COL,
 	NUM_COLS
 };
 
@@ -43,7 +44,7 @@ extern GtkAccelGroup *accel;
 extern CallBackData *viewer_data;
 
 extern void about_activate(void);
-extern GtkTooltip *att(char *sha256, GtkWidget *rel2, GtkCellRenderer *cell);
+extern GtkTooltip *att(char *sha256, GtkWidget *relative_to, GtkCellRenderer *cell);
 extern int completion_bootstrap(void);
 //extern char conninfo[];
 extern char *conninfo;
@@ -69,7 +70,7 @@ extern GtkListStore *search_cb(GtkWidget *entry, const char *query);
 extern GtkWidget *status_bar;
 extern void tab(void);
 extern void wiki(void);
-extern GtkWidget *viewer(GtkWidget *parent_tag_tv, GtkTextBuffer *parent_tag_tb, char *sha256[65]);
+extern void viewer(GtkWidget *icon_view, GtkTreePath *tree_path, gpointer user_data);
 extern void safe_mode_toggle(void);
 extern long word_count(const char *str);
 extern bool tab_completion(const GtkEventControllerKey *event_controller, const unsigned int keycode, const GdkModifierType state, const GtkWidget *entry);

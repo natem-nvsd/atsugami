@@ -26,17 +26,16 @@ extern char *get_thumb_path(void) {
 
 extern char *get_file_path(void) {
 	PGresult *path_res;
+	char *path_base;
 
 	path_res = PQexec(conn, "SELECT store_dir FROM public.settings;");
 
-	char *path_base, *size_name = get_icon_size_name();
-	size_t size = (PQfsize(path_res, 0) + strlen(size_name) + 2);
+	size_t size = (PQfsize(path_res, 0) + 1);
 
 	path_base = (char *) malloc(size);
-	sprintf(path_base, "%s/%s/", PQgetvalue(path_res, 0, 0), size_name);
-	char *path = path_base;
+	sprintf(path_base, "%s/", PQgetvalue(path_res, 0, 0));
 
-	return path;
+	return path_base;
 }
 
 extern char *get_thumb_dir(void) {
