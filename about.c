@@ -5,10 +5,10 @@
 
 void about_activate(void) {
 	GtkWidget *about_diag;
-	const gchar **contributers_ptr = NULL;
-	const char *contributers = "Nate Morrison";
+	const gchar *contributers_ptr[1];
+	const char *author = "Nate Morrison";
 
-	//*contributers_ptr = contributers;
+	contributers_ptr[0] = author;
 	about_diag = gtk_about_dialog_new();
 
 	gtk_about_dialog_set_logo_icon_name(GTK_ABOUT_DIALOG(about_diag), "image-x-generic");

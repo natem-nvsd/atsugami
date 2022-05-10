@@ -5,42 +5,37 @@ Images not included.
 
 TODO:
 -----
-*	Prevent SQL injection					[✘]
-*	Wiki pages						[✘]
-*	Reload iconview						[✘]
-*	Cached thumbnails					[✓]
-*	Settings page						[✘]
-*	Edit tags page						[✘]
-*	Delete tags						[✘]
-*	Delete image						[✘]
-*	Bulk import						[✘]
-*	Bulk edit						[✘]
-*	Import tags from Danbooru				[✘]
-*	Re-orderable tabs					[✓]
-*	Hotkeys							[✓]
-*	Favourite image						[✘]
-*	Search							[✘]
-*	Open image in external viewer				[✘]
-*	Advanced tooltip					[✘]
-*	Open image in new tab					[✘]
-*	Safe mode						[✘]
-*	Export							[✘]
-*	Tag list						[✘]
-*	Tag blacklisting					[✘]
-*	Add "Image" menu item					[✓]
-*	Update "View" menu item					[✓]
-*	Context menus						[✘]
-*	Tag colours						[✓]
-*	Parent-child border colours in GTK icon view		[✘]
-*	Add "Parent" field to `import_wizard.c`			[✘]
-*	Open at a reasonable size on desktop environments	[✘]
-*	Use different colour schemes for light and dark themes	[✘]
-*	Add icons to tabs labels				[✓]
-*	Memory management					[✘]
-*	"Recycle bin"-like page					[✘]
-*	Ability to expunge images (delete file from disk)	[✘]
-*	dtext parser for wiki pages				[✘]
-*	Coloured borders for parent and child files in icon views [✘]
+*	Prevent SQL injection
+*	Wiki pages
+*	Reload iconview
+*	Settings page
+*	Edit tags page
+*	Delete tags
+*	Delete image
+*	Bulk import
+*	Bulk edit
+*	Import tags from Danbooru
+*	Favourite image
+*	Search
+*	Advanced tooltip
+*	Open image in new tab
+*	Export
+*	Tag list
+*	Tag blacklisting
+*	Context menus
+*	Parent-child border colours in GTK icon view
+*	Add "Parent" field to `import_wizard.c`
+*	Open at a reasonable size on desktop environments
+*	Use different colour schemes for light and dark themes
+*	Memory management
+*	"Recycle bin"-like page
+*	Ability to expunge images (delete file from disk)
+*	dtext parser for wiki pages
+*	Coloured borders for parent and child files in icon views
+*	Make GtkAccelerators apply only in specific tabs
+*	Make the "general" tag colour the same as the GTK theme's primary colour
+*	Pixiv Ugoria support via libzip and GdkPixbuf PixbufSimpleAnim
+*	Gnome Keyring support for database passwords
 
 Icons to add
 ----------------
@@ -51,7 +46,7 @@ Preferences: preferences-system
 Icon view: view-list  					DONE  
 Tag list: view-list  
 Recycle bin: trash/trash-full  
-Wiki: text-x-generic  
+Wiki: text-x-generic  					DONE  
 Image viewer: image-x-generic  				DONE  
 Edit tag: gtk-edit  
 Edit image: gtk-edit  
@@ -73,7 +68,7 @@ Dependencies
 * libmd (Should be preinstalled on BSD systems)
 Build-time dependencies:  
 * pkgconf
-* C99 compatible C compiler (under tests, GCC failed)
+* C99 compatible C compiler
 * [BSD make (bmake) (mirror)](https://github.com/natem-nvsd/bmake)
 
 Building and installation

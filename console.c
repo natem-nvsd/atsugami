@@ -50,7 +50,6 @@ static void console_cb(void) {
 	options.caption		= 0;	/* HTML table caption */
 
 	/* Print the query result to a cache file */
-	//fseek(cachefile, 0, SEEK_END);
 	fseek(cachefile, 0, SEEK_SET);
 	PQprint(cachefile, console_res, &options);
 	PQclear(console_res);

@@ -5,19 +5,27 @@
 #include <errno.h>
 #include <gtk/gtk.h>
 #include <libpq-fe.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-GtkWidget *search_bar, *right_scrolled, *pane;
-PGresult *tab_res;
+GtkWidget *search_entry, *right_scrolled, *pane;
 CallBackData *viewer_data;
+
+enum {
+	SEARCH_NAME_COLUMN,	// Tag name	(char *)
+	SEARCH_CAT_COLUMN,	// Tag category	(int)
+	SEARCH_N_COLUMNS
+};
 
 static void close_tab(void) {
 	gtk_notebook_detach_tab(GTK_NOTEBOOK(notebook), pane);
 
 	if (gtk_notebook_get_n_pages(GTK_NOTEBOOK(notebook)) == 0)
 		quit_activate();
+	else
+		printf("NOTEBOOK\n");
 }
 
 static void select_cursor_item(GtkIconView *icon_view, GtkTreePath *tree_path, gpointer user_data) {
@@ -73,9 +81,11 @@ extern void tab(void) {
 	GtkWidget *side_search, *side_vbox, *left_scrolled, *tag_tv, *tab_child, *tab_label_box, *tab_icon, *tab_label, *tab_close;
 	GtkTextBuffer *tag_tb;
 	GtkTextIter start_iter, end_iter;
-	GtkTextTag *artist_tt, *copyright_tt, *character_tt, *general_tt, *meta_tt, *tag_array[5];
+	GtkTextTag *artist_tt, *copyright_tt, *character_tt, *general_tt, *meta_tt, *low_count_tt, *tag_array[6];
 	GtkEntryCompletion *search_completion;
+	GtkTreeModel *search_completion_model;
 	int iter, row_count, page_count;
+	PGresult *tab_res;
 	size_t res_size;
 	char *buffer;
 
@@ -88,24 +98,32 @@ extern void tab(void) {
 	tag_tv = gtk_text_view_new();
 	tag_tb = gtk_text_view_get_buffer(GTK_TEXT_VIEW(tag_tv));
 	right_scrolled = gtk_scrolled_window_new(NULL, NULL);
-	search_bar = gtk_search_bar_new();
-	search_completion = gtk_entry_completion_new();
+	search_entry = gtk_search_entry_new();
+
 	page_count = gtk_notebook_get_n_pages(GTK_NOTEBOOK(notebook));
 	tab_label_box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 2);
 	tab_icon = gtk_image_new_from_icon_name("view-list", GTK_ICON_SIZE_MENU);
 	tab_label = gtk_label_new("List");
 	tab_close = gtk_button_new_from_icon_name("window-close-symbolic", GTK_ICON_SIZE_MENU);
+	printf("%d\n", page_count);
 
+	/* Search completion */
+	search_completion = gtk_entry_completion_new();
+	search_completion_model = completion_model_generator(-1);
+
+	/* More */
 	artist_tt = gtk_text_buffer_create_tag(tag_tb, "artist", "foreground", ARTIST, NULL);
 	copyright_tt = gtk_text_buffer_create_tag(tag_tb, "copyright", "foreground", COPYRIGHT, NULL);
 	character_tt = gtk_text_buffer_create_tag(tag_tb, "character", "foreground", CHARACTER, NULL);
 	general_tt = gtk_text_buffer_create_tag(tag_tb, "general", "foreground", GENERAL, NULL);
 	meta_tt = gtk_text_buffer_create_tag(tag_tb, "meta", "foreground", META, NULL);
+	low_count_tt = gtk_text_buffer_create_tag(tag_tb, "low_count", "foreground", LOW_TAG_COUNT, NULL);
 	tag_array[0] = artist_tt;
 	tag_array[1] = copyright_tt;
 	tag_array[2] = character_tt;
 	tag_array[3] = general_tt;
 	tag_array[4] = meta_tt;
+	tag_array[5] = low_count_tt;
 
 	/* Set values of viewer_data */
 	CallBackData_set_icon_view(viewer_data, GTK_ICON_VIEW(tab_child));		// icon_view *must* be set before list_store.
@@ -114,9 +132,6 @@ extern void tab(void) {
 	CallBackData_set_text_view(viewer_data, tag_tv);
 	CallBackData_set_text_buffer(viewer_data, tag_tb);
 	CallBackData_set_test_int(viewer_data, 999);
-
-	/* tmp */
-	printf("%d\n", CallBackData_get_test_int(viewer_data));
 
 	/* Child callbacks */
 	g_signal_connect(GTK_ICON_VIEW(tab_child), "item-activated", G_CALLBACK(item_activated), viewer_data);
@@ -143,7 +158,8 @@ extern void tab(void) {
 	gtk_scrolled_window_set_propagate_natural_height(GTK_SCROLLED_WINDOW(right_scrolled), TRUE);
 	gtk_scrolled_window_set_kinetic_scrolling(GTK_SCROLLED_WINDOW(right_scrolled), TRUE);
 
-	/* Entry */
+	/* Search entry */
+	gtk_entry_set_completion(GTK_ENTRY(side_search), search_completion);
 	gtk_widget_add_accelerator(side_search, "grab-focus", accel, GDK_KEY_f, GDK_CONTROL_MASK, GTK_ACCEL_LOCKED);
 	//gtk_widget_add_accelerator(side_search, "focus-out", accel, GDK_KEY_Escape, GDK_CONTROL_MASK, GTK_ACCEL_LOCKED);	// FIXME: The widget should lose focus when Esc pressed.
 	gtk_entry_set_placeholder_text(GTK_ENTRY(side_search), "Search...");
@@ -155,11 +171,7 @@ extern void tab(void) {
 	g_signal_connect(side_search, "activate", G_CALLBACK(search_cb), side_search);
 
 	/* Search completion */
-	gtk_entry_set_completion(GTK_ENTRY(side_search), search_completion);
-	gtk_entry_completion_set_model(search_completion, completion_model);
-	gtk_entry_completion_set_popup_completion(search_completion, TRUE);
-	gtk_entry_completion_set_popup_single_match(search_completion, TRUE);
-	gtk_entry_completion_set_text_column(search_completion, 0);
+	entry_completion_set_model(search_completion, search_completion_model);
 
 	/* Text View */
 	gtk_text_view_set_editable(GTK_TEXT_VIEW(tag_tv), FALSE);
@@ -171,28 +183,33 @@ extern void tab(void) {
 	gtk_text_view_set_left_margin(GTK_TEXT_VIEW(tag_tv), 4);
 	gtk_text_view_set_right_margin(GTK_TEXT_VIEW(tag_tv), 12);
 
-	tab_res = PQexec(conn, "SELECT tags_categories.category_id, tags_categories.tag_id, (SELECT COUNT(tag_id) AS counter FROM public.files_tags WHERE tag_id = tags_categories.tag_id), tags.name FROM public.tags_categories tags_categories INNER JOIN public.tags tags ON tags_categories.tag_id = tags.id ORDER BY counter DESC;");
-	row_count = PQntuples(tab_res);
+	if (safe_mode == true) {
+		tab_res = PQexec(conn, "SELECT categories.category_id, (SELECT COUNT(tag_id) AS counter FROM public.files_tags WHERE tag_id = tags.id), tags.name FROM (SELECT tags.id, tags.name FROM (SELECT DISTINCT ON (files_tags.tag_id) files_tags.tag_id FROM (SELECT id FROM public.files WHERE rating = 's') AS files INNER JOIN public.files_tags AS files_tags ON files_tags.file_id = files.id ORDER BY files_tags.tag_id ASC) AS files_tags INNER JOIN public.tags AS tags ON tags.id = files_tags.tag_id ORDER BY tags.id ASC) AS tags INNER JOIN (SELECT tags_categories.category_id, tags_categories.tag_id FROM (SELECT id, name FROM public.tags) AS tags INNER JOIN public.tags_categories AS tags_categories ON tags_categories.tag_id = tags.id ORDER BY tags.id ASC) AS categories ON categories.tag_id = tags.id ORDER BY tags.name ASC;");
+	} else {
+		tab_res = PQexec(conn, "SELECT categories.category_id, (SELECT COUNT(tag_id) AS counter FROM public.files_tags WHERE tag_id = tags.id), tags.name FROM (SELECT tags.id, tags.name FROM (SELECT DISTINCT ON (files_tags.tag_id) files_tags.tag_id FROM (SELECT id FROM public.files) AS files INNER JOIN public.files_tags AS files_tags ON files_tags.file_id = files.id ORDER BY files_tags.tag_id ASC) AS files_tags INNER JOIN public.tags AS tags ON tags.id = files_tags.tag_id ORDER BY tags.id ASC) AS tags INNER JOIN (SELECT tags_categories.category_id, tags_categories.tag_id FROM (SELECT id, name FROM public.tags) AS tags INNER JOIN public.tags_categories AS tags_categories ON tags_categories.tag_id = tags.id ORDER BY tags.id ASC) AS categories ON categories.tag_id = tags.id ORDER BY tags.name ASC;");
+	}
 
+	row_count = PQntuples(tab_res);
 	for (iter = 0; iter < row_count; iter++)
-		res_size = res_size + strlen(PQgetvalue(tab_res, 3, 0));
+		res_size = res_size + strlen(PQgetvalue(tab_res, iter, 0));
+
 	buffer = (char *) malloc(res_size);
 
 	int cursor[row_count][2][2];	// start, end, catid
 
 	for (iter = 0; iter < row_count; iter++) {
-		char *tag = PQgetvalue(tab_res, iter, 3);
+		char *tag = PQgetvalue(tab_res, iter, 2);
 		char *catid_char = PQgetvalue(tab_res, iter, 0);
-		char *tag_count = PQgetvalue(tab_res, iter, 2);
-		char buffer1[(strlen(tag) + strlen(tag_count) + 3)];	// tag, tag_count, size of space and new line character
+		char *tag_count = PQgetvalue(tab_res, iter, 1);
+		char buffer1[(strlen(tag) + strlen(tag_count) + 2)];	// tag, tag_count, size of space and new line character
 		int catid = 0, start = 0, end = 0;
 
 		if (strlen(buffer) > 0)
 			start = strlen(buffer);
 		else
 			start = 0;
-		end   = (strlen(buffer) + strlen(tag));
 
+		end = (strlen(buffer) + strlen(tag));
 		sscanf(catid_char, "%d", &catid);
 		cursor[iter][0][0] = start;
 		cursor[iter][1][0] = end;
@@ -228,6 +245,7 @@ extern void tab(void) {
 
 	gtk_widget_show_all(pane);
 	gtk_widget_show_all(tab_label_box);
+
 	gtk_container_add(GTK_CONTAINER(notebook), pane);
 	gtk_notebook_set_tab_label(GTK_NOTEBOOK(notebook), pane, tab_label_box);
 	gtk_notebook_set_current_page(GTK_NOTEBOOK(notebook), page_count);

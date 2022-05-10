@@ -2,7 +2,7 @@ include config.mk
 
 TARGET=atsugami
 # Redo compilation order to optimize compile times
-SRC=main.c misc.c about.c completion.c console.c file_count.c import_wizard.c import.c new_tag.c notebook.c list_tags.c tab.c tooltip.c types.c wiki.c viewer.c
+SRC=main.c misc.c about.c console.c file_count.c import_wizard.c import.c new_tag.c notebook.c list_tags.c tab.c tooltip.c types.c wiki.c viewer.c search.c lex.c tab_completion.c icon_size.c path.c completion.c
 OBJ=${SRC:.c=.o}
 
 all: options atsugami

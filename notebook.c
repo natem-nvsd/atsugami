@@ -11,10 +11,10 @@
 #include <gtk/gtk.h>
 #include <libpq-fe.h>
 #include <stdio.h>
+#include <stdbool.h>
 
 PGresult *note_res;
 GtkTreeIter ico_tree_iter;
-GtkListStore *ico_list_store;
 GtkTreePath *ico_tree_path;
 
 static int query_tooltip(GtkWidget *widget, gint x, gint y, gboolean keyboard_mode, GtkTooltip *tooltip, gpointer user_data) {
@@ -38,8 +38,8 @@ static int query_tooltip(GtkWidget *widget, gint x, gint y, gboolean keyboard_mo
 	GtkTreeModel *tree_model;
 	GtkTreePath *tree_path;
 	GtkCellRenderer *cell;
-	GdkRectangle *rect;
-	gboolean tooltip_status;
+	//GdkRectangle *rect;
+	//gboolean tooltip_status;
 	char *sha256;
 
 	/* Prevent execution with a null pointer */
@@ -85,57 +85,100 @@ static int query_tooltip(GtkWidget *widget, gint x, gint y, gboolean keyboard_mo
 	return 0;
 }
 
-static void pixbuf_loader(GtkListStore *list_store) {
-	note_res = PQexec(conn, "SELECT thumb_dir, thumb_siz FROM public.settings;");
+extern void pixbuf_loader(GtkListStore *list_store) {
+	int row_count, row_now;
 
-	int row_count;		// Number of rows returned by the query
-	int row_now;		// Current row
-	size_t size = strlen(PQgetvalue(note_res, 0, 0));
-	char path[3 + size], file_path[72 + size], *tree_path;
-	GdkPixbuf *thumb;
-
-	/* Initial path; [thumb_dir]/[size]/ */
-	sprintf(path, "%s/%s/", PQgetvalue(note_res, 0, 0), PQgetvalue(note_res, 0, 1));
-	PQclear(note_res); 	// ASC and DESC are reversed, since they are inserted one by one into list_store
 	gtk_list_store_clear(list_store);
+	if (safe_mode == true)
+		note_res = PQexec(conn, "SELECT sha256 FROM public.files WHERE rating = 's' ORDER BY created_at DESC;");
+	else
+		note_res = PQexec(conn, "SELECT sha256 FROM public.files ORDER BY created_at DESC;");
 
-	note_res = PQexec(conn, "SELECT sha256 FROM public.files ORDER BY created_at DESC;");
 	row_count = PQntuples(note_res);	// get the number of rows returned by the query
 	ico_tree_path = gtk_tree_path_new_from_string("0");
+//	printf("row count: %d\n", row_count);
 
 	if (row_count > 0)
 		for (row_now = 0; row_now < row_count; row_now++) {
-			tree_path = (char *) malloc((sizeof(int) * 3) + 3);
-			sprintf(file_path, "%s%s.png", path, PQgetvalue(note_res, row_now, 0));	// [thumb_dir]/[size]/[sha256]
+			GdkPixbufLoader *gdk_pixbuf_loader;
+			char *path_base = get_thumb_path();
+			char *file_path, *tree_path;
+			size_t size = strlen(path_base), thumb_data_size = 0;
+			FILE *thumb_file;
+			long thumb_size;
+			unsigned char *thumb_data;
 
-			thumb = gdk_pixbuf_new_from_file(file_path, NULL);
+			gdk_pixbuf_loader = gdk_pixbuf_loader_new_with_mime_type("image/png", NULL);
+			tree_path = (char *) malloc(sizeof(int) + 2);
+			file_path = (char *) malloc(size + 4 + PQgetlength(note_res, row_now, 0));
+			sprintf(file_path, "%s%s.png", path_base, PQgetvalue(note_res, row_now, 0));	// [thumb_dir]/[size]/[sha256].png
+		//	printf("'%s' ", file_path);
+
+			/* File operations */
+			thumb_file = fopen(file_path, "r");
+			if (thumb_file == NULL) {
+				GtkWidget *err_img;
+
+				printf("NULL\n");
+				err_img = gtk_image_new_from_icon_name("image-missing", GTK_ICON_SIZE_DIALOG);
+
+				goto error_point;
+			}
+
+			fseek(thumb_file, 0L, SEEK_END);
+			thumb_size = ftell(thumb_file);
+			rewind(thumb_file);
+
+			thumb_data = (unsigned char *) malloc(thumb_size);
+			thumb_data_size = fread(thumb_data, sizeof(char), thumb_size, thumb_file);
+
+			gdk_pixbuf_loader_write(gdk_pixbuf_loader, thumb_data, thumb_data_size, NULL);
 			gtk_list_store_append(list_store, &ico_tree_iter);
-			gtk_list_store_set(list_store, &ico_tree_iter, SHA256_COL, PQgetvalue(note_res, row_now, 0), COL_PIXBUF, thumb, -1);
+			gtk_list_store_set(list_store, &ico_tree_iter, SHA256_COL, PQgetvalue(note_res, row_now, 0), COL_PIXBUF, gdk_pixbuf_loader_get_pixbuf(gdk_pixbuf_loader), -1);
 			sprintf(tree_path, "0:%d", row_now);
-
 			gtk_tree_path_append_index(ico_tree_path, row_now);
+
+			fclose(thumb_file);
+			free(thumb_data);
+			free(file_path);
 			free(tree_path);
+			error_point:
+			gdk_pixbuf_loader_close(gdk_pixbuf_loader, NULL);
 		}
 
 	PQclear(note_res);
+	return;
+}
+
+static void viewer_test(GtkWidget *icon_view, GtkTreePath *tree_path, gpointer user_data) {
+	GtkListStore *list_store;
+	GtkTreeIter tree_iter;
+	char *sha256;
+
+	sha256 = (char *) malloc(65);
+	list_store = GTK_LIST_STORE(user_data);
+
+	gtk_tree_model_get_iter(GTK_TREE_MODEL(list_store), &tree_iter, tree_path);
+	gtk_tree_model_get(GTK_TREE_MODEL(list_store), &tree_iter, 0, &sha256, -1);
+	printf("\n\nPath: '%s'\n\n", sha256);
 }
 
 extern GtkWidget *home_page(void) {
+	GtkListStore *icon_list_store;
 	GtkWidget *icon_view;
-	GtkTooltip *tt;
-	char *sha256;
+	int icon_size;
 
 	/* Create and fill the list store */
-	sha256 = (char *) malloc(65);
-	ico_list_store = gtk_list_store_new(2, G_TYPE_STRING, GDK_TYPE_PIXBUF);
-	pixbuf_loader(ico_list_store);
+	icon_size = get_icon_size();
+	icon_list_store = gtk_list_store_new(2, G_TYPE_STRING, GDK_TYPE_PIXBUF);
+	pixbuf_loader(icon_list_store);
 
-	icon_view = gtk_icon_view_new_with_model(GTK_TREE_MODEL(ico_list_store));
-	ico_tree_path = gtk_tree_model_get_path(GTK_TREE_MODEL(ico_list_store), &ico_tree_iter);
+	icon_view = gtk_icon_view_new_with_model(GTK_TREE_MODEL(icon_list_store));
+	ico_tree_path = gtk_tree_model_get_path(GTK_TREE_MODEL(icon_list_store), &ico_tree_iter);
 
 	CallBackData_set_tree_path(viewer_data, ico_tree_path);
-	CallBackData_set_tree_model(viewer_data, GTK_TREE_MODEL(ico_list_store));
-	CallBackData_set_list_store(viewer_data, ico_list_store);
+	CallBackData_set_tree_model(viewer_data, GTK_TREE_MODEL(icon_list_store));
+	CallBackData_set_list_store(viewer_data, icon_list_store);
 
 	/* Setup containers */
 	gtk_icon_view_set_selection_mode(GTK_ICON_VIEW(icon_view), GTK_SELECTION_MULTIPLE);
@@ -144,8 +187,11 @@ extern GtkWidget *home_page(void) {
 	/* Advanced tooltip */
 	gtk_widget_set_has_tooltip(icon_view, TRUE);
 	g_signal_connect(icon_view, "query-tooltip", G_CALLBACK(query_tooltip), icon_view);
+	g_signal_connect(icon_view, "item-activated", G_CALLBACK(viewer_test), icon_list_store);
 
-	/* SHow the widgets */
+	/* Misc. */
 	gtk_icon_view_set_pixbuf_column(GTK_ICON_VIEW(icon_view), COL_PIXBUF);
+	gtk_icon_view_set_item_width(GTK_ICON_VIEW(icon_view), get_icon_size());
+
 	return icon_view;
 }

@@ -2,63 +2,98 @@
 #include "atsugami.h"
 #include <gtk/gtk.h>
 #include <libpq-fe.h>
-
-PGresult *count_res;
+#include <stdbool.h>
 
 extern void file_count(void) {
-	char label_str[25];	// use malloc later
-	int count;
-	
-	count_res = PQexec(conn, "SELECT count(*) FROM public.files;");
-	sprintf(label_str, "%s files", PQgetvalue(count_res, 0, 0));
-	count = (int) strtol(PQgetvalue(count_res, 0, 0), (char **) NULL, 10);
+	char *label_str = NULL;	// use malloc later
+	PGresult *count_res;
+	size_t count;
 
-	switch (count) {
-		case 0: {
-			file_label = gtk_label_new("No files found.");
-			break;
+	if (safe_mode == TRUE) {
+		size_t safe_count, total;
+
+		count_res = PQexec(conn, "SELECT count(*) FROM public.files;");
+		total = atol(PQgetvalue(count_res, 0, 0));
+		PQclear(count_res);
+
+		label_str = (char *) malloc(35 + (sizeof(unsigned long) * 3));
+		count_res = PQexec(conn, "SELECT count(*) FROM public.files WHERE rating = 's';");
+		safe_count = atol(PQgetvalue(count_res, 0, 0));
+		sprintf(label_str, "%lu of %lu images (%lu hidden by safe mode)", safe_count, total, (total - safe_count));
+
+		switch (safe_count) {
+			case 0: {
+				msg_id = gtk_statusbar_push(GTK_STATUSBAR(status_bar), 0, label_str);
+				break;
+			}
+
+			case 1: {
+				msg_id = gtk_statusbar_push(GTK_STATUSBAR(status_bar), 0, "1 image");
+				break;
+			}
+			default: {
+				msg_id = gtk_statusbar_push(GTK_STATUSBAR(status_bar), 0, label_str);
+				break;
+			 }
 		}
 
-		case 1: {
-			file_label = gtk_label_new("1 file");
-			break;
+		PQclear(count_res);
+		free(label_str);
+	} else {
+		label_str = (char *) malloc(16 + sizeof(int));
+		count_res = PQexec(conn, "SELECT count(*) FROM public.files;");
+		sprintf(label_str, "%s files", PQgetvalue(count_res, 0, 0));
+		count = atol(PQgetvalue(count_res, 0, 0));
+
+		switch (count) {
+			case 0: {
+				msg_id = gtk_statusbar_push(GTK_STATUSBAR(status_bar), 0, "No images found");
+				break;
+			}
+
+			case 1: {
+				msg_id = gtk_statusbar_push(GTK_STATUSBAR(status_bar), 0, "1 image");
+				break;
+			}
+			default: {
+				msg_id = gtk_statusbar_push(GTK_STATUSBAR(status_bar), 0, label_str);
+				break;
+			 }
 		}
-		default: {
-			file_label = gtk_label_new(label_str);
-			break;
-		 }
+
+		PQclear(count_res);
 	}
 
-	gtk_widget_set_halign(file_label, GTK_ALIGN_START);
-	gtk_widget_set_valign(file_label, GTK_ALIGN_END);
-	gtk_box_pack_start(GTK_BOX(vbox), file_label, FALSE, FALSE, 2);
-	gtk_widget_set_margin_start(file_label, 4);
-	PQclear(count_res);
 }
 
 extern void file_count_update(void) {
 	char label_str[25];	// use malloc later
-	int count;
+	unsigned long count;	// unsigned long is used to gurantee compatibility with Postgres' BIGINT.
+	PGresult *count_res;
 	
-	count_res = PQexec(conn, "SELECT count(*) FROM public.files;");
-	sprintf(label_str, "%s files", PQgetvalue(count_res, 0, 0));
-	count = (int) strtol(PQgetvalue(count_res, 0, 0), (char **) NULL, 10);
+	count_res = PQexec(conn, "SELECT COUNT(*) FROM public.files;");
+	count = strtoll(PQgetvalue(count_res, 0, 0), (char **) NULL, 10);
 
-	PQclear(count_res);
 	switch (count) {
 		case 0: {
-			gtk_label_set_text(GTK_LABEL(file_label), "No files found.");
+			gtk_statusbar_remove(GTK_STATUSBAR(status_bar), 0, msg_id);
+			msg_id = gtk_statusbar_push(GTK_STATUSBAR(status_bar), 0, "No files found.");
 			break;
 		}
 
 		case 1: {
-			gtk_label_set_text(GTK_LABEL(file_label), "1 file");
+			gtk_statusbar_remove(GTK_STATUSBAR(status_bar), 0, msg_id);
+			msg_id = gtk_statusbar_push(GTK_STATUSBAR(status_bar), 0, "1 file");
 			break;
 		}
 
 		default: {
-			gtk_label_set_text(GTK_LABEL(file_label), label_str);
+			sprintf(label_str, "%s files", PQgetvalue(count_res, 0, 0));
+			gtk_statusbar_remove(GTK_STATUSBAR(status_bar), 0, msg_id);
+			msg_id = gtk_statusbar_push(GTK_STATUSBAR(status_bar), 0, label_str);
 			break;
 		}
 	}
+
+	PQclear(count_res);
 }

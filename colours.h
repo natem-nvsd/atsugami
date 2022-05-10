@@ -12,7 +12,7 @@
 #define CHILD_BORDER	"#fdfd92920000"
 #define CHILD_BACKGND	"#38382d2d0000"
 #define CHILD_MARGIN	""
-#define LOW_TAG_COUNT	""
+#define LOW_TAG_COUNT	"#ffff5a5a5b5a"
 #define RESIZED_NOTICE	""
 
 /* Light theme colours */
