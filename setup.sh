@@ -1,7 +1,7 @@
 #!/bin/sh
 # Prototype for future use in Atsugami
 
-printf "If PostgreSQL has not already been setup, run this command \`/usr/bin/postgresql-setup --initdb\` as postgres.\n"
+printf "If PostgreSQL has not already been setup, run this command \`/usr/bin/postgresql-setup --initdb\` as postgres or \`service postgresql initdb\`\n"
 CONFIG_ROOT=$HOME/.config/atsugami
 STORAGE_ROOT=$HOME/.local/share/atsugami
 THUMBDIR=$STORAGE_ROOT/thumbs
@@ -20,7 +20,12 @@ mkdir "$THUMBDIR/huge"
 mkdir "$THUMBDIR/gigantic"
 
 # Create an account for the user running the script 
-sudo -c "psql -c 'CREATE USER $USER; ALTER ROLE $USER SUPERUSER;'" postgres
+if groups $USER | grep -q '\bwheel\b'; then
+	sudo -c "psql -c 'CREATE USER $USER; ALTER ROLE $USER SUPERUSER;'" postgres
+else
+	sudo -c "psql -c 'CREATE USER $USER'" postgres
+fi
+
 sudo -c "psql -c 'CREATE DATABASE $USER;'" postgres
 
 # Create an atsugami database for the user running the script

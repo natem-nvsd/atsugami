@@ -1,9 +1,27 @@
-/***************************************************************\
-*	misc.c (c) 2022, by Nate Morrison			*
-*								*
-*	Functions too short for their own file			*
-*								*
-\***************************************************************/
+/* icon_size.h
+ * Copyright (c) 2021-2022 by Nate Morrison.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright notice, this
+ *    list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright notice,
+ *    this list of conditions and the following disclaimer in the documentation
+ *    and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
+ * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
 
 #include "atsugami.h"
 #include <gtk/gtk.h>
@@ -115,95 +133,95 @@ extern void set_icon_menu_items(void) {
 
 	switch (icon_size_id) {
 		case 0: {
-			gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(medium_icons_menu_item), FALSE);
-			gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(large_icons_menu_item), FALSE);
-			gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(huge_icons_menu_item), FALSE);
-			gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(gigantic_icons_menu_item), FALSE);
+			gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(medium_mi), FALSE);
+			gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(large_mi), FALSE);
+			gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(huge_mi), FALSE);
+			gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(gigantic_mi), FALSE);
 
-			gtk_widget_set_sensitive(medium_icons_menu_item, TRUE);
-			gtk_widget_set_sensitive(large_icons_menu_item, TRUE);
-			gtk_widget_set_sensitive(huge_icons_menu_item, TRUE);
-			gtk_widget_set_sensitive(gigantic_icons_menu_item, TRUE);
+			gtk_widget_set_sensitive(medium_mi, TRUE);
+			gtk_widget_set_sensitive(large_mi, TRUE);
+			gtk_widget_set_sensitive(huge_mi, TRUE);
+			gtk_widget_set_sensitive(gigantic_mi, TRUE);
 
 			size_res = PQexec(conn, "UPDATE public.settings SET thumb_size = 0;");
-			gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(small_icons_menu_item), TRUE);
-			gtk_widget_set_sensitive(small_icons_menu_item, FALSE);
+			gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(small_mi), TRUE);
+			gtk_widget_set_sensitive(small_mi, FALSE);
 			PQclear(size_res);
 
 			break;
 		}
 
 		case 1: {
-			gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(small_icons_menu_item), FALSE);
-			gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(large_icons_menu_item), FALSE);
-			gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(huge_icons_menu_item), FALSE);
-			gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(gigantic_icons_menu_item), FALSE);
+			gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(small_mi), FALSE);
+			gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(large_mi), FALSE);
+			gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(huge_mi), FALSE);
+			gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(gigantic_mi), FALSE);
 
-			gtk_widget_set_sensitive(small_icons_menu_item, TRUE);
-			gtk_widget_set_sensitive(large_icons_menu_item, TRUE);
-			gtk_widget_set_sensitive(huge_icons_menu_item, TRUE);
-			gtk_widget_set_sensitive(gigantic_icons_menu_item, TRUE);
+			gtk_widget_set_sensitive(small_mi, TRUE);
+			gtk_widget_set_sensitive(large_mi, TRUE);
+			gtk_widget_set_sensitive(huge_mi, TRUE);
+			gtk_widget_set_sensitive(gigantic_mi, TRUE);
 
 			size_res = PQexec(conn, "UPDATE public.settings SET thumb_size = 1;");
-			gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(medium_icons_menu_item), TRUE);
-			gtk_widget_set_sensitive(medium_icons_menu_item, FALSE);
+			gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(medium_mi), TRUE);
+			gtk_widget_set_sensitive(medium_mi, FALSE);
 			PQclear(size_res);
 
 			break;
 		}
 
 		case 2: {
-			gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(small_icons_menu_item), FALSE);
-			gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(medium_icons_menu_item), FALSE);
-			gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(huge_icons_menu_item), FALSE);
-			gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(gigantic_icons_menu_item), FALSE);
+			gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(small_mi), FALSE);
+			gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(medium_mi), FALSE);
+			gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(huge_mi), FALSE);
+			gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(gigantic_mi), FALSE);
 
-			gtk_widget_set_sensitive(small_icons_menu_item, TRUE);
-			gtk_widget_set_sensitive(medium_icons_menu_item, TRUE);
-			gtk_widget_set_sensitive(huge_icons_menu_item, TRUE);
-			gtk_widget_set_sensitive(gigantic_icons_menu_item, TRUE);
+			gtk_widget_set_sensitive(small_mi, TRUE);
+			gtk_widget_set_sensitive(medium_mi, TRUE);
+			gtk_widget_set_sensitive(huge_mi, TRUE);
+			gtk_widget_set_sensitive(gigantic_mi, TRUE);
 
 			size_res = PQexec(conn, "UPDATE public.settings SET thumb_size = 2;");
-			gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(large_icons_menu_item), TRUE);
-			gtk_widget_set_sensitive(large_icons_menu_item, FALSE);
+			gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(large_mi), TRUE);
+			gtk_widget_set_sensitive(large_mi, FALSE);
 			PQclear(size_res);
 
 			break;
 		}
 
 		case 3: {
-			gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(small_icons_menu_item), FALSE);
-			gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(medium_icons_menu_item), FALSE);
-			gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(huge_icons_menu_item), FALSE);
-			gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(gigantic_icons_menu_item), FALSE);
+			gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(small_mi), FALSE);
+			gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(medium_mi), FALSE);
+			gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(huge_mi), FALSE);
+			gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(gigantic_mi), FALSE);
 
-			gtk_widget_set_sensitive(small_icons_menu_item, TRUE);
-			gtk_widget_set_sensitive(medium_icons_menu_item, TRUE);
-			gtk_widget_set_sensitive(large_icons_menu_item, TRUE);
-			gtk_widget_set_sensitive(gigantic_icons_menu_item, TRUE);
+			gtk_widget_set_sensitive(small_mi, TRUE);
+			gtk_widget_set_sensitive(medium_mi, TRUE);
+			gtk_widget_set_sensitive(large_mi, TRUE);
+			gtk_widget_set_sensitive(gigantic_mi, TRUE);
 
 			size_res = PQexec(conn, "UPDATE public.settings SET thumb_size = 3;");
-			gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(huge_icons_menu_item), TRUE);
-			gtk_widget_set_sensitive(huge_icons_menu_item, FALSE);
+			gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(huge_mi), TRUE);
+			gtk_widget_set_sensitive(huge_mi, FALSE);
 			PQclear(size_res);
 
 			break;
 		}
 
 		case 4: {
-			gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(small_icons_menu_item), FALSE);
-			gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(medium_icons_menu_item), FALSE);
-			gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(large_icons_menu_item), FALSE);
-			gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(huge_icons_menu_item), FALSE);
+			gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(small_mi), FALSE);
+			gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(medium_mi), FALSE);
+			gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(large_mi), FALSE);
+			gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(huge_mi), FALSE);
 
-			gtk_widget_set_sensitive(small_icons_menu_item, TRUE);
-			gtk_widget_set_sensitive(medium_icons_menu_item, TRUE);
-			gtk_widget_set_sensitive(large_icons_menu_item, TRUE);
-			gtk_widget_set_sensitive(huge_icons_menu_item, TRUE);
+			gtk_widget_set_sensitive(small_mi, TRUE);
+			gtk_widget_set_sensitive(medium_mi, TRUE);
+			gtk_widget_set_sensitive(large_mi, TRUE);
+			gtk_widget_set_sensitive(huge_mi, TRUE);
 
 			size_res = PQexec(conn, "UPDATE public.settings SET thumb_size = 4;");
-			gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(gigantic_icons_menu_item), TRUE);
-			gtk_widget_set_sensitive(gigantic_icons_menu_item, FALSE);
+			gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(gigantic_mi), TRUE);
+			gtk_widget_set_sensitive(gigantic_mi, FALSE);
 			PQclear(size_res);
 
 			break;
@@ -220,95 +238,95 @@ extern void set_icon_size(gpointer user_data) {
 
 	switch (*size_id) {
 		case 0: {
-			gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(medium_icons_menu_item), FALSE);
-			gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(large_icons_menu_item), FALSE);
-			gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(huge_icons_menu_item), FALSE);
-			gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(gigantic_icons_menu_item), FALSE);
+			gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(medium_mi), FALSE);
+			gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(large_mi), FALSE);
+			gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(huge_mi), FALSE);
+			gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(gigantic_mi), FALSE);
 
-			gtk_widget_set_sensitive(medium_icons_menu_item, TRUE);
-			gtk_widget_set_sensitive(large_icons_menu_item, TRUE);
-			gtk_widget_set_sensitive(huge_icons_menu_item, TRUE);
-			gtk_widget_set_sensitive(gigantic_icons_menu_item, TRUE);
+			gtk_widget_set_sensitive(medium_mi, TRUE);
+			gtk_widget_set_sensitive(large_mi, TRUE);
+			gtk_widget_set_sensitive(huge_mi, TRUE);
+			gtk_widget_set_sensitive(gigantic_mi, TRUE);
 
 			size_res = PQexec(conn, "UPDATE public.settings SET thumb_size = 0;");
-			gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(small_icons_menu_item), TRUE);
-			gtk_widget_set_sensitive(small_icons_menu_item, FALSE);
+			gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(small_mi), TRUE);
+			gtk_widget_set_sensitive(small_mi, FALSE);
 			PQclear(size_res);
 
 			break;
 		}
 
 		case 1: {
-			gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(small_icons_menu_item), FALSE);
-			gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(large_icons_menu_item), FALSE);
-			gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(huge_icons_menu_item), FALSE);
-			gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(gigantic_icons_menu_item), FALSE);
+			gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(small_mi), FALSE);
+			gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(large_mi), FALSE);
+			gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(huge_mi), FALSE);
+			gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(gigantic_mi), FALSE);
 
-			gtk_widget_set_sensitive(small_icons_menu_item, TRUE);
-			gtk_widget_set_sensitive(large_icons_menu_item, TRUE);
-			gtk_widget_set_sensitive(huge_icons_menu_item, TRUE);
-			gtk_widget_set_sensitive(gigantic_icons_menu_item, TRUE);
+			gtk_widget_set_sensitive(small_mi, TRUE);
+			gtk_widget_set_sensitive(large_mi, TRUE);
+			gtk_widget_set_sensitive(huge_mi, TRUE);
+			gtk_widget_set_sensitive(gigantic_mi, TRUE);
 
 			size_res = PQexec(conn, "UPDATE public.settings SET thumb_size = 1;");
-			gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(medium_icons_menu_item), TRUE);
-			gtk_widget_set_sensitive(medium_icons_menu_item, FALSE);
+			gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(medium_mi), TRUE);
+			gtk_widget_set_sensitive(medium_mi, FALSE);
 			PQclear(size_res);
 
 			break;
 		}
 
 		case 2: {
-			gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(small_icons_menu_item), FALSE);
-			gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(medium_icons_menu_item), FALSE);
-			gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(huge_icons_menu_item), FALSE);
-			gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(gigantic_icons_menu_item), FALSE);
+			gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(small_mi), FALSE);
+			gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(medium_mi), FALSE);
+			gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(huge_mi), FALSE);
+			gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(gigantic_mi), FALSE);
 
-			gtk_widget_set_sensitive(small_icons_menu_item, TRUE);
-			gtk_widget_set_sensitive(medium_icons_menu_item, TRUE);
-			gtk_widget_set_sensitive(huge_icons_menu_item, TRUE);
-			gtk_widget_set_sensitive(gigantic_icons_menu_item, TRUE);
+			gtk_widget_set_sensitive(small_mi, TRUE);
+			gtk_widget_set_sensitive(medium_mi, TRUE);
+			gtk_widget_set_sensitive(huge_mi, TRUE);
+			gtk_widget_set_sensitive(gigantic_mi, TRUE);
 
 			size_res = PQexec(conn, "UPDATE public.settings SET thumb_size = 2;");
-			gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(large_icons_menu_item), TRUE);
-			gtk_widget_set_sensitive(large_icons_menu_item, FALSE);
+			gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(large_mi), TRUE);
+			gtk_widget_set_sensitive(large_mi, FALSE);
 			PQclear(size_res);
 
 			break;
 		}
 
 		case 3: {
-			gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(small_icons_menu_item), FALSE);
-			gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(medium_icons_menu_item), FALSE);
-			gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(huge_icons_menu_item), FALSE);
-			gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(gigantic_icons_menu_item), FALSE);
+			gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(small_mi), FALSE);
+			gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(medium_mi), FALSE);
+			gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(huge_mi), FALSE);
+			gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(gigantic_mi), FALSE);
 
-			gtk_widget_set_sensitive(small_icons_menu_item, TRUE);
-			gtk_widget_set_sensitive(medium_icons_menu_item, TRUE);
-			gtk_widget_set_sensitive(large_icons_menu_item, TRUE);
-			gtk_widget_set_sensitive(gigantic_icons_menu_item, TRUE);
+			gtk_widget_set_sensitive(small_mi, TRUE);
+			gtk_widget_set_sensitive(medium_mi, TRUE);
+			gtk_widget_set_sensitive(large_mi, TRUE);
+			gtk_widget_set_sensitive(gigantic_mi, TRUE);
 
 			size_res = PQexec(conn, "UPDATE public.settings SET thumb_size = 3;");
-			gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(huge_icons_menu_item), TRUE);
-			gtk_widget_set_sensitive(huge_icons_menu_item, FALSE);
+			gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(huge_mi), TRUE);
+			gtk_widget_set_sensitive(huge_mi, FALSE);
 			PQclear(size_res);
 
 			break;
 		}
 
 		case 4: {
-			gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(small_icons_menu_item), FALSE);
-			gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(medium_icons_menu_item), FALSE);
-			gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(large_icons_menu_item), FALSE);
-			gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(huge_icons_menu_item), FALSE);
+			gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(small_mi), FALSE);
+			gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(medium_mi), FALSE);
+			gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(large_mi), FALSE);
+			gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(huge_mi), FALSE);
 
-			gtk_widget_set_sensitive(small_icons_menu_item, TRUE);
-			gtk_widget_set_sensitive(medium_icons_menu_item, TRUE);
-			gtk_widget_set_sensitive(large_icons_menu_item, TRUE);
-			gtk_widget_set_sensitive(huge_icons_menu_item, TRUE);
+			gtk_widget_set_sensitive(small_mi, TRUE);
+			gtk_widget_set_sensitive(medium_mi, TRUE);
+			gtk_widget_set_sensitive(large_mi, TRUE);
+			gtk_widget_set_sensitive(huge_mi, TRUE);
 
 			size_res = PQexec(conn, "UPDATE public.settings SET thumb_size = 4;");
-			gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(gigantic_icons_menu_item), TRUE);
-			gtk_widget_set_sensitive(gigantic_icons_menu_item, FALSE);
+			gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(gigantic_mi), TRUE);
+			gtk_widget_set_sensitive(gigantic_mi, FALSE);
 			PQclear(size_res);
 
 			break;

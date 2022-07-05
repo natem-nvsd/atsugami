@@ -1,6 +1,5 @@
 /* search.c */
 #include "atsugami.h"
-#include "types.h"
 #include <gtk/gtk.h>
 #include <libpq-fe.h>
 #include <stdio.h>
@@ -9,15 +8,17 @@ PGresult *search_res;
 GdkPixbuf *thumb;
 GtkTreeIter *iter;
 
-extern GtkListStore *search_cb(GtkWidget *parent, const char *keyword_list) {
+extern GtkListStore *search_cb(GtkWidget *parent, char *keyword_list) {
 	GtkListStore *list_store;
 	int iter;
 	long wc;
 
 	wc = word_count(keyword_list);
-	iter = 0;
 
-	const char *query_base[3], *keywords[wc], *query;
+	char *query_base[3], *keywords[wc], *query, *raw_str;
+
+	iter = 0;
+	raw_str = search_input_sanitiser(keyword_list);
 
 	query_base[0] = "SELECT * FROM (WITH files(sha256, id, created_at) AS (SELECT * FROM (SELECT DISTINCT ON (files.id) files.sha256, files.id, files.created_at, tags.tag_id FROM public.files AS \"files\" INNER JOIN public.files_tags AS \"tags\" ON files.id = tags.file_id WHERE tags.tag_id = (SELECT id FROM public.tags WHERE name = '%s') ORDER BY id ASC) AS \"keyword0\"";
 	query_base[1] = "UNION (SELECT * FROM (SELECT DISTINCT ON (files.id) files.sha256, files.id, files.created_at, tags.tag_id FROM public.files AS \"files\" INNER JOIN public.files_tags AS \"tags\" ON files.id = tags.file_id WHERE tags.tag_id = (SELECT id FROM public.tags WHERE name = '%s') ORDER BY id ASC) AS \"keyword1\")";

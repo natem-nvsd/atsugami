@@ -1,8 +1,8 @@
 include config.mk
 
 TARGET=atsugami
-# Redo compilation order to optimize compile times
-SRC=main.c misc.c about.c console.c file_count.c import_wizard.c import.c new_tag.c notebook.c list_tags.c tab.c types.c wiki.c viewer.c search.c lex.c tab_completion.c icon_size.c path.c completion.c
+# Sort this alphabetically later
+SRC = about.c colours.c completion_model.c console.c file_count.c icon_size.c importers.c lex.c main.c misc.c path.c pixbuf.c search.c tab_completion.c tag_list.c view.c
 OBJ=${SRC:.c=.o}
 
 all: options atsugami
@@ -35,18 +35,12 @@ install: atsugami
 	strip ${DESTDIR}${PREFIX}/bin/atsugami
 	chmod 755 ${DESTDIR}${PREFIX}/bin/atsugami
 	strip -d ${DESTDIR}${PREFIX}/bin/atsugami
-	mkdir -p ${DESTDIR}${PREFIX}/share/atsugami
-	cp -f atsugami.glade ${DESTDIR}${PREFIX}/share/atsugami/
-	chmod 644 ${DESTDIR}${PREFIX}/share/atsugami/atsugami.glade
 
 install-only:
 	cp -f atsugami ${DESTDIR}${PREFIX}/bin
 	strip ${DESTDIR}${PREFIX}/bin/atsugami
 	chmod 755 ${DESTDIR}${PREFIX}/bin/atsugami
 	strip -d ${DESTDIR}${PREFIX}/bin/atsugami
-	mkdir -p ${DESTDIR}${PREFIX}/share/atsugami
-	cp -f atsugami.glade ${DESTDIR}${PREFIX}/share/atsugami/
-	chmod 644 ${DESTDIR}${PREFIX}/share/atsugami/atsugami.glade
 
 uninstall:
 	rm -f ${DESTDIR}${PREFIX}/bin/atsugami

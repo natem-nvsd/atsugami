@@ -1,94 +1,104 @@
-/* main.h */
-#ifndef FUNCTIONS_H_INCLUDED
-#define FUNCTIONS_H_INCLUDED
-#include "types.h"
+/* atsugami.h
+ * Copyright (c) 2021-2022 by Nate Morrison.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright notice, this
+ *    list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright notice,
+ *    this list of conditions and the following disclaimer in the documentation
+ *    and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
+ * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+#ifndef ATSUGAMI_H_INCLUDED
+#define ATSUGAMI_H_INCLUDED
+
+#include "classes.h"
 #include <gtk/gtk.h>
 #include <libpq-fe.h>
 #include <stdbool.h>
 
-/* Status macros for use once a "recycle bin" has been implemented */
-#define STATUS_ACTIVE	0	// The file shows up when 
-#define STATUS_DELETED	1	// The image is hidden from general parts of Atsugami, but the image has not been deleted from disk.
-				// Images with this status can be accessed from a "recycle bin"-like view
-#define STATUS_EXPUNGED	2	// The image has been deleted from the disk; thumbnails may be kept, and metadata remains to prevent re-importing
+#define __VERSION	"0.86.0"
 
-#define EOL -1
-#define __VERSION "0.84.0"
+/* Tags */
+#define ARTIST		0
+#define COPYRIGHT	1
+#define CHARACTER	2
+#define GENERAL		3
+#define META		4
+#define DELETED		5
+#define CHILD_PREVIEW	6
+#define PARENT_PREVIEW	7
+#define PARENT_NOTICE	8
+#define CHILD_NOTICE	9
+#define DELETED_NOTICE	10
+#define RESIZED		11
+#define LOW_COUNT	12
+#define POOL		3
 
-enum {
-	SHA256_COL,
-	COL_PIXBUF,
-	TOOLTIP_COL,
-	NUM_COLS
-};
-
-/* Completion enum */
 enum {
 	COMPLETION_MODEL_NAME_COLUMN,
 	COMPLETION_MODEL_CATEGORY_COLUMN,
 	COMPLETION_MODEL_N_COLUMN
 };
 
-extern int msg_id;
-extern bool safe_mode;
-extern GtkWidget *about_menu_item, *bulk_edit_menu_item, *bulk_import_image, *bulk_import_menu_item, *console_menu_item, *delete_menu_item, *edit_file_menu_item, *edit_image, *edit_menu, *edit_menu_item, *error_area, *error_bar, *error_image, *error_label, *error_widget, *export_menu_item, *favourite_image, *file_menu, *file_menu_item, *gigantic_icons_menu_item, *help_menu, *help_menu_button, *help_menu_item, *home_image, *huge_icons_menu_item, *image_menu, *image_menu_item, *img_info_menu_item, *import_image, *import_menu_item, *large_icons_menu_item, *medium_icons_menu_item, *menu_bar, *new_tag_menu_item, *new_wiki_page,*next_tab, *open_img_extern_menu_item, *open_img_menu_item, *open_img_new_tab_menu_item, *open_wiki_menu_item, *prev_tab, *quit_menu_item, *safe_mode_menu_item, *settings_menu_item, *small_icons_menu_item, *tags_menu, *tags_menu_item, *thumb_size_menu, *thumb_size_menu_item, *toolbar, *view_menu, *view_menu_item, *warn_area, *warn_bar, *warn_image, *warn_label, *warn_widget, *wiki_image, *wiki_menu, *wiki_menu_item;
+enum {
+        SHA256_COL,
+        COL_PIXBUF,
+        TOOLTIP_COL,
+        NUM_COLS
+};
 
+/** Variables **/
+extern GtkWidget *notebook;
+extern GtkWidget *status_bar;
+extern PGconn *conn;
+extern bool safe_mode;
+extern bool dark_theme;
+extern int msg_id;
+
+/* Icon sizes */
+extern GtkWidget *small_mi;
+extern GtkWidget *medium_mi;
+extern GtkWidget *large_mi;
+extern GtkWidget *huge_mi;
+extern GtkWidget *gigantic_mi;
+extern GtkWidget *safe_mode_mi;
+
+/** Functions **/
+extern void check_safe_mode(void);
+extern char *colour_getter(const int id);
 extern void dbg_err(const char *msg);
 extern void dbg_info(const char *msg);
 extern void dbg_print(const char *msg);
 extern void dbg_warn(const char *msg);
-
-extern PGconn *conn;
-extern GtkTreePath *ico_tree_path;
-extern GtkAccelGroup *accel;
-extern CallBackData *viewer_data;
-
-extern void about_activate(void);
-extern GtkTooltip *att(char *sha256, GtkWidget *relative_to, GtkCellRenderer *cell);
-extern int completion_bootstrap(void);
-//extern char conninfo[];
-extern char *conninfo;
-extern void console(void);
-extern void destroy_window(gpointer user_data);
-extern void exit(int ret_code);
 extern void file_count(void);
 extern void file_count_update(void);
-extern GtkWidget *home_page(void);
-extern void import_activate(void);
-extern void import_wizard(void);
-extern void list_tags(void);
-extern void new_artist_activate(void);
-extern void new_character_activate(void);
-extern void new_copyright_activate(void);
-extern void new_tag_activate(void);
-extern void new_meta_tag_activate(void);
-extern void next_tab_cb(GtkNotebook *notebook);
-extern GtkWidget *notebook, *vbox, *window;
-extern void prev_tab_cb(GtkNotebook *notebook);
-extern void quit_activate(void);
-extern GtkListStore *search_cb(GtkWidget *entry, const char *query);
-extern GtkWidget *status_bar;
-extern void tab(void);
-extern void wiki(void);
-extern void viewer(GtkWidget *icon_view, GtkTreePath *tree_path, gpointer user_data);
-extern void safe_mode_toggle(void);
-extern long word_count(const char *str);
-extern bool tab_completion(const GtkEventControllerKey *event_controller, const unsigned int keycode, const GdkModifierType state, const GtkWidget *entry);
-extern void set_icon_size(gpointer user_data);
-extern int get_icon_size(void);
-extern char *get_icon_size_name(void);
-extern void set_icon_menu_items(void);
-extern char *get_thumb_path(void);
 extern char *get_file_path(void);
-extern void pixbuf_loader(GtkListStore *list_store);
-extern GtkTreeModel *completion_model_generator(const int category);
-extern void entry_completion_set_model(GtkEntryCompletion *entry_completion, GtkTreeModel *entry_completion_model);
+extern char *get_icon_size_name(void);
 extern char *get_thumb_dir(void);
+extern char *get_thumb_path(void);
 extern char *get_thumb_path_by_id(const int id);
-
-
-
-
-
+extern int get_icon_size(void);
+extern void quit_activate(void);
+extern void safe_mode_toggle(void);
+extern char *search_input_sanitiser(char *str);
+extern void set_icon_menu_items(void);
+extern void set_icon_size(gpointer user_data);
+extern char *tag_input_sanitiser(char *str);
+extern long word_count(const char *str);
 
 #endif
