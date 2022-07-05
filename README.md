@@ -6,7 +6,7 @@ Images not included.
 TODO
 ----
 
-# Classes
+## Classes
 * Finish About class
 * Finish Console class
 * Finish List Tags class
@@ -20,7 +20,7 @@ TODO
 * Viewer class
 * Wiki class
 
-# UI - Control Elements
+## UI - Control Elements
 * Edit tags page
 * Delete tags
 * Delete image
@@ -30,7 +30,7 @@ TODO
 * Tag blacklisting
 * Ability to expunge images (delete file from disk)
 
-# UI - Miscellaneous
+## UI - Miscellaneous
 * Reload iconview
 * Favourite image
 * Open image in new tab
@@ -45,14 +45,14 @@ TODO
 * Add "Parent" field to `import_wizard.c`
 * Open at a reasonable size on desktop environments
 
-# Data Processing
+## Data Processing
 * Danbooru importer
 * dtext parser for wiki pages and artist commentary
 * Gnome Keyring support for database passwords
 * Pixiv Ugoria support via libzip and GdkPixbuf PixbufSimpleAnim
 * Search callback
 
-# Miscellaneous
+## Miscellaneous
 * Documentation
 
 FIXME:
