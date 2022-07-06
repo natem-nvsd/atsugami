@@ -16,6 +16,18 @@ GTKIMAGEVIEWINC = `pkg-config --cflags gtkimageview`
 #GTKIMAGEVIEWLIB = `pkg-config --libs gtkimageview`
 GTKIMAGEVIEWLIB = -L/usr/local/lib -l:gtkimageview.so
 
+# json-c
+JSONINC = `pkg-config --cflags json-c`
+JSONLIB = `pkg-config --libs json-c`
+
+# libcurl
+CURLINC = `pkg-config --cflags libcurl`
+CURLLIB = `pkg-config --libs libcurl`
+
+# PCRE2
+PCRE2INC = `pcre2-config --cflags-posix`
+PCRE2LIB = `pcre2-config --libs-posix`
+
 # PostgreSQL libraries
 LPQINC = `pkg-config --cflags libpq`
 LPQLIB = `pkg-config --libs libpq`
@@ -28,8 +40,8 @@ MDINC = -lmd
 MDLIB = -lmd
 
 # includes and libs
-INCS = $(GTKINC) $(GDKPIXBUFINC) $(GDKINC) $(GTKIMAGEVIEWINC) 
-LIBS = $(GTKLIB) $(GDKPIXBUFLIB) $(LPQLIB) $(GTKIMAGEVIEWLIB) $(MDLIB) -lgthread-2.0
+INCS = $(CURLINC) $(GTKINC) $(GDKPIXBUFINC) $(GTKIMAGEVIEWINC) $(JSONINC) $(LPQINC) $(MDINC) $(PCRE2INC)
+LIBS = $(CURLLIB) $(GTKLIB) $(GDKPIXBUFLIB) $(GTKIMAGEVIEWLIB) $(JSONLIB) $(LPQLIB) $(MDLIB) $(PCRE2LIB) -lgthread-2.0
 
 # flags
 CFLAGS = -g -std=c11 -pedantic -Wall -O -D_FORTIFY_SOURCE=2 ${INCS}

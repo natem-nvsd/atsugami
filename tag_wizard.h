@@ -57,7 +57,7 @@ struct _AtusgamiTagWizardPrivate {
 	GtkWidget *close_btn;
 	GtkWidget *accept_btn;
 	GtkWidget *reject_btn;
-}
+};
 
 extern GType atsugami_tag_wizard_get_type(void) G_GNUC_CONST;
 extern GtkWidget *atsugami_tag_wizard_new(void);

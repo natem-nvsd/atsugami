@@ -77,6 +77,8 @@ Icons to add
 
 Dependencies
 ------------
+* libcurl
+* [json-c](https://github.com/json-c/json-c/)
 * PostgreSQL (Tested on 14 and 14.1)  
 * libpq-fe  
 * GTK 3  
